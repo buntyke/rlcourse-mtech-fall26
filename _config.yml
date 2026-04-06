@@ -1,19 +1,18 @@
 # Site settings
-course_name: History of Magic
-course_description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam ornare aliquam mattis. Donec hendrerit sollicitudin urna. Aliquam venenatis rutrum velit, at lobortis dui cursus a. Nam varius metus in turpis maximus, ut rhoncus tellus dictum. In aliquam tortor nec mi dapibus, sit amet vehicula dolor auctor."
-course_semester: "Fall 1998"
+course_name: "Reinforcement Learning"
+course_description: "M.Tech. II Semester — AI &amp; DS | Course Code: 25PE1AS14 | Professional Elective-IV | 3 Credits (L:3, T:0, P:0)"
+course_semester: "II Semester 2025–26"
 
-baseurl: "/jekyll-course-website-template" # the subpath of your site, e.g. /blog/
-url: "http://kazemnejad.github.io/" # the base hostname & protocol for your site
+baseurl: "/rlcourse-mtech-fall26" # the subpath of your site, e.g. /blog/
+url: "" # the base hostname & protocol for your site (fill in after GitHub Pages setup)
 
-schoolname: "Hogwarts"
-schoolurl: "https://hogwarts.edu"
-twitter_username: username 
+schoolname: "VNR Vignana Jyothi Institute of Engineering and Technology"
+schoolurl: "https://www.vnrvjiet.ac.in"
 
 address: |
-    School of Witchcraft and Wizardry
-    Hogwarts
-    Scotland
+    Department of AI & Data Science
+    VNR Vignana Jyothi Institute of Engineering and Technology
+    Bachupally, Hyderabad, Telangana — 500090
 
 # Set your Google Analytics tracking ID (set up yours at http://www.google.com/analytics/)
 # google_analytics: UA-XXXXXXXX-X
@@ -30,7 +29,7 @@ excerpt_separator: "<!--more-->"
 include: ['_images', '_css']
 exclude: ['develop']
 
-dateformat: "%m/%d/%Y"
+dateformat: "%d/%m/%Y"
 
 future: true
 collections:

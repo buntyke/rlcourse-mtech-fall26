@@ -1,6 +1,7 @@
 ---
 type: tutorial
-title: "T3: Gridworld MDP Environment with Gymnasium"
+date: 2026-05-16T09:00:00+05:30
+title: "Gridworld MDP Environment with Gymnasium"
 tldr: "Build a Gridworld MDP from scratch using Gymnasium — define states, actions, transitions, and reward functions, and visualize agent trajectories."
 hide_from_announcments: true
 links: []

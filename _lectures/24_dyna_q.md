@@ -1,5 +1,6 @@
 ---
 type: lecture
+date: 2026-08-06T09:00:00+05:30
 title: "Models, Planning & Dyna-Q"
 tldr: "Model-based RL: using a learned environment model for planning. Dyna-Q integrates planning, acting, and learning in a unified architecture."
 hide_from_announcments: true

@@ -1,5 +1,6 @@
 ---
 type: lecture
+date: 2026-07-20T09:00:00+05:30
 title: "REINFORCE & REINFORCE with Baseline"
 tldr: "The REINFORCE Monte Carlo policy gradient algorithm and variance reduction via a learned baseline."
 hide_from_announcments: true

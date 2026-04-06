@@ -1,5 +1,6 @@
 ---
 type: lecture
+date: 2026-05-21T09:00:00+05:30
 title: "Bootstrapping & TD(0) Prediction"
 tldr: "The idea of bootstrapping, the TD(0) algorithm, and the TD update rule as a one-step return estimate."
 hide_from_announcments: true

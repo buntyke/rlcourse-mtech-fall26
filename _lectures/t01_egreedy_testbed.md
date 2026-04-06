@@ -1,6 +1,7 @@
 ---
 type: tutorial
-title: "T1: Epsilon-Greedy on the 10-Armed Testbed"
+date: 2026-04-18T09:00:00+05:30
+title: "Epsilon-Greedy on the 10-Armed Testbed"
 tldr: "Reproduce S&B Figure 2.2 — implement epsilon-greedy action selection and observe the effect of epsilon on average reward and optimal action percentage."
 hide_from_announcments: true
 links: []

@@ -1,5 +1,6 @@
 ---
 type: lecture
+date: 2026-04-20T09:00:00+05:30
 title: "UCB, KL-UCB & Thompson Sampling"
 tldr: "Upper Confidence Bound action selection, KL-UCB (brief), and Thompson Sampling for principled exploration."
 hide_from_announcments: true

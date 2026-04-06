@@ -1,6 +1,7 @@
 ---
 type: tutorial
-title: "T9: SARSA vs Q-Learning on Cliff Walking"
+date: 2026-08-20T09:00:00+05:30
+title: "SARSA vs Q-Learning on Cliff Walking"
 tldr: "Implement SARSA and Q-learning on the Cliff Walking gridworld (S&B Example 6.6) and compare the safe vs optimal paths each algorithm finds."
 hide_from_announcments: true
 links: []

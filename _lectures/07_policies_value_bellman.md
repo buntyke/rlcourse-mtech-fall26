@@ -1,5 +1,6 @@
 ---
 type: lecture
+date: 2026-05-04T09:00:00+05:30
 title: "Policies, Value Functions & Bellman Equations"
 tldr: "State-value and action-value functions, Bellman expectation equations, and Bellman optimality equations."
 hide_from_announcments: true

@@ -1,0 +1,11 @@
+---
+type: lecture
+title: "Markov Decision Processes — Agent-Environment Interface"
+tldr: "The MDP framework: states, actions, transitions, rewards, and the agent-environment boundary."
+hide_from_announcments: true
+links: []
+---
+**Unit II — Markov Decision Processes & Dynamic Programming**
+
+**Suggested Readings:**
+- Sutton & Barto, *RL: An Introduction*, Ch. 3.1–3.2

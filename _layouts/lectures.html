@@ -5,7 +5,12 @@ layout: page
 {{ content }}
 
 <ul id="archive">
-{% for lecture in site.lectures %}
+{% if page.filter_type %}
+  {% assign lecture_list = site.lectures | where: "type", page.filter_type %}
+{% else %}
+  {% assign lecture_list = site.lectures %}
+{% endif %}
+{% for lecture in lecture_list %}
 <li class="archiveposturl" style="background: transparent">
 <div class="lecture-container">
     {% if lecture.thumbnail %}

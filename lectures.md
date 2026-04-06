@@ -2,5 +2,6 @@
 layout: lectures
 title: Lectures
 permalink: /lectures/
+filter_type: lecture
 ---
-You can download the lectures here. We will try to upload lectures prior to their corresponding classes.
+Theory lectures covering the 5 units of the course. Slides and notes will be uploaded before each class.

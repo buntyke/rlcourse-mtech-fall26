@@ -1,6 +1,6 @@
 ---
 layout: page
-title: Project
-permalink: /project/
+title: Tutorials
+permalink: /tutorials-info/
 ---
-Describe Final project.
+See the [Tutorials](/tutorials/) page for all hands-on implementation sessions.

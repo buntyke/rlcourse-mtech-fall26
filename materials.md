@@ -6,15 +6,17 @@ permalink: /materials/
 
 ## Textbooks
 
-1. Richard S. Sutton and Andrew G. Barto, *Reinforcement Learning: An Introduction*, 2nd Ed., MIT Press, 2020.
-   - **Free PDF:** [incompleteideas.net/book/the-book-2nd.html](http://incompleteideas.net/book/the-book-2nd.html)
+1. Richard S. Sutton and Andrew G. Barto, *Reinforcement Learning: An Introduction*, 2nd Ed., MIT Press, 2020. [Link](https://drive.google.com/file/d/1nuzfkYwh2-zWwUs0nduoVYgefXS5agHn/view?usp=drive_link)
 
-2. Masashi Sugiyama, *Statistical Reinforcement Learning: Modern Machine Learning Approaches*, 1st Ed., CRC Press, 2015.
+2. Marc P. Deisenroth, A. A. Faisal, and C. S. Ong, *Mathematics for Machine Learning*,  Cambridge University Press, 2020. [Link](https://drive.google.com/file/d/1iPiwlwbc4I9tPhkTTvCUkIe0xzKT6cqP/view?usp=drive_link)
+
+3. Tor Lattimore and Csaba Szepesvári, *Bandit Algorithms*, 1st Ed., Cambridge University Press, 2020. [Link](https://drive.google.com/file/d/1aSHDHQSGSAgq-hJIvNjIC7KdWXvnxdUM/view?usp=drive_link)
+
+4. Richard S. Sutton and Andrew G. Barto, *Reinforcement Learning: An Introduction*, 1st Edition, MIT Press, 2000. [Link](https://drive.google.com/file/d/1j0BDoQbEam-CJJrepXeW-zYyOs-9sihP/view?usp=drive_link)
 
 ## Reference Books
 
-1. Tor Lattimore and Csaba Szepesvári, *Bandit Algorithms*, 1st Ed., Cambridge University Press, 2020.
-   - **Free PDF:** [banditalgs.com](https://banditalgs.com)
+1. Masashi Sugiyama, *Statistical Reinforcement Learning: Modern Machine Learning Approaches*, 1st Ed., CRC Press, 2015.
 
 2. Boris Belousov, Hany Abdulsamad, Pascal Klink, Simone Parisi, and Jan Peters, *Reinforcement Learning Algorithms: Analysis and Applications*, 1st Ed., Springer, 2021.
 
@@ -22,19 +24,8 @@ permalink: /materials/
 
 ## Free Online Resources
 
-- [Sutton & Barto (2nd Ed.) — Free online book](http://incompleteideas.net/book/the-book-2nd.html)
-- [Bandit Algorithms — Lattimore & Szepesvári (free PDF)](https://banditalgs.com)
-- [Mathematics for Machine Learning — Deisenroth et al. (free PDF)](https://mml-book.github.io) *(background reference for Unit I)*
-- [Gymnasium Documentation](https://gymnasium.farama.org/) *(used in all tutorial sessions)*
-- [David Silver's RL Lecture Series (UCL)](https://www.davidsilver.uk/teaching/) *(supplementary video lectures)*
-- [OpenAI Spinning Up in Deep RL](https://spinningup.openai.com/) *(supplementary for Units IV–V)*
+1. [Gymnasium Documentation](https://gymnasium.farama.org/) *(used in all tutorial sessions)*
 
-## Course Outcomes
+2. [David Silver's RL Lecture Series (UCL)](https://www.davidsilver.uk/teaching/) *(supplementary video lectures)*
 
-| CO | Description |
-|----|-------------|
-| CO-1 | Understand the basics of Reinforcement Learning. |
-| CO-2 | Understand the RL framework and the Markov Decision Process (MDP). |
-| CO-3 | Analyze learning through Dynamic Programming and Monte Carlo methods. |
-| CO-4 | Understand TD(0) and TD(λ) algorithms. |
-| CO-5 | List the Applications and Case Studies of Reinforcement Learning. |
+3. [OpenAI Spinning Up in Deep RL](https://spinningup.openai.com/) *(supplementary for Units IV–V)*

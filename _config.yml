@@ -46,6 +46,11 @@ collections:
 defaults:
   - scope:
       path: ""
+      type: "lectures"
+    values:
+      layout: "class"
+  - scope:
+      path: ""
       type: "assignments"
     values:
       layout: "assignment"

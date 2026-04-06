@@ -2,20 +2,97 @@
 layout: default
 ---
 
+{% comment %} Build sorted list of items of the same type (lecture or tutorial) {% endcomment %}
+{% assign siblings = site.lectures | where: "type", page.type | sort: "date" %}
+{% assign current_idx = nil %}
+{% for item in siblings %}
+  {% if item.url == page.url %}
+    {% assign current_idx = forloop.index0 %}
+  {% endif %}
+{% endfor %}
 
-  <header class="post-header">
-    <h1 class="post-title">{{ page.title }}</h1>
-  </header>
+{% if current_idx and current_idx > 0 %}
+  {% assign prev_idx = current_idx | minus: 1 %}
+  {% assign prev_item = siblings | slice: prev_idx, 1 | first %}
+{% endif %}
+{% assign next_idx = current_idx | plus: 1 %}
+{% if next_idx < siblings.size %}
+  {% assign next_item = siblings | slice: next_idx, 1 | first %}
+{% endif %}
 
-<div id="class">
-  <article class="post-content">
-    {{ content }}
-  </article>
+{% assign total = siblings.size %}
+{% assign position = current_idx | plus: 1 %}
 
+<div class="class-nav-bar">
+  <div class="class-nav-prev">
+    {% if prev_item %}
+      <a href="{{ prev_item.url | prepend: site.baseurl }}" class="class-nav-link" title="{{ prev_item.title }}">
+        <span class="class-nav-arrow">&#8592;</span>
+        <span class="class-nav-label">{{ prev_item.title | truncate: 40 }}</span>
+      </a>
+    {% else %}
+      <span class="class-nav-link class-nav-disabled">&#8592; First {{ page.type | capitalize }}</span>
+    {% endif %}
+  </div>
+
+  <div class="class-nav-counter">
+    {{ page.type | capitalize }} {{ position }} / {{ total }}
+  </div>
+
+  <div class="class-nav-next">
+    {% if next_item %}
+      <a href="{{ next_item.url | prepend: site.baseurl }}" class="class-nav-link" title="{{ next_item.title }}">
+        <span class="class-nav-label">{{ next_item.title | truncate: 40 }}</span>
+        <span class="class-nav-arrow">&#8594;</span>
+      </a>
+    {% else %}
+      <span class="class-nav-link class-nav-disabled">Last {{ page.type | capitalize }} &#8594;</span>
+    {% endif %}
+  </div>
 </div>
 
-<div id="secondary">
+<div class="class-header">
+  {% if page.type == "lecture" %}
+    <span class="class-type-badge class-type-lecture">Lecture</span>
+  {% elsif page.type == "tutorial" %}
+    <span class="class-type-badge class-type-tutorial">Tutorial</span>
+  {% endif %}
+  <h1 class="post-title">{{ page.title }}</h1>
+  <p class="class-meta">
+    {{ page.date | date: "%A, %d %B %Y" }}
+    {% if page.tldr %}
+    &nbsp;·&nbsp; <em>{{ page.tldr }}</em>
+    {% endif %}
+  </p>
+  {% if page.video_url %}
+  <p class="class-video-link">
+    <a href="{{ page.video_url }}" target="_blank" class="btn-video">
+      <i class="fas fa-play-circle"></i> Watch Video
+    </a>
+  </p>
+  {% endif %}
+</div>
 
- {% include_relative {{page.path | remove:'.md' | remove: 'teaching' | append:'-course-materials.md'}} %} 
+<article class="post-content">
+  {{ content }}
+</article>
 
+<div class="class-nav-bar class-nav-bar-bottom">
+  <div class="class-nav-prev">
+    {% if prev_item %}
+      <a href="{{ prev_item.url | prepend: site.baseurl }}" class="class-nav-link" title="{{ prev_item.title }}">
+        <span class="class-nav-arrow">&#8592;</span>
+        <span class="class-nav-label">{{ prev_item.title | truncate: 40 }}</span>
+      </a>
+    {% endif %}
+  </div>
+  <div class="class-nav-counter"></div>
+  <div class="class-nav-next">
+    {% if next_item %}
+      <a href="{{ next_item.url | prepend: site.baseurl }}" class="class-nav-link" title="{{ next_item.title }}">
+        <span class="class-nav-label">{{ next_item.title | truncate: 40 }}</span>
+        <span class="class-nav-arrow">&#8594;</span>
+      </a>
+    {% endif %}
+  </div>
 </div>

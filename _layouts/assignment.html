@@ -2,9 +2,55 @@
 layout: default
 title: page.title
 ---
-<div class="post">
 
+{% comment %} Prev/Next navigation across assignments sorted by date {% endcomment %}
+{% assign siblings = site.assignments | sort: "date" %}
+{% assign current_idx = nil %}
+{% for item in siblings %}
+  {% if item.url == page.url %}
+    {% assign current_idx = forloop.index0 %}
+  {% endif %}
+{% endfor %}
+
+{% if current_idx and current_idx > 0 %}
+  {% assign prev_idx = current_idx | minus: 1 %}
+  {% assign prev_item = siblings | slice: prev_idx, 1 | first %}
+{% endif %}
+{% assign next_idx = current_idx | plus: 1 %}
+{% if next_idx < siblings.size %}
+  {% assign next_item = siblings | slice: next_idx, 1 | first %}
+{% endif %}
+
+{% assign total = siblings.size %}
+{% assign position = current_idx | plus: 1 %}
+
+<div class="class-nav-bar">
+  <div class="class-nav-prev">
+    {% if prev_item %}
+      <a href="{{ prev_item.url | prepend: site.baseurl }}" class="class-nav-link" title="{{ prev_item.title }}">
+        <span class="class-nav-arrow">&#8592;</span>
+        <span class="class-nav-label">{{ prev_item.title | truncate: 40 }}</span>
+      </a>
+    {% else %}
+      <span class="class-nav-link class-nav-disabled">&#8592; First Assignment</span>
+    {% endif %}
+  </div>
+  <div class="class-nav-counter">Assignment {{ position }} / {{ total }}</div>
+  <div class="class-nav-next">
+    {% if next_item %}
+      <a href="{{ next_item.url | prepend: site.baseurl }}" class="class-nav-link" title="{{ next_item.title }}">
+        <span class="class-nav-label">{{ next_item.title | truncate: 40 }}</span>
+        <span class="class-nav-arrow">&#8594;</span>
+      </a>
+    {% else %}
+      <span class="class-nav-link class-nav-disabled">Last Assignment &#8594;</span>
+    {% endif %}
+  </div>
+</div>
+
+<div class="post">
   <header class="post-header">
+    <span class="class-type-badge" style="background:#d9edf7; color:#31708f;">Assignment</span>
     <h1 class="post-title">{{ page.title }}</h1>
     <p class="post-meta">Released on {{ page.date | date: "%A" }} {{ page.date | date: site.dateformat }}</p>
   </header>
@@ -35,5 +81,24 @@ title: page.title
   <article class="post-content">
     {{ content }}
   </article>
+</div>
 
+<div class="class-nav-bar class-nav-bar-bottom">
+  <div class="class-nav-prev">
+    {% if prev_item %}
+      <a href="{{ prev_item.url | prepend: site.baseurl }}" class="class-nav-link">
+        <span class="class-nav-arrow">&#8592;</span>
+        <span class="class-nav-label">{{ prev_item.title | truncate: 40 }}</span>
+      </a>
+    {% endif %}
+  </div>
+  <div class="class-nav-counter"></div>
+  <div class="class-nav-next">
+    {% if next_item %}
+      <a href="{{ next_item.url | prepend: site.baseurl }}" class="class-nav-link">
+        <span class="class-nav-label">{{ next_item.title | truncate: 40 }}</span>
+        <span class="class-nav-arrow">&#8594;</span>
+      </a>
+    {% endif %}
+  </div>
 </div>

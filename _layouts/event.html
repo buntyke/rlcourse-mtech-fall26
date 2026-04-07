@@ -1,0 +1,87 @@
+---
+layout: default
+---
+
+{% assign siblings = site.events | sort: "date" %}
+{% assign current_idx = nil %}
+{% for item in siblings %}
+  {% if item.url == page.url %}
+    {% assign current_idx = forloop.index0 %}
+  {% endif %}
+{% endfor %}
+
+{% if current_idx and current_idx > 0 %}
+  {% assign prev_idx = current_idx | minus: 1 %}
+  {% assign prev_item = siblings | slice: prev_idx, 1 | first %}
+{% endif %}
+{% assign next_idx = current_idx | plus: 1 %}
+{% if next_idx < siblings.size %}
+  {% assign next_item = siblings | slice: next_idx, 1 | first %}
+{% endif %}
+
+{% assign total = siblings.size %}
+{% assign position = current_idx | plus: 1 %}
+
+<div class="class-nav-bar">
+  <div class="class-nav-prev">
+    {% if prev_item %}
+      <a href="{{ prev_item.url | prepend: site.baseurl }}" class="class-nav-link" title="{{ prev_item.description }}">
+        <span class="class-nav-arrow">&#8592;</span>
+        <span class="class-nav-label">{{ prev_item.description | truncate: 40 }}</span>
+      </a>
+    {% else %}
+      <span class="class-nav-link class-nav-disabled">&#8592; First Event</span>
+    {% endif %}
+  </div>
+
+  <div class="class-nav-counter">
+    Event {{ position }} / {{ total }}
+  </div>
+
+  <div class="class-nav-next">
+    {% if next_item %}
+      <a href="{{ next_item.url | prepend: site.baseurl }}" class="class-nav-link" title="{{ next_item.description }}">
+        <span class="class-nav-label">{{ next_item.description | truncate: 40 }}</span>
+        <span class="class-nav-arrow">&#8594;</span>
+      </a>
+    {% else %}
+      <span class="class-nav-link class-nav-disabled">Last Event &#8594;</span>
+    {% endif %}
+  </div>
+</div>
+
+<div class="class-header">
+  <span class="class-type-badge class-type-exam">Exam</span>
+  <h1 class="post-title">{{ page.description }}</h1>
+  <p class="class-meta">
+    {% if page.end_date %}
+      {{ page.date | date: "%A, %d %B %Y" }} &ndash; {{ page.end_date | date: "%A, %d %B %Y" }}
+    {% else %}
+      {{ page.date | date: "%A, %d %B %Y" }}
+    {% endif %}
+  </p>
+</div>
+
+<article class="post-content">
+  {{ content }}
+</article>
+
+<div class="class-nav-bar class-nav-bar-bottom">
+  <div class="class-nav-prev">
+    {% if prev_item %}
+      <a href="{{ prev_item.url | prepend: site.baseurl }}" class="class-nav-link" title="{{ prev_item.description }}">
+        <span class="class-nav-arrow">&#8592;</span>
+        <span class="class-nav-label">{{ prev_item.description | truncate: 40 }}</span>
+      </a>
+    {% endif %}
+  </div>
+  <div class="class-nav-counter"></div>
+  <div class="class-nav-next">
+    {% if next_item %}
+      <a href="{{ next_item.url | prepend: site.baseurl }}" class="class-nav-link" title="{{ next_item.description }}">
+        <span class="class-nav-label">{{ next_item.description | truncate: 40 }}</span>
+        <span class="class-nav-arrow">&#8594;</span>
+      </a>
+    {% endif %}
+  </div>
+</div>

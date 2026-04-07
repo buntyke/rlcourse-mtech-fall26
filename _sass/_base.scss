@@ -647,3 +647,19 @@ a.tosu {
     color: #15803d;
     border: 1px solid #22c55e;
 }
+
+.class-type-exam {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #ef4444;
+}
+
+.lecture-tldr {
+    background: #f8fafc;
+    border-left: 4px solid $primary-color;
+    padding: 10px 14px;
+    margin-bottom: 20px;
+    font-size: 0.95em;
+    color: #374151;
+    border-radius: 0 4px 4px 0;
+}

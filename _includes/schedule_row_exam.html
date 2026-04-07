@@ -8,8 +8,12 @@
     {% endif %}
 </div>
 <div class="col col-2" style="font-weight:bold;" data-label="Description">
-    {{ include.event.description }}
+    <a href="{{ include.event.url | prepend: site.baseurl }}" style="color:inherit; text-decoration:none;">
+        {{ include.event.description }}
+    </a>
 </div>
 <div class="col col-res" data-label="Resources">
-    {{ include.event.content }}
+    <a href="{{ include.event.url | prepend: site.baseurl }}" title="View event details" style="display:inline-block;">
+        <i class="fas fa-file-alt"></i> Details
+    </a>
 </div>

@@ -54,3 +54,8 @@ defaults:
       type: "assignments"
     values:
       layout: "assignment"
+  - scope:
+      path: ""
+      type: "events"
+    values:
+      layout: "event"

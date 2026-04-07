@@ -60,9 +60,6 @@ layout: default
   <h1 class="post-title">{{ page.title }}</h1>
   <p class="class-meta">
     {{ page.date | date: "%A, %d %B %Y" }}
-    {% if page.tldr %}
-    &nbsp;·&nbsp; <em>{{ page.tldr }}</em>
-    {% endif %}
   </p>
   {% if page.video_url %}
   <p class="class-video-link">
@@ -74,6 +71,11 @@ layout: default
 </div>
 
 <article class="post-content">
+  {% if page.tldr %}
+  <div class="lecture-tldr">
+    <strong>Summary:</strong> {{ page.tldr }}
+  </div>
+  {% endif %}
   {{ content }}
 </article>
 

@@ -4,7 +4,7 @@ course_description: "M.Tech. II Semester — AI &amp; DS | Course Code: 25PE1AS1
 course_semester: "II Semester 2025–26"
 
 baseurl: "/rlcourse-mtech-fall26" # the subpath of your site, e.g. /blog/
-url: "" # the base hostname & protocol for your site (fill in after GitHub Pages setup)
+url: "https://buntyke.github.io/" # the base hostname & protocol for your site (fill in after GitHub Pages setup)
 
 schoolname: "VNR Vignana Jyothi Institute of Engineering and Technology"
 schoolurl: "https://www.vnrvjiet.ac.in"

@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RL Lecture 1 — Introduction</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css" id="theme">
+<style>
+  :root { --rl-red: rgb(180,30,30); --rl-white: rgb(235,235,235); }
+  .reveal { font-family: "Lato", "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 30px; }
+  .reveal h1, .reveal h2, .reveal h3, .reveal h4 { color: var(--rl-red); font-weight: 700; text-transform: none; }
+  .reveal .slides > section, .reveal .slides > section > section {
+    top: 0 !important;
+    height: 100%;
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 70px 30px 60px 30px !important;
+    box-sizing: border-box;
+  }
+  .reveal .frame-title { position: absolute; top: 18px; left: 30px; right: 30px; color: var(--rl-red); font-size: 1.2em; font-weight: 700; border-bottom: 2px solid var(--rl-red); padding-bottom: .2em; margin: 0; text-align: left; }
+  .reveal section img { background: none; border: none; box-shadow: none; margin: .3em auto; }
+  .reveal .title-slide { background: #fff; color: var(--rl-red); padding: 2em; text-align: center !important; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%; }
+  .reveal .title-slide h1, .reveal .title-slide h2, .reveal .title-slide p { color: var(--rl-red); text-align: center !important; width: 100%; }
+  .reveal .section-divider { display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; text-align: center !important; }
+  .reveal .section-divider h1 { color: var(--rl-red); font-size: 1.8em; text-align: center !important; width: 100%; margin: 0 auto; }
+  .two-col { display: flex; gap: 1em; align-items: center; justify-content: center; }
+  .two-col > div { flex: 1; text-align: center; }
+  .two-col.w64 > div:first-child { flex: 0 0 60%; }
+  .two-col.w64 > div:last-child  { flex: 0 0 36%; }
+  .reveal ul { display: inline-block; text-align: left; margin: 0 auto; font-size: .90em; }
+  .reveal ul > li { margin-bottom: .6em; }
+  .reveal ul > li:last-child { margin-bottom: 0; }
+  .reveal ul ul > li { margin-bottom: 0; }
+  .reveal p { font-size: .95em; }
+  .reveal section { text-align: center; }
+  .reveal .small { font-size: .7em; }
+  .reveal .has-footnote img { max-height: 540px; max-width: 90%; height: auto; }
+  .reveal .full-img { width: 100%; text-align: center; }
+  .reveal .full-img img { height: 576px; width: auto; max-width: 95%; }
+  .reveal .has-footnote.full-slide .full-img img { height: 540px; }
+  .reveal section.full-slide { padding-top: 55px !important; padding-bottom: 25px !important; }
+  .reveal .footnote { position: absolute; left: 30px; right: 30px; bottom: 10px; font-size: .5em; font-style: italic; color: #555; border-top: 1px solid #888; padding-top: 4px; text-align: left; margin: 0; }
+  .img-stack { position: relative; display: inline-block; }
+  .img-stack img { position: absolute; top: 0; left: 0; }
+  .img-stack img:first-child { position: relative; }
+  .center { text-align: center; }
+  .reveal a { color: var(--rl-red); }
+</style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- Title -->
+<section class="title-slide">
+  <h1 style="margin-bottom:.15em; font-size:2.4em">Reinforcement Learning</h1>
+  <h2 style="margin-top:0; font-size:1.6em">Lecture 1</h2>
+  <p style="margin-top:1.8em; font-size:1.4em">Nishanth Koganti</p>
+  <p style="font-size:1em">VNR VJIET — M.Tech AI &amp; DS</p>
+</section>
+
+<!-- TOC -->
+<section>
+  <div class="frame-title">Table of Contents</div>
+  <ul>
+    <li>Introduction to RL</li>
+    <li>Examples of RL</li>
+    <li>Course Admin</li>
+  </ul>
+  <p class="center" style="margin-top:1.5em"><strong>Lecture material:</strong>
+    <a href="https://buntyke.github.io/rlcourse-mtech-fall26">buntyke.github.io/rlcourse-mtech-fall26</a></p>
+</section>
+
+<!-- Acknowledgements -->
+<section>
+  <div class="frame-title">Acknowledgements</div>
+  <p>The slides of this lecture are based on:</p>
+  <ul>
+    <li>Lecture 1 of <strong>Google DeepMind's 2015</strong> lectures by <em>David Silver</em></li>
+    <li>Chapter 1 of <strong>Reinforcement Learning: An Introduction</strong> by <em>Sutton &amp; Barto</em></li>
+  </ul>
+  <p class="center" style="margin-top:1.5em"><strong>Lecture material:</strong>
+    <a href="https://buntyke.github.io/rlcourse-mtech-fall26">buntyke.github.io/rlcourse-mtech-fall26</a></p>
+</section>
+
+<!-- Section: Intro to RL -->
+<section class="section-divider"><h1>Introduction to Reinforcement Learning</h1></section>
+
+<!-- SL / USL -->
+<section>
+  <div class="frame-title">Classes of Learning Problems</div>
+  <div class="two-col" style="width:100%; align-items:stretch;">
+    <div style="display:flex; flex-direction:column; align-items:center; gap:1.2em;">
+      <strong style="font-size:1.1em">Supervised Learning</strong>
+      <ul style="margin:0">
+        <li><strong>Data</strong>: \((\mathbf{x}, y)\) — \(\mathbf{x}\) is data, \(y\) is label</li>
+        <li><strong>Goal</strong>: Learn \(f: \mathbf{x} \rightarrow y\)</li>
+        <li><strong>Example</strong>: Image Classification</li>
+      </ul>
+      <img src="images/sl-example.png" style="max-height:260px; margin:0">
+    </div>
+    <div style="display:flex; flex-direction:column; align-items:center; gap:1.2em;">
+      <strong style="font-size:1.1em">Unsupervised Learning</strong>
+      <ul style="margin:0">
+        <li><strong>Data</strong>: \(\mathbf{x}\) — no labels</li>
+        <li><strong>Goal</strong>: Learn structure \(p(\mathbf{x})\)</li>
+        <li><strong>Example</strong>: Clustering</li>
+      </ul>
+      <img src="images/usl-example.png" style="max-height:260px; margin:0">
+    </div>
+  </div>
+</section>
+
+<!-- RL (vertical stack) -->
+<section>
+  <section>
+    <div class="frame-title">Classes of Learning Problems</div>
+    <div class="two-col w64" style="align-items:center;">
+      <div style="display:flex; flex-direction:column; align-items:center; gap:1.2em;">
+        <strong style="font-size:1.1em">Reinforcement Learning</strong>
+        <ul style="margin:0">
+          <li><strong>Data</strong>: \((\mathbf{s}, a, r)\) — states, actions, rewards</li>
+        </ul>
+      </div>
+      <div><img src="images/rl-example.png" style="max-height:420px"></div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Classes of Learning Problems</div>
+    <div class="two-col w64" style="align-items:center;">
+      <div style="display:flex; flex-direction:column; align-items:center; gap:1.2em;">
+        <strong style="font-size:1.1em">Reinforcement Learning</strong>
+        <ul style="margin:0">
+          <li><strong>Data</strong>: \((\mathbf{s}, a, r)\) — states, actions, rewards</li>
+          <li><strong>Goal</strong>: Maximize future rewards via sequential decisions</li>
+        </ul>
+      </div>
+      <div><img src="images/rl-example.png" style="max-height:420px"></div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Classes of Learning Problems</div>
+    <div class="two-col w64" style="align-items:center;">
+      <div style="display:flex; flex-direction:column; align-items:center; gap:1.2em;">
+        <strong style="font-size:1.1em">Reinforcement Learning</strong>
+        <ul style="margin:0">
+          <li><strong>Data</strong>: \((\mathbf{s}, a, r)\) — states, actions, rewards</li>
+          <li><strong>Goal</strong>: Maximize future rewards via sequential decisions</li>
+          <li><strong>Example</strong>: Robot navigation, factory control, investment bots, ...</li>
+        </ul>
+      </div>
+      <div><img src="images/rl-example.png" style="max-height:420px"></div>
+    </div>
+  </section>
+</section>
+
+<!-- Travel -->
+<section>
+  <div class="frame-title">How did you come to college today?</div>
+  <div class="two-col">
+    <div><img src="images/travel-example1.png" style="max-height:460px"></div>
+    <div><img src="images/travel-example2.png" style="max-height:330px"></div>
+  </div>
+</section>
+
+<!-- Agent -->
+<section class="full-slide">
+  <div class="frame-title">RL Formulation: Agent</div>
+  <div class="center full-img"><img src="images/agent-formulation.png"></div>
+</section>
+
+<!-- Agent + Env (vertical stack) -->
+<section>
+  <section>
+    <div class="frame-title">RL Formulation: Agent and Environment</div>
+    <div class="two-col" style="width:100%; align-items:center;">
+      <div style="display:flex; justify-content:center; align-items:center;">
+        <img src="images/rl-formulation.png" style="max-width:100%; max-height:520px">
+      </div>
+      <div style="text-align:left">
+        <ul>
+          <li>At each time step \(t\), the agent:
+            <ul><li>Receives state \(S_t\)</li><li>Receives reward \(R_t\)</li><li>Executes action \(A_t\)</li></ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">RL Formulation: Agent and Environment</div>
+    <div class="two-col" style="width:100%; align-items:center;">
+      <div style="display:flex; justify-content:center; align-items:center;">
+        <img src="images/rl-formulation.png" style="max-width:100%; max-height:520px">
+      </div>
+      <div style="text-align:left">
+        <ul>
+          <li>At each time step \(t\), the agent:
+            <ul><li>Receives state \(S_t\)</li><li>Receives reward \(R_t\)</li><li>Executes action \(A_t\)</li></ul>
+          </li>
+          <li>The environment:
+            <ul><li>Receives action \(A_t\)</li><li>Emits state \(S_{t+1}\)</li><li>Emits reward \(R_{t+1}\)</li></ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">RL Formulation: Agent and Environment</div>
+    <div class="two-col" style="width:100%; align-items:center;">
+      <div style="display:flex; justify-content:center; align-items:center;">
+        <img src="images/rl-formulation.png" style="max-width:100%; max-height:520px">
+      </div>
+      <div style="text-align:left">
+        <ul>
+          <li>At each time step \(t\), the agent:
+            <ul><li>Receives state \(S_t\)</li><li>Receives reward \(R_t\)</li><li>Executes action \(A_t\)</li></ul>
+          </li>
+          <li>The environment:
+            <ul><li>Receives action \(A_t\)</li><li>Emits state \(S_{t+1}\)</li><li>Emits reward \(R_{t+1}\)</li></ul>
+          </li>
+          <li>\(t\) increments at the env step</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</section>
+
+<!-- Grid World (vertical stack) -->
+<section>
+<!-- Grid World: Task -->
+<section>
+  <div class="frame-title">RL Example: Grid World</div>
+  <div class="two-col">
+    <div><img src="images/grid-world.png" style="max-height:420px"></div>
+    <div style="text-align:left">
+      <ul>
+        <li><strong>Task</strong>: Robot spawns at Start (blue) and must reach Goal (green)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Grid World: State Space -->
+<section>
+  <div class="frame-title">RL Example: Grid World</div>
+  <div class="two-col">
+    <div><img src="images/grid-world-state.png" style="max-height:420px"></div>
+    <div style="text-align:left">
+      <ul>
+        <li><strong>State Space</strong>: Every non-wall (white) cell \(s_i\)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Grid World: State -->
+<section>
+  <div class="frame-title">RL Example: Grid World</div>
+  <div class="two-col">
+    <div><img src="images/grid-world-state.png" style="max-height:420px"></div>
+    <div style="text-align:left">
+      <ul>
+        <li><strong>State Space</strong>: Every non-wall (white) cell \(s_i\)</li>
+        <li><strong>State</strong>: Current position of robot (red)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Grid World: Action -->
+<section>
+  <div class="frame-title">RL Example: Grid World</div>
+  <div class="two-col">
+    <div><img src="images/grid-world-action.png" style="max-height:420px"></div>
+    <div style="text-align:left">
+      <ul>
+        <li><strong>Action</strong>: North, South, East, West</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Grid World: Reward -->
+<section>
+  <div class="frame-title">RL Example: Grid World</div>
+  <div class="two-col">
+    <div><img src="images/grid-world-reward.png" style="max-height:420px"></div>
+    <div style="text-align:left">
+      <ul>
+        <li><strong>Reward</strong>: \(-1\) for every cell other than goal
+          \[ R_t = \begin{cases} -1, & S_t \ne \text{Goal} \\ \;\,0, & S_t = \text{Goal} \end{cases} \]
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Grid World: Environment -->
+<section>
+  <div class="frame-title">RL Example: Grid World</div>
+  <div class="two-col">
+    <div><img src="images/grid-world-action.png" style="max-height:420px"></div>
+    <div style="text-align:left">
+      <ul>
+        <li><strong>Environment</strong>: Action into a wall keeps the robot in place. \((S_1, A_W)\!\to\!S_2\), \((S_1, A_N)\!\to\!S_1\)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Grid World: Episode 1 -->
+<section>
+  <div class="frame-title">RL Example: Grid World</div>
+  <div class="two-col">
+    <div><img src="images/grid-world-eps1.png" style="max-height:420px"></div>
+    <div style="text-align:left">
+      <ul>
+        <li><strong>Episode</strong>: Terminates when total reward reaches \(-30\) or robot reaches goal.
+          \[ \text{Return} = \sum_{t=1}^{T} R_t \]
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Grid World: Episode 2 -->
+<section>
+  <div class="frame-title">RL Example: Grid World</div>
+  <div class="two-col">
+    <div><img src="images/grid-world-eps2.png" style="max-height:420px"></div>
+    <div style="text-align:left">
+      <ul>
+        <li><strong>Episode</strong>: Terminates when total reward reaches \(-30\) or robot reaches goal.
+          \[ \text{Return} = \sum_{t=1}^{T} R_t \]
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+</section>
+
+<!-- Portfolio -->
+<section class="full-slide">
+  <div class="frame-title">Portfolio Management: What is State, Action, Reward?</div>
+  <div class="center full-img"><img src="images/portfolio-management-formulation.png"></div>
+</section>
+
+<!-- Self driving -->
+<section class="full-slide">
+  <div class="frame-title">Self Driving: What is State, Action, Reward?</div>
+  <div class="center full-img"><img src="images/self-driving-formulation.png"></div>
+</section>
+
+<!-- Sequential -->
+<section>
+  <div class="frame-title">RL Problem: Sequential Decision Making</div>
+  <div style="display:flex; flex-direction:column; align-items:center; gap:1.2em; width:100%;">
+    <p style="margin:0; font-size:1.05em"><strong>Goal</strong>: Select actions to maximize <em>total future rewards</em></p>
+    <ul style="margin:0">
+      <li>Actions may have long-term consequences with <em>delayed rewards</em></li>
+      <li>Better to sacrifice immediate reward to gain more long-term reward</li>
+    </ul>
+    <div class="two-col" style="width:100%">
+      <div><img src="images/trading-usecase.png" style="max-height:240px"></div>
+      <div><img src="images/chess-usecase.png" style="max-height:240px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Characteristics: bullets + teach/trial -->
+<section>
+  <div class="frame-title">Characteristics of RL</div>
+  <ul>
+    <li>There is no supervisor and only a reward signal</li>
+    <li>Feedback through reward can be delayed and not immediate</li>
+  </ul>
+  <div class="two-col" style="margin-top:1em">
+    <div><img src="images/teach-example.png" style="max-height:260px"></div>
+    <div><img src="images/trial-example.jpg" style="max-height:260px"></div>
+  </div>
+</section>
+
+<!-- Characteristics: bullets + policy-collapse -->
+<section class="has-footnote">
+  <div class="frame-title">Characteristics of RL</div>
+  <ul>
+    <li>There is no supervisor and only a reward signal</li>
+    <li>Feedback through reward can be delayed and not immediate</li>
+    <li>Time really matters (sequential, non-i.i.d. data)</li>
+    <li>Agent's actions affect subsequent data it receives</li>
+  </ul>
+  <div><img src="images/policy-collapse.png" style="max-height:280px; margin-top:1em"></div>
+  <div class="footnote">Image Source: Omid Saeid (2023), "Exploring the Foundations of Modern RL Algorithms", Medium</div>
+</section>
+
+<!-- Many faces -->
+<section class="full-slide">
+  <div class="frame-title">Many Faces of Reinforcement Learning</div>
+  <div class="center full-img"><img src="images/rl-faces.png"></div>
+</section>
+
+<!-- Section: Examples -->
+<section class="section-divider"><h1>Examples of Reinforcement Learning</h1></section>
+
+<!-- Backgammon -->
+<section class="has-footnote">
+  <div class="frame-title">Classical Examples: Backgammon</div>
+  <div class="two-col">
+    <div><img src="images/backgammon-rules.png"></div>
+    <div><img src="images/td-gammon.png"></div>
+  </div>
+  <div class="footnote">Tesauro, Gerald. "TD-Gammon, a self-teaching backgammon program, achieves master-level play." Neural Computation 6.2 (1994): 215–219.</div>
+</section>
+
+<!-- Helicopter -->
+<section class="has-footnote">
+  <div class="frame-title">Classical Examples: Helicopter Maneuvers</div>
+  <div class="two-col">
+    <div><img src="images/helicopter-flight.png"></div>
+    <div><img src="images/helicopter-control.png"></div>
+  </div>
+  <div class="footnote">Abbeel, Pieter, et al. "An application of reinforcement learning to aerobatic helicopter flight." NeurIPS 19 (2006).</div>
+</section>
+
+<!-- AlphaGo -->
+<section class="has-footnote">
+  <div class="frame-title">Modern Examples: AlphaGo</div>
+  <div class="two-col">
+    <div><img src="images/go-game.png"></div>
+    <div><img src="images/alphago-news.jpg"></div>
+  </div>
+  <div class="footnote">Silver, David, et al. "Mastering the game of Go without human knowledge." Nature 550.7676 (2017): 354–359.</div>
+</section>
+
+<!-- Atari -->
+<section class="has-footnote">
+  <div class="frame-title">Modern Examples: Atari Games</div>
+  <div class="two-col">
+    <div><img src="images/atari-dqn.png"></div>
+    <div><img src="images/dqn-overview.png"></div>
+  </div>
+  <div class="footnote">Mnih, Volodymyr, et al. "Human-level control through deep reinforcement learning." Nature 518.7540 (2015): 529–533.</div>
+</section>
+
+<!-- Robotics -->
+<section class="has-footnote full-slide">
+  <div class="frame-title">Modern Examples: Robotics</div>
+  <div class="center full-img"><img src="images/gps-examples.png"></div>
+  <div class="footnote">Levine, Sergey, et al. "End-to-end training of deep visuomotor policies." JMLR 17.39 (2016): 1–40.</div>
+</section>
+
+<!-- ChatGPT -->
+<section class="has-footnote full-slide">
+  <div class="frame-title">Modern Examples: ChatGPT</div>
+  <div class="center full-img"><img src="images/rlhf-example.jpg"></div>
+  <div class="footnote">"What is RLHF?", AWS (Amazon Web Services), accessed June 2025.</div>
+</section>
+
+<!-- Section: Course Admin -->
+<section class="section-divider"><h1>Course Admin</h1></section>
+
+<!-- Prereqs (vertical stack) -->
+<section>
+  <section>
+    <div class="frame-title">Course Prerequisites</div>
+    <ul>
+      <li><strong>Mathematics</strong>: Probability and Statistics, Linear Algebra</li>
+    </ul>
+  </section>
+  <section>
+    <div class="frame-title">Course Prerequisites</div>
+    <ul>
+      <li><strong>Mathematics</strong>: Probability and Statistics, Linear Algebra</li>
+      <li><strong>Programming</strong>: Python, NumPy, Matplotlib, PyTorch (optional)</li>
+    </ul>
+  </section>
+  <section>
+    <div class="frame-title">Course Prerequisites</div>
+    <ul>
+      <li><strong>Mathematics</strong>: Probability and Statistics, Linear Algebra</li>
+      <li><strong>Programming</strong>: Python, NumPy, Matplotlib, PyTorch (optional)</li>
+      <li><strong>Enthusiasm</strong>: Let's learn something new :D</li>
+    </ul>
+  </section>
+</section>
+
+<!-- Outline (vertical stack) -->
+<section>
+  <section>
+    <div class="frame-title">Course Outline</div>
+    <ul>
+      <li><strong>Unit 1</strong>: Multi-Armed Bandits</li>
+    </ul>
+  </section>
+  <section>
+    <div class="frame-title">Course Outline</div>
+    <ul>
+      <li><strong>Unit 1</strong>: Multi-Armed Bandits</li>
+      <li><strong>Unit 2</strong>: Markov Decision Processes</li>
+    </ul>
+  </section>
+  <section>
+    <div class="frame-title">Course Outline</div>
+    <ul>
+      <li><strong>Unit 1</strong>: Multi-Armed Bandits</li>
+      <li><strong>Unit 2</strong>: Markov Decision Processes</li>
+      <li><strong>Unit 3</strong>: Monte Carlo Methods</li>
+    </ul>
+  </section>
+  <section>
+    <div class="frame-title">Course Outline</div>
+    <ul>
+      <li><strong>Unit 1</strong>: Multi-Armed Bandits</li>
+      <li><strong>Unit 2</strong>: Markov Decision Processes</li>
+      <li><strong>Unit 3</strong>: Monte Carlo Methods</li>
+      <li><strong>Unit 4</strong>: Temporal Difference Learning</li>
+    </ul>
+  </section>
+  <section>
+    <div class="frame-title">Course Outline</div>
+    <ul>
+      <li><strong>Unit 1</strong>: Multi-Armed Bandits</li>
+      <li><strong>Unit 2</strong>: Markov Decision Processes</li>
+      <li><strong>Unit 3</strong>: Monte Carlo Methods</li>
+      <li><strong>Unit 4</strong>: Temporal Difference Learning</li>
+      <li><strong>Unit 5</strong>: Policy Gradient Methods</li>
+    </ul>
+  </section>
+  <section>
+    <div class="frame-title">Course Outline</div>
+    <ul>
+      <li><strong>Unit 1</strong>: Multi-Armed Bandits</li>
+      <li><strong>Unit 2</strong>: Markov Decision Processes</li>
+      <li><strong>Unit 3</strong>: Monte Carlo Methods</li>
+      <li><strong>Unit 4</strong>: Temporal Difference Learning</li>
+      <li><strong>Unit 5</strong>: Policy Gradient Methods</li>
+      <li><strong>Advanced</strong>: Deep Reinforcement Learning</li>
+    </ul>
+  </section>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/math/math.js"></script>
+<script>
+  Reveal.initialize({
+    width: 1280, height: 720, margin: 0.04,
+    hash: true, slideNumber: 'c/t',
+    plugins: [ RevealMath.MathJax3 ],
+    mathjax3: { mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js' }
+  });
+</script>
+</body>
+</html>

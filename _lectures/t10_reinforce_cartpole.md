@@ -1,6 +1,6 @@
 ---
 type: tutorial
-date: 2026-08-29T09:00:00+05:30
+date: 2026-08-20T09:00:00+05:30
 title: "REINFORCE on CartPole"
 tldr: "Implement the REINFORCE policy gradient algorithm on CartPole-v1 (Gymnasium) using a neural network policy, and observe episode return improvement over training."
 hide_from_announcments: true

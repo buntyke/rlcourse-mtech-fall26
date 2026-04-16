@@ -1,6 +1,6 @@
 ---
 type: tutorial
-date: 2026-08-10T09:00:00+05:30
+date: 2026-08-01T09:00:00+05:30
 title: "n-Step TD & TD(λ) on Random Walk"
 tldr: "Implement n-step TD and TD(λ) on the Random Walk, and visualize how the choice of n and λ affects learning speed and final accuracy."
 hide_from_announcments: true

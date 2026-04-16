@@ -1,6 +1,6 @@
 ---
 type: lecture
-date: 2026-05-25T09:00:00+05:30
+date: 2026-07-16T09:00:00+05:30
 title: "Advantages of TD Methods & MC vs Batch TD(0) Convergence"
 tldr: "Why TD methods outperform MC in many settings, convergence analysis of Monte Carlo vs batch TD(0), and optimality of TD(0)."
 hide_from_announcments: true

@@ -1,6 +1,6 @@
 ---
 type: lecture
-date: 2026-04-06T09:00:00+05:30
+date: 2026-04-16T09:00:00+05:30
 title: "Introduction to Reinforcement Learning & Course Overview"
 tldr: "What is RL, why it matters, how it fits in the ML landscape, and a walkthrough of the course structure, objectives, and expectations."
 hide_from_announcments: true

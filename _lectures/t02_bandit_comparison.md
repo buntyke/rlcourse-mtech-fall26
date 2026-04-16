@@ -1,6 +1,6 @@
 ---
 type: tutorial
-date: 2026-05-02T09:00:00+05:30
+date: 2026-05-04T09:00:00+05:30
 title: "Bandit Algorithm Comparison — UCB, Thompson Sampling & Gradient Bandits"
 tldr: "Compare UCB, Thompson Sampling, and gradient bandits on the 10-armed testbed and reproduce the summary comparison figure from S&B Ch. 2.10."
 hide_from_announcments: true

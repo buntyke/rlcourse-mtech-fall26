@@ -1,6 +1,6 @@
 ---
 type: tutorial
-date: 2026-09-05T09:00:00+05:30
+date: 2026-08-29T09:00:00+05:30
 title: "Actor-Critic on CartPole / MountainCar"
 tldr: "Implement a one-step Actor-Critic agent on CartPole-v1 or MountainCar-v0 and compare convergence speed against the REINFORCE baseline from T10."
 hide_from_announcments: true

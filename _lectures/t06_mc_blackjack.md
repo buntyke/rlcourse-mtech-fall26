@@ -1,6 +1,6 @@
 ---
 type: tutorial
-date: 2026-07-18T09:00:00+05:30
+date: 2026-07-27T09:00:00+05:30
 title: "MC Prediction & Control on Blackjack"
 tldr: "Implement first-visit MC prediction to estimate value functions in Blackjack (Gymnasium), then apply MC control to learn an optimal policy."
 hide_from_announcments: true

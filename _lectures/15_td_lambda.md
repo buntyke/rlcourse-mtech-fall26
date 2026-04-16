@@ -1,6 +1,6 @@
 ---
 type: lecture
-date: 2026-06-01T09:00:00+05:30
+date: 2026-07-23T09:00:00+05:30
 title: "TD(λ) & Eligibility Traces"
 tldr: "The λ-return as a geometric average of n-step returns, eligibility traces, and the TD(λ) algorithm."
 hide_from_announcments: true

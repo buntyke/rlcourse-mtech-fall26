@@ -1,6 +1,6 @@
 ---
 type: lecture
-date: 2026-06-04T09:00:00+05:30
+date: 2026-07-30T09:00:00+05:30
 title: "SARSA — On-Policy TD Control"
 tldr: "SARSA as on-policy TD control: the update rule, convergence conditions, and the Cliff Walking example."
 hide_from_announcments: true

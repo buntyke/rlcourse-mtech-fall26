@@ -116,7 +116,10 @@
 <section class="has-footnote">
   <div class="frame-title">Linear Algebra</div>
   <p style="max-width:85%">Linear algebra is the math of <strong>collections of numbers</strong> and the <strong>rules that transform them</strong>.</p>
-  <div class="center"><img src="images/page_22_Figure_10.jpeg" style="max-height:380px"></div>
+  <div class="two-col" style="width:100%">
+    <div style="flex:0 0 45%"><img src="images/page_22_Figure_10.jpeg" style="width:100%; height:auto; max-height:400px; object-fit:contain"></div>
+    <div style="flex:0 0 45%"><img src="images/page_24_Figure_2.jpeg" style="width:100%; height:auto; max-height:400px; object-fit:contain"></div>
+  </div>
   <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 2.</div>
 </section>
 
@@ -134,8 +137,8 @@
 <!-- Slide 6: Geometric view + worked example -->
 <section class="has-footnote">
   <div class="frame-title">Geometric View</div>
-  <div class="two-col w64">
-    <div>
+  <div class="two-col" style="width:100%">
+    <div style="flex:0 0 45%; text-align:left">
       <ul>
         <li>Each linear equation in 2 unknowns is a <strong>line</strong>.</li>
         <li>A solution is an <strong>intersection point</strong>.</li>
@@ -149,9 +152,9 @@
       </ul>
       <div class="boardwork">🖊️ <strong>Board:</strong> Solve \(2x+y=5,\ x-y=1\) by substitution &amp; elimination; draw both lines; mark \((2,1)\).</div>
     </div>
-    <div><img src="images/page_24_Figure_2.jpeg" style="max-width:100%; max-height:440px"></div>
+    <div style="flex:0 0 50%"><img src="images/image_05_solution_cases.png" style="width:100%; height:auto"></div>
   </div>
-  <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 2, Fig. 2.4.</div>
+  <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 2.</div>
 </section>
 
 <!-- Slide 7: Matrices -->
@@ -287,8 +290,8 @@
 <section>
   <section>
     <div class="frame-title">When Does a Unique Solution Exist?</div>
-    <div class="two-col w64">
-      <div>
+    <div class="two-col" style="width:100%">
+      <div style="flex:0 0 45%; text-align:left">
         <ul>
           <li>Three possibilities:
             <ul>
@@ -299,13 +302,13 @@
           </li>
         </ul>
       </div>
-      <div><img src="images/image_05_solution_cases.png" style="max-width:100%; max-height:460px"></div>
+      <div style="flex:0 0 50%"><img src="images/image_05_solution_cases.png" style="width:100%; height:auto"></div>
     </div>
   </section>
   <section>
     <div class="frame-title">When Does a Unique Solution Exist?</div>
-    <div class="two-col w64">
-      <div>
+    <div class="two-col" style="width:100%">
+      <div style="flex:0 0 45%; text-align:left">
         <ul>
           <li>Three possibilities:
             <ul>
@@ -317,13 +320,13 @@
           <li>Tied to whether \(A\) is <strong>invertible</strong> (square, full rank).</li>
         </ul>
       </div>
-      <div><img src="images/image_05_solution_cases.png" style="max-width:100%; max-height:460px"></div>
+      <div style="flex:0 0 50%"><img src="images/image_05_solution_cases.png" style="width:100%; height:auto"></div>
     </div>
   </section>
   <section>
     <div class="frame-title">When Does a Unique Solution Exist?</div>
-    <div class="two-col w64">
-      <div>
+    <div class="two-col" style="width:100%">
+      <div style="flex:0 0 45%; text-align:left">
         <ul>
           <li>Three possibilities:
             <ul>
@@ -336,7 +339,7 @@
           <li>\( A^{-1} \) exists \(\iff \det(A) \neq 0 \iff\) rows/columns are linearly independent.</li>
         </ul>
       </div>
-      <div><img src="images/image_05_solution_cases.png" style="max-width:100%; max-height:460px"></div>
+      <div style="flex:0 0 50%"><img src="images/image_05_solution_cases.png" style="width:100%; height:auto"></div>
     </div>
   </section>
 </section>
@@ -389,13 +392,13 @@
 <!-- Slide 18b: Probability opener -->
 <section class="has-footnote">
   <div class="frame-title">Reasoning Under Uncertainty</div>
-  <div class="two-col w64">
-    <div>
-      <p style="text-align:left">Most interesting problems are <strong>noisy</strong>: dice rolls, weather, stock prices, a robot's sensor.</p>
-      <p style="text-align:left; margin-top:.5em">Probability is the math that lets us reason <em>carefully</em> when we can't be certain.</p>
-      <p style="text-align:left; margin-top:.5em"><em>We'll come back to this all semester.</em></p>
+  <div class="two-col" style="width:100%">
+    <div style="flex:0 0 45%; text-align:left">
+      <p>Most interesting problems are <strong>noisy</strong>: dice rolls, weather, stock prices, a robot's sensor.</p>
+      <p style="margin-top:.5em">Probability is the math that lets us reason <em>carefully</em> when we can't be certain.</p>
+      <p style="margin-top:.5em"><em>We'll come back to this all semester.</em></p>
     </div>
-    <div><img src="images/page_177_Picture_2.jpeg" style="max-width:100%; max-height:440px"></div>
+    <div style="flex:0 0 50%"><img src="images/page_178_Figure_2.jpeg" style="width:100%; height:auto"></div>
   </div>
   <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 6 opener.</div>
 </section>
@@ -412,7 +415,7 @@
           </li>
         </ul>
       </div>
-      <div><img src="images/page_178_Figure_2.jpeg" style="max-width:100%; max-height:440px"></div>
+      <div><img src="images/page_177_Picture_2.jpeg" style="width:100%; height:auto"></div>
     </div>
     <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 6.1.</div>
   </section>
@@ -429,7 +432,7 @@
           </li>
         </ul>
       </div>
-      <div><img src="images/page_178_Figure_2.jpeg" style="max-width:100%; max-height:440px"></div>
+      <div><img src="images/page_177_Picture_2.jpeg" style="width:100%; height:auto"></div>
     </div>
     <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 6.1.</div>
   </section>
@@ -452,7 +455,7 @@
           </li>
         </ul>
       </div>
-      <div><img src="images/page_178_Figure_2.jpeg" style="max-width:100%; max-height:440px"></div>
+      <div><img src="images/page_177_Picture_2.jpeg" style="width:100%; height:auto"></div>
     </div>
     <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 6.1.</div>
   </section>
@@ -589,26 +592,62 @@
   <div class="boardwork">🖊️ <strong>Board:</strong> \(P(D)=0.01\), \(P(+\mid D)=0.99\), \(P(+\mid\neg D)=0.05\). Apply Bayes → <strong>≈ 16.7%</strong>. Discuss why the answer is surprisingly low — <em>base rates matter</em>.</div>
 </section>
 
-<!-- Slide 26: Expectation -->
-<section class="has-footnote">
-  <div class="frame-title">Expectation</div>
-  <ul>
-    <li>The <strong>expected value</strong> is the long-run average.</li>
-    <li>Discrete: \( \mathbb{E}[X] = \sum_x x\,P(X=x) \)</li>
-    <li>Continuous: \( \mathbb{E}[X] = \displaystyle\int x\,p(x)\,dx \)</li>
-    <li>Fair die: \( \mathbb{E}[X] = \dfrac{1+2+3+4+5+6}{6} = 3.5 \)</li>
-    <li><strong>Linearity</strong> (always, even if \(X,Y\) dependent):
-      \[ \mathbb{E}[aX + bY] = a\mathbb{E}[X] + b\mathbb{E}[Y] \]
-    </li>
-  </ul>
-  <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 6.4.</div>
+<!-- Slide 26: Expectation (vertical stack) -->
+<section>
+  <section class="has-footnote">
+    <div class="frame-title">Expectation</div>
+    <ul>
+      <li>The <strong>expected value</strong> is the long-run average.</li>
+    </ul>
+    <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 6.4.</div>
+  </section>
+  <section class="has-footnote">
+    <div class="frame-title">Expectation</div>
+    <ul>
+      <li>The <strong>expected value</strong> is the long-run average.</li>
+      <li>Discrete: \( \mathbb{E}[X] = \sum_x x\,P(X=x) \)</li>
+    </ul>
+    <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 6.4.</div>
+  </section>
+  <section class="has-footnote">
+    <div class="frame-title">Expectation</div>
+    <ul>
+      <li>The <strong>expected value</strong> is the long-run average.</li>
+      <li>Discrete: \( \mathbb{E}[X] = \sum_x x\,P(X=x) \)</li>
+      <li>Continuous: \( \mathbb{E}[X] = \displaystyle\int x\,p(x)\,dx \)</li>
+    </ul>
+    <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 6.4.</div>
+  </section>
+  <section class="has-footnote">
+    <div class="frame-title">Expectation</div>
+    <ul>
+      <li>The <strong>expected value</strong> is the long-run average.</li>
+      <li>Discrete: \( \mathbb{E}[X] = \sum_x x\,P(X=x) \)</li>
+      <li>Continuous: \( \mathbb{E}[X] = \displaystyle\int x\,p(x)\,dx \)</li>
+      <li>Fair die: \( \mathbb{E}[X] = \dfrac{1+2+3+4+5+6}{6} = 3.5 \)</li>
+    </ul>
+    <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 6.4.</div>
+  </section>
+  <section class="has-footnote">
+    <div class="frame-title">Expectation</div>
+    <ul>
+      <li>The <strong>expected value</strong> is the long-run average.</li>
+      <li>Discrete: \( \mathbb{E}[X] = \sum_x x\,P(X=x) \)</li>
+      <li>Continuous: \( \mathbb{E}[X] = \displaystyle\int x\,p(x)\,dx \)</li>
+      <li>Fair die: \( \mathbb{E}[X] = \dfrac{1+2+3+4+5+6}{6} = 3.5 \)</li>
+      <li><strong>Linearity</strong> (always, even if \(X,Y\) dependent):
+        \[ \mathbb{E}[aX + bY] = a\mathbb{E}[X] + b\mathbb{E}[Y] \]
+      </li>
+    </ul>
+    <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 6.4.</div>
+  </section>
 </section>
 
 <!-- Slide 27: Variance -->
 <section>
   <div class="frame-title">Variance</div>
-  <div class="two-col w64">
-    <div>
+  <div class="two-col" style="width:100%">
+    <div style="flex:0 0 45%; text-align:left">
       <p class="mathline">\( \mathrm{Var}(X) = \mathbb{E}[(X - \mathbb{E}[X])^2] = \mathbb{E}[X^2] - (\mathbb{E}[X])^2 \)</p>
       <ul style="margin-top:.5em">
         <li>How spread out are outcomes around their mean?</li>
@@ -617,7 +656,7 @@
         <li>Fair die: \(\mathrm{Var}(X) \approx 2.92,\ \sigma \approx 1.71\).</li>
       </ul>
     </div>
-    <div><img src="images/image_09_variance_histograms.png" style="max-width:100%; max-height:460px"></div>
+    <div style="flex:0 0 40%"><img src="images/image_09_variance_histograms.png" style="width:100%; height:auto"></div>
   </div>
 </section>
 

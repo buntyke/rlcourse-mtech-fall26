@@ -1,6 +1,6 @@
 ---
 type: lecture
-date: 2026-05-11T09:00:00+05:30
+date: 2026-05-07T09:00:00+05:30
 title: "Returns, Reward Formulations & Episodic vs Continuing Tasks"
 tldr: "Cumulative returns, discounted and finite-horizon reward formulations, average reward (brief), and the episodic vs continuing task distinction."
 hide_from_announcments: true

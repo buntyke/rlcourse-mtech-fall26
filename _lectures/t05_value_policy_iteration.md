@@ -1,6 +1,6 @@
 ---
 type: tutorial
-date: 2026-07-18T09:00:00+05:30
+date: 2026-05-30T09:00:00+05:30
 title: "Value Iteration & Policy Iteration on Frozen Lake"
 tldr: "Implement value iteration and policy iteration on the Frozen Lake environment (Gymnasium) and compare their convergence speed and resulting optimal policies."
 hide_from_announcments: true

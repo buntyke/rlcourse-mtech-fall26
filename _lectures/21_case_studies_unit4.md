@@ -1,6 +1,6 @@
 ---
 type: lecture
-date: 2026-08-24T09:00:00+05:30
+date: 2026-08-13T09:00:00+05:30
 title: "Case Studies: TD-Gammon & Acrobot"
 tldr: "TD-Gammon: applying TD learning to master backgammon. Acrobot: a classic underactuated control problem solved with semi-gradient TD."
 hide_from_announcments: true

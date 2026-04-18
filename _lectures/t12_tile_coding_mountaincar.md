@@ -1,6 +1,6 @@
 ---
 type: tutorial
-date: 2026-09-10T09:00:00+05:30
+date: 2026-09-05T09:00:00+05:30
 title: "Semi-Gradient TD(0) with Tile Coding on MountainCar"
 tldr: "Implement semi-gradient TD(0) with tile-coded features on MountainCar-v0 (Gymnasium) and visualize the learned value function over the continuous state space."
 hide_from_announcments: true

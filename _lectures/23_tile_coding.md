@@ -1,6 +1,6 @@
 ---
 type: lecture
-date: 2026-08-31T09:00:00+05:30
+date: 2026-08-24T09:00:00+05:30
 title: "Feature Construction: Coarse Coding & Tile Coding"
 tldr: "Practical feature construction for linear function approximation — coarse coding and tile coding for continuous state spaces."
 hide_from_announcments: true

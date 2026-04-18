@@ -1,6 +1,6 @@
 ---
 type: lecture
-date: 2026-04-18T09:00:00+05:30
+date: 2026-04-20T09:00:00+05:30
 title: "Probability & Linear Algebra Recap"
 tldr: "Random variables, expectations, conditional probability, Bayes' theorem, and basic linear algebra essentials for RL."
 hide_from_announcments: true

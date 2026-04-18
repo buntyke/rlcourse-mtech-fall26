@@ -1,6 +1,6 @@
 ---
 type: lecture
-date: 2026-08-03T09:00:00+05:30
+date: 2026-07-27T09:00:00+05:30
 title: "Q-Learning, Expected SARSA & On/Off-Policy Learning"
 tldr: "Q-learning as off-policy TD control, Expected SARSA, and the distinction between on-policy and off-policy methods."
 hide_from_announcments: true

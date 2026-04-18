@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RL Lecture 2 — Probability &amp; Linear Algebra Recap</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css" id="theme">
+<style>
+  :root { --rl-red: #213c8b; --rl-white: rgb(235,235,235); }
+  .reveal { font-family: "Lato", "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 30px; }
+  .reveal h1, .reveal h2, .reveal h3, .reveal h4 { color: var(--rl-red); font-weight: 700; text-transform: none; }
+  .reveal .slides > section, .reveal .slides > section > section {
+    top: 0 !important;
+    height: 100%;
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 70px 30px 60px 30px !important;
+    box-sizing: border-box;
+  }
+  .reveal .frame-title { position: absolute; top: 18px; left: 30px; right: 30px; color: var(--rl-red); font-size: 1.2em; font-weight: 700; border-bottom: 2px solid var(--rl-red); padding-bottom: .2em; margin: 0; text-align: left; }
+  .reveal section img { background: none; border: none; box-shadow: none; margin: .3em auto; }
+  .reveal .title-slide { background: #fff; color: var(--rl-red); padding: 2em; text-align: center !important; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%; }
+  .reveal .title-slide h1, .reveal .title-slide h2, .reveal .title-slide p { color: var(--rl-red); text-align: center !important; width: 100%; }
+  .reveal .section-divider { display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; text-align: center !important; }
+  .reveal .section-divider h1 { color: var(--rl-red); font-size: 1.8em; text-align: center !important; width: 100%; margin: 0 auto; }
+  .two-col { display: flex; gap: 1em; align-items: center; justify-content: center; width: 100%; }
+  .two-col > div { flex: 1; text-align: center; }
+  .two-col.w64 > div:first-child { flex: 0 0 60%; }
+  .two-col.w64 > div:last-child  { flex: 0 0 36%; }
+  .reveal ul { display: inline-block; text-align: left; margin: 0 auto; font-size: .90em; }
+  .reveal ul > li { margin-bottom: .6em; }
+  .reveal ul > li:last-child { margin-bottom: 0; }
+  .reveal ul ul > li { margin-bottom: 0; }
+  .reveal p { font-size: .95em; }
+  .reveal section { text-align: center; }
+  .reveal .small { font-size: .7em; }
+  .reveal .has-footnote img { max-height: 480px; max-width: 85%; height: auto; }
+  .reveal .full-img { width: 100%; text-align: center; }
+  .reveal .full-img img { height: 540px; width: auto; max-width: 95%; }
+  .reveal .has-footnote.full-slide .full-img img { height: 500px; }
+  .reveal section.full-slide { padding-top: 55px !important; padding-bottom: 25px !important; }
+  .reveal .footnote { position: absolute; left: 30px; right: 30px; bottom: 10px; font-size: .5em; font-style: italic; color: #555; border-top: 1px solid #888; padding-top: 4px; text-align: left; margin: 0; }
+  .reveal .center { text-align: center; }
+  .reveal a { color: var(--rl-red); }
+  .reveal .boardwork { background: #f6f1e7; border-left: 4px solid var(--rl-red); padding: .5em .9em; font-size: .8em; text-align: left; max-width: 85%; margin: .8em auto; }
+  .reveal .mathline { margin: .5em auto; font-size: 1em; text-align: center; }
+</style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- Slide 1: Title -->
+<section class="title-slide">
+  <h1 style="margin-bottom:.15em; font-size:2.4em">Reinforcement Learning</h1>
+  <h2 style="margin-top:0; font-size:1.6em">Lecture 2 — Probability &amp; Linear Algebra</h2>
+  <p style="margin-top:1.8em; font-size:1.4em">Nishanth Koganti</p>
+  <p style="font-size:1em">VNR VJIET — M.Tech AI &amp; DS</p>
+</section>
+
+<!-- Slide 2: TOC -->
+<section>
+  <div class="frame-title">Today's Journey</div>
+  <ul>
+    <li>A quick word on <em>why</em> we need this</li>
+    <li>Part 1 — Linear Algebra
+      <ul><li>Systems, matrices, transformations, solving</li></ul>
+    </li>
+    <li>Part 2 — Probability
+      <ul><li>Spaces, distributions, Bayes, expectation</li></ul>
+    </li>
+    <li>Wrap-up &amp; where we go next</li>
+  </ul>
+  <p class="center" style="margin-top:1.5em"><strong>Lecture material:</strong>
+    <a href="https://buntyke.github.io/rlcourse-mtech-fall26">buntyke.github.io/rlcourse-mtech-fall26</a></p>
+</section>
+
+<!-- Acknowledgements -->
+<section>
+  <div class="frame-title">Acknowledgements</div>
+  <p>The content of this lecture is based on:</p>
+  <ul>
+    <li>Chapters 2 &amp; 6 of <strong>Mathematics for Machine Learning</strong> by <em>Deisenroth, Faisal &amp; Ong</em></li>
+    <li><strong>Essence of Linear Algebra</strong> YouTube series by <em>3Blue1Brown</em></li>
+    <li><strong>Introduction to Linear Algebra</strong> by <em>Gilbert Strang</em></li>
+  </ul>
+  <p class="center" style="margin-top:1.5em"><strong>Lecture material:</strong>
+    <a href="https://buntyke.github.io/rlcourse-mtech-fall26">buntyke.github.io/rlcourse-mtech-fall26</a></p>
+</section>
+
+<!-- Slide 3: Why are we doing this? -->
+<section class="has-footnote">
+  <div class="frame-title">Why Are We Doing This?</div>
+  <div class="two-col w64">
+    <div>
+      <p style="text-align:left">This course is about building agents that learn by <strong>trial and error</strong>.</p>
+      <p style="text-align:left">Before we get there we need fluency in two languages:</p>
+      <ul>
+        <li><strong>Linear algebra</strong> — for organizing information</li>
+        <li><strong>Probability</strong> — for handling uncertainty</li>
+      </ul>
+      <p style="text-align:left; margin-top:.6em"><em>Today is about tuning the instruments before the concert.</em></p>
+    </div>
+    <div><img src="images/image_02_motivation.png" style="max-width:100%; max-height:460px"></div>
+  </div>
+  <div class="footnote">Deisenroth, Faisal &amp; Ong. <em>Mathematics for Machine Learning</em>, Cambridge University Press, 2024.</div>
+</section>
+
+<!-- Slide 4: Part 1 divider -->
+<section class="section-divider"><h1>Part 1 — Linear Algebra</h1></section>
+
+<!-- Slide 4b: Linear algebra opener -->
+<section class="has-footnote">
+  <div class="frame-title">Linear Algebra</div>
+  <p style="max-width:85%">Linear algebra is the math of <strong>collections of numbers</strong> and the <strong>rules that transform them</strong>.</p>
+  <div class="center"><img src="images/_page_22_Figure_10.jpeg" style="max-height:380px"></div>
+  <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 2.</div>
+</section>
+
+<!-- Slide 5: Systems of Linear Equations -->
+<section>
+  <div class="frame-title">Systems of Linear Equations</div>
+  <ul>
+    <li>A <strong>linear equation</strong>: variables only to the first power, no products.</li>
+    <li>A <strong>system</strong>: several such equations in the same unknowns.</li>
+    <li>Goal: find values of the unknowns satisfying <em>all</em> equations simultaneously.</li>
+  </ul>
+  <p class="mathline" style="margin-top:1em">\( 2x + y = 5 \qquad x - y = 1 \)</p>
+</section>
+
+<!-- Slide 6: Geometric view + worked example -->
+<section class="has-footnote">
+  <div class="frame-title">Geometric View</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li>Each linear equation in 2 unknowns is a <strong>line</strong>.</li>
+        <li>A solution is an <strong>intersection point</strong>.</li>
+        <li>Three cases:
+          <ul>
+            <li>Unique — lines cross</li>
+            <li>No solution — parallel</li>
+            <li>Infinite — coincident</li>
+          </ul>
+        </li>
+      </ul>
+      <div class="boardwork">🖊️ <strong>Board:</strong> Solve \(2x+y=5,\ x-y=1\) by substitution &amp; elimination; draw both lines; mark \((2,1)\).</div>
+    </div>
+    <div><img src="images/_page_24_Figure_2.jpeg" style="max-width:100%; max-height:440px"></div>
+  </div>
+  <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 2, Fig. 2.4.</div>
+</section>
+
+<!-- Slide 7: Matrices -->
+<section>
+  <div class="frame-title">Matrices — What Are They?</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li>A <strong>rectangular array of numbers</strong>, arranged in rows and columns.</li>
+        <li>Notation: \( A \in \mathbb{R}^{m \times n} \).</li>
+        <li>Everyday examples:
+          <ul>
+            <li>A spreadsheet</li>
+            <li>Pixel grid of a grayscale image</li>
+            <li>Table of distances between cities</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+    <div><img src="images/image_03_matrix_analogies.png" style="max-width:100%; max-height:460px"></div>
+  </div>
+</section>
+
+<!-- Slide 8: Matrix operations (vertical stack) -->
+<section>
+  <section class="has-footnote">
+    <div class="frame-title">Matrix Operations</div>
+    <ul>
+      <li><strong>Addition</strong> — element-wise, same shape.</li>
+    </ul>
+    <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 2.2.</div>
+  </section>
+  <section class="has-footnote">
+    <div class="frame-title">Matrix Operations</div>
+    <ul>
+      <li><strong>Addition</strong> — element-wise, same shape.</li>
+      <li><strong>Scalar multiplication</strong> — multiply every entry by the scalar.</li>
+    </ul>
+    <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 2.2.</div>
+  </section>
+  <section class="has-footnote">
+    <div class="frame-title">Matrix Operations</div>
+    <ul>
+      <li><strong>Addition</strong> — element-wise, same shape.</li>
+      <li><strong>Scalar multiplication</strong> — multiply every entry by the scalar.</li>
+      <li><strong>Matrix multiplication:</strong> \( (AB)_{ij} = \sum_k A_{ik} B_{kj} \)
+        <ul><li>Dimensions must agree: \((m \times n)(n \times p) = (m \times p)\)</li></ul>
+      </li>
+    </ul>
+    <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 2.2.</div>
+  </section>
+  <section class="has-footnote">
+    <div class="frame-title">Matrix Operations</div>
+    <ul>
+      <li><strong>Addition</strong> — element-wise, same shape.</li>
+      <li><strong>Scalar multiplication</strong> — multiply every entry by the scalar.</li>
+      <li><strong>Matrix multiplication:</strong> \( (AB)_{ij} = \sum_k A_{ik} B_{kj} \)
+        <ul><li>Dimensions must agree: \((m \times n)(n \times p) = (m \times p)\)</li></ul>
+      </li>
+      <li><strong>Not commutative:</strong> \( AB \neq BA \) in general.</li>
+    </ul>
+    <div class="boardwork">🖊️ <strong>Board:</strong> Pick two \(2\times2\) matrices \(A,B\); compute \(AB\) and \(BA\); show they differ.</div>
+    <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 2.2.</div>
+  </section>
+</section>
+
+<!-- Slide 9: Matrix × Vector geometric meaning -->
+<section>
+  <div class="frame-title">Matrix × Vector — Geometric Meaning</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li>Multiplying a vector by a matrix <strong>transforms</strong> it:
+          <ul><li>stretch · rotate · shear · project</li></ul>
+        </li>
+        <li>Example — stretch along \(x\):</li>
+      </ul>
+      <p class="mathline">\( \begin{bmatrix}2 &amp; 0\\0 &amp; 1\end{bmatrix} \begin{bmatrix}1\\1\end{bmatrix} = \begin{bmatrix}2\\1\end{bmatrix} \)</p>
+    </div>
+    <div><img src="images/image_04_matrix_transformation.png" style="max-width:100%; max-height:460px"></div>
+  </div>
+</section>
+
+<!-- Slide 10: Question #1 -->
+<section>
+  <div class="frame-title">🎯 Question #1 — Dimension Arithmetic</div>
+  <p>If \(A\) is \(3\times 4\) and \(B\) is \(4\times 2\), which of the following are defined, and what are their shapes?</p>
+  <ul>
+    <li>(a) \(AB\)</li>
+    <li>(b) \(BA\)</li>
+    <li>(c) \(A + B\)</li>
+    <li>(d) \(A^\top B\)</li>
+  </ul>
+</section>
+
+<!-- Slide 11: Gaussian elimination -->
+<section class="has-footnote">
+  <div class="frame-title">Solving Linear Systems — Gaussian Elimination</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li>Write the system as \( A\mathbf{x} = \mathbf{b} \).</li>
+        <li>Form the <strong>augmented matrix</strong> \([A \,|\, \mathbf{b}]\).</li>
+        <li>Allowed row operations:
+          <ul>
+            <li>swap two rows</li>
+            <li>scale a row by a non-zero constant</li>
+            <li>add a multiple of one row to another</li>
+          </ul>
+        </li>
+        <li>Reach <strong>row-echelon form</strong>, then back-substitute.</li>
+      </ul>
+    </div>
+    <div><img src="images/_page_26_Figure_2.jpeg" style="max-width:100%; max-height:440px"></div>
+  </div>
+  <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 2.3.</div>
+</section>
+
+<!-- Slide 12: Gaussian elimination worked example -->
+<section>
+  <div class="frame-title">Worked Example — Gaussian Elimination</div>
+  <p class="mathline">
+    \( \begin{array}{rcl}
+    x + 2y + z &amp;=&amp; 6 \\
+    2x + y + 3z &amp;=&amp; 14 \\
+    3x + y + 2z &amp;=&amp; 13
+    \end{array} \)
+  </p>
+  <div class="boardwork" style="margin-top:1em">🖊️ <strong>Board:</strong> Row-reduce step-by-step; end at \((x,y,z) = (1, 2, 3)\); verify by substitution.</div>
+</section>
+
+<!-- Slide 13: When does a unique solution exist? (vertical stack) -->
+<section>
+  <section>
+    <div class="frame-title">When Does a Unique Solution Exist?</div>
+    <div class="two-col w64">
+      <div>
+        <ul>
+          <li>Three possibilities:
+            <ul>
+              <li>unique solution</li>
+              <li>no solution</li>
+              <li>infinitely many</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+      <div><img src="images/image_05_solution_cases.png" style="max-width:100%; max-height:460px"></div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">When Does a Unique Solution Exist?</div>
+    <div class="two-col w64">
+      <div>
+        <ul>
+          <li>Three possibilities:
+            <ul>
+              <li>unique solution</li>
+              <li>no solution</li>
+              <li>infinitely many</li>
+            </ul>
+          </li>
+          <li>Tied to whether \(A\) is <strong>invertible</strong> (square, full rank).</li>
+        </ul>
+      </div>
+      <div><img src="images/image_05_solution_cases.png" style="max-width:100%; max-height:460px"></div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">When Does a Unique Solution Exist?</div>
+    <div class="two-col w64">
+      <div>
+        <ul>
+          <li>Three possibilities:
+            <ul>
+              <li>unique solution</li>
+              <li>no solution</li>
+              <li>infinitely many</li>
+            </ul>
+          </li>
+          <li>Tied to whether \(A\) is <strong>invertible</strong> (square, full rank).</li>
+          <li>\( A^{-1} \) exists \(\iff \det(A) \neq 0 \iff\) rows/columns are linearly independent.</li>
+        </ul>
+      </div>
+      <div><img src="images/image_05_solution_cases.png" style="max-width:100%; max-height:460px"></div>
+    </div>
+  </section>
+</section>
+
+<!-- Slide 14: Question #2 -->
+<section>
+  <div class="frame-title">🎯 Question #2 — Inconsistency vs. Dependence</div>
+  <p>Consider the system:</p>
+  <p class="mathline">\( x + y = 2, \qquad 2x + 2y = 5. \)</p>
+  <p>Without solving, what can you say about its solutions — and why?</p>
+  <p>What if the right-hand side of the second equation were <strong>4</strong> instead of 5?</p>
+</section>
+
+<!-- Slide 15: Linear Mappings -->
+<section class="has-footnote">
+  <div class="frame-title">Linear Mappings</div>
+  <p>A function \(T:V \to W\) is <strong>linear</strong> if, for all vectors \(x,y\) and scalars \(\alpha,\beta\),</p>
+  <p class="mathline">\( T(\alpha x + \beta y) = \alpha\,T(x) + \beta\,T(y) \)</p>
+  <ul style="margin-top:.6em">
+    <li>✅ \(T(x) = 3x\) — scaling</li>
+    <li>✅ \(T(x,y) = (x+y,\ x-y)\) — rotation + scale</li>
+    <li>❌ \(T(x) = x+1\) — affine, not linear</li>
+    <li>❌ \(T(x) = x^2\) — nonlinear</li>
+  </ul>
+  <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 2.7.</div>
+</section>
+
+<!-- Slide 16: Why Linear Algebra? (RL link) -->
+<section>
+  <div class="frame-title">Why Linear Algebra?</div>
+  <div class="two-col w64">
+    <div>
+      <p style="text-align:left">Later in this course you'll see that an agent's <strong>knowledge</strong> about the world, its <strong>predictions</strong>, and its <strong>decisions</strong> can all be packed into vectors and matrices.</p>
+      <p style="text-align:left; margin-top:.6em"><em>The algebra we did today is the vocabulary we'll speak in.</em></p>
+    </div>
+    <div><img src="images/image_06_notebook_compass.png" style="max-width:100%; max-height:460px"></div>
+  </div>
+</section>
+
+<!-- Slide 17: Question #3 -->
+<section>
+  <div class="frame-title">🎯 Question #3 — Linear vs. Affine</div>
+  <p>Is \( T(x, y) = (2x + y,\ x - y + 1) \) a linear mapping?</p>
+  <p>If <em>not</em>, how would you modify it to make it linear?</p>
+</section>
+
+<!-- Slide 18a: Part 2 divider -->
+<section class="section-divider"><h1>Part 2 — Probability</h1></section>
+
+<!-- Slide 18b: Probability opener -->
+<section class="has-footnote">
+  <div class="frame-title">Reasoning Under Uncertainty</div>
+  <div class="two-col w64">
+    <div>
+      <p style="text-align:left">Most interesting problems are <strong>noisy</strong>: dice rolls, weather, stock prices, a robot's sensor.</p>
+      <p style="text-align:left; margin-top:.5em">Probability is the math that lets us reason <em>carefully</em> when we can't be certain.</p>
+      <p style="text-align:left; margin-top:.5em"><em>We'll come back to this all semester.</em></p>
+    </div>
+    <div><img src="images/_page_177_Picture_2.jpeg" style="max-width:100%; max-height:440px"></div>
+  </div>
+  <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 6 opener.</div>
+</section>
+
+<!-- Slide 19: Probability space (vertical stack) -->
+<section>
+  <section class="has-footnote">
+    <div class="frame-title">The Probability Space \((\Omega, \mathcal{A}, P)\)</div>
+    <div class="two-col w64">
+      <div>
+        <ul>
+          <li>\(\Omega\) — <strong>sample space</strong>: all outcomes.
+            <ul><li>Die: \(\{1,2,3,4,5,6\}\)</li></ul>
+          </li>
+        </ul>
+      </div>
+      <div><img src="images/_page_178_Figure_2.jpeg" style="max-width:100%; max-height:440px"></div>
+    </div>
+    <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 6.1.</div>
+  </section>
+  <section class="has-footnote">
+    <div class="frame-title">The Probability Space \((\Omega, \mathcal{A}, P)\)</div>
+    <div class="two-col w64">
+      <div>
+        <ul>
+          <li>\(\Omega\) — <strong>sample space</strong>: all outcomes.
+            <ul><li>Die: \(\{1,2,3,4,5,6\}\)</li></ul>
+          </li>
+          <li>\(\mathcal{A}\) — <strong>events</strong>: subsets we care about.
+            <ul><li>"Even" = \(\{2,4,6\}\)</li></ul>
+          </li>
+        </ul>
+      </div>
+      <div><img src="images/_page_178_Figure_2.jpeg" style="max-width:100%; max-height:440px"></div>
+    </div>
+    <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 6.1.</div>
+  </section>
+  <section class="has-footnote">
+    <div class="frame-title">The Probability Space \((\Omega, \mathcal{A}, P)\)</div>
+    <div class="two-col w64">
+      <div>
+        <ul>
+          <li>\(\Omega\) — <strong>sample space</strong>: all outcomes.
+            <ul><li>Die: \(\{1,2,3,4,5,6\}\)</li></ul>
+          </li>
+          <li>\(\mathcal{A}\) — <strong>events</strong>: subsets we care about.
+            <ul><li>"Even" = \(\{2,4,6\}\)</li></ul>
+          </li>
+          <li>\(P\) — <strong>probability measure</strong>: \( \mathcal{A} \to [0,1] \):
+            <ul>
+              <li>\(P(\Omega) = 1\), \(P(\emptyset) = 0\)</li>
+              <li>countable additivity</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+      <div><img src="images/_page_178_Figure_2.jpeg" style="max-width:100%; max-height:440px"></div>
+    </div>
+    <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 6.1.</div>
+  </section>
+</section>
+
+<!-- Slide 20: Joint, Marginal, Conditional -->
+<section class="has-footnote">
+  <div class="frame-title">Joint, Marginal, Conditional — Two Coins</div>
+  <ul>
+    <li><strong>Joint:</strong> \( P(X{=}H, Y{=}T) \)</li>
+    <li><strong>Marginal:</strong> \( P(X{=}H) = \sum_y P(X{=}H, Y{=}y) \)</li>
+    <li><strong>Conditional:</strong> \( P(Y{=}T \mid X{=}H) = \dfrac{P(X{=}H, Y{=}T)}{P(X{=}H)} \)</li>
+  </ul>
+  <div class="boardwork">🖊️ <strong>Board (optional):</strong> Build the \(2\times 2\) joint table for two fair coins; compute all three quantities live.</div>
+  <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 6.2.</div>
+</section>
+
+<!-- Slide 21: Continuous probabilities -->
+<section>
+  <div class="frame-title">Continuous Probabilities</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li>Continuous outcomes (heights, temperatures) use a <strong>PDF</strong> \(p(x)\) instead of a PMF.</li>
+        <li>Key twist: \( P(X = a) = 0 \) for any single point.</li>
+        <li>Probability is defined over <strong>intervals</strong>:
+          \[ P(a \le X \le b) = \int_a^b p(x)\,dx \]
+        </li>
+      </ul>
+    </div>
+    <div><img src="images/image_07_pmf_vs_pdf.png" style="max-width:100%; max-height:460px"></div>
+  </div>
+</section>
+
+<!-- Slide 22: Question #4 -->
+<section>
+  <div class="frame-title">🎯 Question #4 — PDF Misconception</div>
+  <p>A continuous random variable has PDF \(p(x)\). A student says:</p>
+  <p><em>"Since \(p(2) = 0.3\), the probability of getting exactly \(x = 2\) is \(0.3\)."</em></p>
+  <p>What's wrong with this statement?</p>
+</section>
+
+<!-- Slide 23: Sum and Product rules -->
+<section class="has-footnote">
+  <div class="frame-title">Sum Rule &amp; Product Rule</div>
+  <ul>
+    <li><strong>Sum rule (marginalization):</strong>
+      \[ P(x) = \sum_y P(x, y) \]
+    </li>
+    <li><strong>Product rule (chain rule):</strong>
+      \[ P(x, y) = P(x \mid y)\,P(y) = P(y \mid x)\,P(x) \]
+    </li>
+  </ul>
+  <p style="margin-top:.5em">Two workhorses of <em>all</em> probability calculations.</p>
+  <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 6.3.</div>
+</section>
+
+<!-- Slide 24: Bayes' Theorem (vertical stack) -->
+<section>
+  <section>
+    <div class="frame-title">Bayes' Theorem</div>
+    <div class="two-col w64">
+      <div>
+        <p class="mathline" style="font-size:1.05em">\( P(H \mid D) = \dfrac{P(D \mid H)\,P(H)}{P(D)} \)</p>
+      </div>
+      <div><img src="images/image_08_bayes_curves.png" style="max-width:100%; max-height:460px"></div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Bayes' Theorem</div>
+    <div class="two-col w64">
+      <div>
+        <p class="mathline" style="font-size:1.05em">\( P(H \mid D) = \dfrac{P(D \mid H)\,P(H)}{P(D)} \)</p>
+        <ul style="margin-top:.6em">
+          <li>\(P(H)\) — <strong>prior</strong></li>
+        </ul>
+      </div>
+      <div><img src="images/image_08_bayes_curves.png" style="max-width:100%; max-height:460px"></div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Bayes' Theorem</div>
+    <div class="two-col w64">
+      <div>
+        <p class="mathline" style="font-size:1.05em">\( P(H \mid D) = \dfrac{P(D \mid H)\,P(H)}{P(D)} \)</p>
+        <ul style="margin-top:.6em">
+          <li>\(P(H)\) — <strong>prior</strong></li>
+          <li>\(P(D \mid H)\) — <strong>likelihood</strong></li>
+        </ul>
+      </div>
+      <div><img src="images/image_08_bayes_curves.png" style="max-width:100%; max-height:460px"></div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Bayes' Theorem</div>
+    <div class="two-col w64">
+      <div>
+        <p class="mathline" style="font-size:1.05em">\( P(H \mid D) = \dfrac{P(D \mid H)\,P(H)}{P(D)} \)</p>
+        <ul style="margin-top:.6em">
+          <li>\(P(H)\) — <strong>prior</strong></li>
+          <li>\(P(D \mid H)\) — <strong>likelihood</strong></li>
+          <li>\(P(H \mid D)\) — <strong>posterior</strong></li>
+        </ul>
+      </div>
+      <div><img src="images/image_08_bayes_curves.png" style="max-width:100%; max-height:460px"></div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Bayes' Theorem</div>
+    <div class="two-col w64">
+      <div>
+        <p class="mathline" style="font-size:1.05em">\( P(H \mid D) = \dfrac{P(D \mid H)\,P(H)}{P(D)} \)</p>
+        <ul style="margin-top:.6em">
+          <li>\(P(H)\) — <strong>prior</strong></li>
+          <li>\(P(D \mid H)\) — <strong>likelihood</strong></li>
+          <li>\(P(H \mid D)\) — <strong>posterior</strong></li>
+          <li>\(P(D)\) — <strong>normalizing constant</strong></li>
+        </ul>
+        <p style="text-align:left; margin-top:.5em"><em>Bayes' theorem is how you update beliefs in light of new evidence.</em></p>
+      </div>
+      <div><img src="images/image_08_bayes_curves.png" style="max-width:100%; max-height:460px"></div>
+    </div>
+  </section>
+</section>
+
+<!-- Slide 25: Bayes worked example -->
+<section>
+  <div class="frame-title">Bayes' Worked Example — Medical Test</div>
+  <ul>
+    <li>A disease affects <strong>1%</strong> of the population.</li>
+    <li>Test is <strong>99% sensitive</strong> and <strong>95% specific</strong>.</li>
+    <li>You test positive — what's the probability you actually have the disease?</li>
+  </ul>
+  <div class="boardwork">🖊️ <strong>Board:</strong> \(P(D)=0.01\), \(P(+\mid D)=0.99\), \(P(+\mid\neg D)=0.05\). Apply Bayes → <strong>≈ 16.7%</strong>. Discuss why the answer is surprisingly low — <em>base rates matter</em>.</div>
+</section>
+
+<!-- Slide 26: Expectation -->
+<section class="has-footnote">
+  <div class="frame-title">Expectation</div>
+  <ul>
+    <li>The <strong>expected value</strong> is the long-run average.</li>
+    <li>Discrete: \( \mathbb{E}[X] = \sum_x x\,P(X=x) \)</li>
+    <li>Continuous: \( \mathbb{E}[X] = \displaystyle\int x\,p(x)\,dx \)</li>
+    <li>Fair die: \( \mathbb{E}[X] = \dfrac{1+2+3+4+5+6}{6} = 3.5 \)</li>
+    <li><strong>Linearity</strong> (always, even if \(X,Y\) dependent):
+      \[ \mathbb{E}[aX + bY] = a\mathbb{E}[X] + b\mathbb{E}[Y] \]
+    </li>
+  </ul>
+  <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 6.4.</div>
+</section>
+
+<!-- Slide 27: Variance -->
+<section>
+  <div class="frame-title">Variance</div>
+  <div class="two-col w64">
+    <div>
+      <p class="mathline">\( \mathrm{Var}(X) = \mathbb{E}[(X - \mathbb{E}[X])^2] = \mathbb{E}[X^2] - (\mathbb{E}[X])^2 \)</p>
+      <ul style="margin-top:.5em">
+        <li>How spread out are outcomes around their mean?</li>
+        <li>Units: \(X\) in meters \(\Rightarrow\) \(\mathrm{Var}(X)\) in m².</li>
+        <li><strong>Standard deviation</strong> \(\sigma = \sqrt{\mathrm{Var}(X)}\) — back in meters.</li>
+        <li>Fair die: \(\mathrm{Var}(X) \approx 2.92,\ \sigma \approx 1.71\).</li>
+      </ul>
+    </div>
+    <div><img src="images/image_09_variance_histograms.png" style="max-width:100%; max-height:460px"></div>
+  </div>
+</section>
+
+<!-- Slide 28: Independence -->
+<section>
+  <div class="frame-title">Independence</div>
+  <ul>
+    <li>Events \(A, B\) are <strong>independent</strong> if
+      \[ P(A \cap B) = P(A)\,P(B) \]
+    </li>
+    <li>Equivalently, \( P(A \mid B) = P(A) \) — knowing \(B\) doesn't change your belief about \(A\).</li>
+    <li>✅ Example: two rolls of a fair die.</li>
+    <li>❌ Non-example: drawing two cards <em>without</em> replacement.</li>
+  </ul>
+</section>
+
+<!-- Slide 29: Question #5 + Bridge -->
+<section>
+  <div class="frame-title">🎯 Question #5 — Bridge to What's Next</div>
+  <p>You have a biased coin with unknown probability \(p\) of heads. You flip it 3 times and see <strong>H, H, T</strong>.</p>
+  <ul>
+    <li>What is the <em>likelihood</em> of this data for a given \(p\)?</li>
+    <li>With a <em>uniform prior</em> over \(p\), how would you sketch the posterior?</li>
+  </ul>
+  <p style="margin-top:.8em; max-width:85%"><em>You've just done the exact reasoning an agent uses when figuring out whether a slot machine is good or bad. That's where we head next.</em></p>
+</section>
+
+<!-- Slide 30: Further Reading -->
+<section>
+  <div class="frame-title">Further Reading</div>
+  <ul>
+    <li>Deisenroth, Faisal &amp; Ong — <em>Mathematics for Machine Learning</em>, Ch. 2 &amp; 6.
+      <br><span class="small">Free at <a href="https://mml-book.github.io">mml-book.github.io</a></span>
+    </li>
+    <li>3Blue1Brown — <em>Essence of Linear Algebra</em> (YouTube playlist).</li>
+    <li>Gilbert Strang — <em>Introduction to Linear Algebra</em>.</li>
+  </ul>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/math/math.js"></script>
+<script>
+  Reveal.initialize({
+    width: 1280, height: 720, margin: 0.04,
+    hash: true, slideNumber: 'c/t',
+    plugins: [ RevealMath.MathJax3 ],
+    mathjax3: { mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js' }
+  });
+</script>
+</body>
+</html>

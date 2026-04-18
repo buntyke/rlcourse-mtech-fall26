@@ -320,7 +320,7 @@
           <li>Tied to whether \(A\) is <strong>invertible</strong> (square, full rank).</li>
         </ul>
       </div>
-      <div style="flex:0 0 50%"><img src="images/image_05_solution_cases.png" style="width:100%; height:auto"></div>
+      <div style="flex:0 0 50%"><img src="images/image_10_invertible_vs_singular.png" style="width:100%; height:auto"></div>
     </div>
   </section>
   <section>
@@ -339,7 +339,7 @@
           <li>\( A^{-1} \) exists \(\iff \det(A) \neq 0 \iff\) rows/columns are linearly independent.</li>
         </ul>
       </div>
-      <div style="flex:0 0 50%"><img src="images/image_05_solution_cases.png" style="width:100%; height:auto"></div>
+      <div style="flex:0 0 50%"><img src="images/image_10_invertible_vs_singular.png" style="width:100%; height:auto"></div>
     </div>
   </section>
 </section>
@@ -363,6 +363,21 @@
     <li>✅ \(T(x,y) = (x+y,\ x-y)\) — rotation + scale</li>
     <li>❌ \(T(x) = x+1\) — affine, not linear</li>
     <li>❌ \(T(x) = x^2\) — nonlinear</li>
+  </ul>
+  <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 2.7.</div>
+</section>
+
+<!-- Slide 15b: Matrix ↔ Linear Map equivalence -->
+<section class="has-footnote">
+  <div class="frame-title">Matrices <em>are</em> Linear Maps</div>
+  <p style="max-width:88%">Every linear map \(T:\mathbb{R}^n \to \mathbb{R}^m\) can be written as</p>
+  <p class="mathline">\( T(\mathbf{x}) = A\mathbf{x} \)</p>
+  <p style="max-width:88%">for a <strong>unique</strong> matrix \(A \in \mathbb{R}^{m \times n}\). The columns of \(A\) are where the basis vectors land:</p>
+  <p class="mathline">\( A = \big[\, T(\mathbf{e}_1) \;\big|\; T(\mathbf{e}_2) \;\big|\; \cdots \;\big|\; T(\mathbf{e}_n) \,\big] \)</p>
+  <ul style="margin-top:.6em">
+    <li>Matrix multiplication \(AB\) = <strong>composition</strong> of the two maps (apply \(B\), then \(A\)).</li>
+    <li>This is why \(AB \neq BA\): function composition is not commutative.</li>
+    <li><em>Systems, transformations, and matrices are three views of the same object.</em></li>
   </ul>
   <div class="footnote">Deisenroth et al., <em>MML</em>, Ch. 2.7.</div>
 </section>
@@ -643,11 +658,24 @@
   </section>
 </section>
 
+<!-- Slide 26b: Expectation is the Goal of RL -->
+<section>
+  <div class="frame-title">Expectation <em>is</em> the Goal of RL</div>
+  <p style="max-width:88%">Every RL algorithm this semester solves <em>one</em> problem — maximize the <strong>expected return</strong>:</p>
+  <p class="mathline" style="font-size:1.1em">\( J(\pi) = \mathbb{E}_\pi\!\left[\sum_{t=0}^{\infty} \gamma^t R_t\right] \)</p>
+  <ul style="margin-top:.4em">
+    <li>\(\pi\) — the agent's <strong>policy</strong> (how it chooses actions)</li>
+    <li>\(R_t\) — reward at step \(t\); \(\gamma \in [0,1)\) — <strong>discount</strong> (near rewards count more)</li>
+    <li>\(\mathbb{E}_\pi\) — average over <em>all</em> the randomness: environment, policy, future</li>
+  </ul>
+  <p style="max-width:88%; margin-top:.6em"><em>Value iteration, Q-learning, policy gradients, AlphaGo, RLHF — all the same equation, different tricks for the \(\mathbb{E}\).</em></p>
+</section>
+
 <!-- Slide 27: Variance -->
 <section>
   <div class="frame-title">Variance</div>
   <div class="two-col" style="width:100%">
-    <div style="flex:0 0 45%; text-align:left">
+    <div style="flex:0 0 40%; text-align:left">
       <p class="mathline">\( \mathrm{Var}(X) = \mathbb{E}[(X - \mathbb{E}[X])^2] = \mathbb{E}[X^2] - (\mathbb{E}[X])^2 \)</p>
       <ul style="margin-top:.5em">
         <li>How spread out are outcomes around their mean?</li>

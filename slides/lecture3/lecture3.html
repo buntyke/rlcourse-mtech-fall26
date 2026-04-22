@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RL Lecture 3 — Multi-Armed Bandits, Regret &amp; ε-Greedy</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css" id="theme">
+<style>
+  :root { --rl-red: #213c8b; --rl-white: rgb(235,235,235); }
+  .reveal { font-family: "Lato", "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 30px; }
+  .reveal h1, .reveal h2, .reveal h3, .reveal h4 { color: var(--rl-red); font-weight: 700; text-transform: none; }
+  .reveal .slides > section, .reveal .slides > section > section {
+    top: 0 !important;
+    height: 100%;
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 70px 30px 60px 30px !important;
+    box-sizing: border-box;
+  }
+  .reveal .frame-title { position: absolute; top: 18px; left: 30px; right: 30px; color: var(--rl-red); font-size: 1.2em; font-weight: 700; border-bottom: 2px solid var(--rl-red); padding-bottom: .2em; margin: 0; text-align: left; }
+  .reveal section img { background: none; border: none; box-shadow: none; margin: .3em auto; }
+  .reveal .title-slide { background: #fff; color: var(--rl-red); padding: 2em; text-align: center !important; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%; }
+  .reveal .title-slide h1, .reveal .title-slide h2, .reveal .title-slide p { color: var(--rl-red); text-align: center !important; width: 100%; }
+  .reveal .section-divider { display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; text-align: center !important; }
+  .reveal .section-divider h1 { color: var(--rl-red); font-size: 1.8em; text-align: center !important; width: 100%; margin: 0 auto; }
+  .two-col { display: flex; gap: 1em; align-items: center; justify-content: center; width: 100%; }
+  .two-col > div { flex: 1; text-align: center; }
+  .two-col.w64 > div:first-child { flex: 0 0 60%; }
+  .two-col.w64 > div:last-child  { flex: 0 0 36%; }
+  .reveal ul { display: inline-block; text-align: left; margin: 0 auto; font-size: .90em; }
+  .reveal ul > li { margin-bottom: .6em; }
+  .reveal ul > li:last-child { margin-bottom: 0; }
+  .reveal ul ul > li { margin-bottom: 0; }
+  .reveal p { font-size: .95em; }
+  .reveal section { text-align: center; }
+  .reveal .small { font-size: .7em; }
+  .reveal .has-footnote img { max-height: 480px; max-width: 85%; height: auto; }
+  .reveal .full-img { width: 100%; text-align: center; }
+  .reveal .full-img img { height: 540px; width: auto; max-width: 95%; }
+  .reveal .has-footnote.full-slide .full-img img { height: 500px; }
+  .reveal section.full-slide { padding-top: 55px !important; padding-bottom: 25px !important; }
+  .reveal .footnote { position: absolute; left: 30px; right: 30px; bottom: 10px; font-size: .5em; font-style: italic; color: #555; border-top: 1px solid #888; padding-top: 4px; text-align: left; margin: 0; }
+  .reveal .center { text-align: center; }
+  .reveal a { color: var(--rl-red); }
+  .reveal .boardwork { background: #f6f1e7; border-left: 4px solid var(--rl-red); padding: .5em .9em; font-size: .8em; text-align: left; max-width: 85%; margin: .8em auto; }
+  .reveal .mathline { margin: .5em auto; font-size: 1em; text-align: center; }
+  .reveal pre code { font-size: .65em; line-height: 1.25; text-align: left; }
+  .reveal table.env { border-collapse: collapse; margin: .4em auto; font-size: .7em; }
+  .reveal table.env th, .reveal table.env td { border: 1px solid #999; padding: .25em .6em; }
+  .reveal table.env th { background: #f0ecdd; color: var(--rl-red); }
+</style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- Title -->
+<section class="title-slide">
+  <h1 style="margin-bottom:.15em; font-size:2.4em">Reinforcement Learning</h1>
+  <h2 style="margin-top:0; font-size:1.6em">Lecture 3 — Multi-Armed Bandits, Regret &amp; ε-Greedy</h2>
+  <p style="margin-top:1.8em; font-size:1.4em">Nishanth Koganti</p>
+  <p style="font-size:1em">VNR VJIET — M.Tech AI &amp; DS</p>
+</section>
+
+<!-- TOC -->
+<section>
+  <div class="frame-title">Today's Journey</div>
+  <ul>
+    <li>Part A — The bandit problem &amp; why it matters</li>
+    <li>Part B — First algorithms: greedy &amp; ε-greedy</li>
+    <li>Part C — Implementation: incremental updates</li>
+    <li>Part D — Formalizing the objective: <em>regret</em></li>
+    <li>Part E — Bandit classes: Bernoulli, Gaussian, subgaussian</li>
+    <li>Wrap-up &amp; preview of UCB / KL-UCB / Thompson</li>
+  </ul>
+  <p class="center" style="margin-top:1.5em"><strong>Lecture material:</strong>
+    <a href="https://buntyke.github.io/rlcourse-mtech-fall26">buntyke.github.io/rlcourse-mtech-fall26</a></p>
+</section>
+
+<!-- Notation conventions -->
+<section>
+  <div class="frame-title">Notation Conventions</div>
+  <ul style="font-size:.85em">
+    <li>\( A_t \) — action taken at step \(t\)</li>
+    <li>\( R_t \) — <strong>reward</strong> received at step \(t\) <span class="small">(Sutton &amp; Barto convention; we keep this all semester)</span></li>
+    <li>\( q_*(a) = \mathbb{E}[R_t \mid A_t = a] \) — true mean reward of arm \(a\)</li>
+    <li>\( a^* \in \arg\max_a q_*(a) \) — the <em>optimal</em> arm</li>
+    <li>\( Q_t(a) \) — our <em>estimate</em> of \(q_*(a)\) at step \(t\)</li>
+    <li>\( \Delta_a = q_*(a^*) - q_*(a) \) — suboptimality gap of arm \(a\)</li>
+    <li>\( T_a(n) \) — number of times arm \(a\) was pulled in the first \(n\) steps</li>
+    <li>\( \mathrm{Reg}(n) \) — cumulative <strong>regret</strong> over \(n\) rounds <span class="small">(renamed from L&amp;S's \(R_n\) to avoid clashing with reward \(R_t\))</span></li>
+  </ul>
+</section>
+
+<!-- Acknowledgements -->
+<section>
+  <div class="frame-title">Acknowledgements</div>
+  <p>The content of this lecture is based on:</p>
+  <ul>
+    <li>Chapter 2 of <strong>Reinforcement Learning: An Introduction</strong> (2nd ed.) by <em>Sutton &amp; Barto</em></li>
+    <li>Chapters 4–5 of <strong>Bandit Algorithms</strong> by <em>Lattimore &amp; Szepesvári</em> (free at <a href="https://banditalgs.com">banditalgs.com</a>)</li>
+  </ul>
+  <p class="center" style="margin-top:1.5em"><strong>Lecture material:</strong>
+    <a href="https://buntyke.github.io/rlcourse-mtech-fall26">buntyke.github.io/rlcourse-mtech-fall26</a></p>
+</section>
+
+<!-- Part A divider -->
+<section class="section-divider"><h1>Part A — The Problem</h1></section>
+
+<!-- Slide 1: Why bandits -->
+<section>
+  <div class="frame-title">Why Study Bandits?</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li>A doctor choosing between two treatments</li>
+        <li>A phone showing ad variant A or B</li>
+        <li>A gambler at a bank of slot machines</li>
+      </ul>
+      <p style="text-align:left; margin-top:.8em"><em>Every choice is a tradeoff between <strong>what you know</strong> and <strong>what you could learn</strong>.</em></p>
+    </div>
+    <div><img src="images/image_01_motivation_triptych.png" style="max-width:100%; max-height:460px"></div>
+  </div>
+</section>
+
+<!-- Slide 2: Evaluative vs instructive -->
+<section class="has-footnote">
+  <div class="frame-title">Evaluative vs. Instructive Feedback</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li><strong>Instructive:</strong> tells you the <em>correct</em> action (supervised learning).</li>
+        <li><strong>Evaluative:</strong> scores only the action you <em>took</em>.</li>
+        <li>Evaluative feedback is why <strong>exploration</strong> exists at all.</li>
+      </ul>
+    </div>
+    <div><img src="images/image_02_evaluative_vs_instructive.png" style="max-width:100%; max-height:460px"></div>
+  </div>
+  <div class="footnote">Sutton &amp; Barto, <em>RL: An Introduction</em>, Ch. 2 opener.</div>
+</section>
+
+<!-- Slide 3: The k-armed bandit, informally -->
+<section>
+  <div class="frame-title">The k-Armed Bandit — Informally</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li><em>k</em> levers, one pull per round, for <em>n</em> rounds.</li>
+        <li>Each lever returns a <strong>noisy reward</strong> from its own fixed distribution.</li>
+        <li>Goal: maximize total reward.</li>
+        <li>Name from "one-armed bandit" (slot machine), with <em>k</em> arms instead of one.</li>
+      </ul>
+    </div>
+    <div><img src="images/image_03_slot_machines_row.png" style="max-width:100%; max-height:460px"></div>
+  </div>
+</section>
+
+<!-- Slide 4: Applications grid -->
+<section>
+  <div class="frame-title">Bandits Are Everywhere</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li>Clinical trials — which treatment?</li>
+        <li>Online advertising — which creative?</li>
+        <li>Recommender systems — which item?</li>
+        <li>Network routing — which path?</li>
+        <li>Dynamic pricing — which price?</li>
+        <li>Hyperparameter tuning — which config?</li>
+      </ul>
+      <p style="text-align:left; margin-top:.5em"><em>Same math underneath.</em></p>
+    </div>
+    <div><img src="images/image_04_applications_grid.png" style="max-width:100%; max-height:460px"></div>
+  </div>
+</section>
+
+<!-- Slide 5: Formal setup -->
+<section class="has-footnote">
+  <div class="frame-title">Formal Setup — The Interaction Loop</div>
+  <div class="two-col w64">
+    <div>
+      <p style="text-align:left">For \( t = 1, 2, \dots, n \):</p>
+      <ul>
+        <li>Agent picks action \( A_t \in \{1,\dots,k\} \).</li>
+        <li>Environment samples reward \( R_t \sim P_{A_t} \).</li>
+        <li>Agent observes \( R_t \).</li>
+      </ul>
+      <p class="mathline" style="margin-top:.5em">\( q_*(a) \doteq \mathbb{E}[R_t \mid A_t = a] \)</p>
+      <p style="text-align:left; font-size:.85em"><em>Action values</em> \(q_*(a)\) are unknown; we keep estimates \(Q_t(a)\).</p>
+    </div>
+    <div><img src="images/image_05_agent_environment_loop.png" style="max-width:100%; max-height:460px"></div>
+  </div>
+  <div class="footnote">Lattimore &amp; Szepesvári, <em>Bandit Algorithms</em>, §4.1.</div>
+</section>
+
+<!-- Part B divider -->
+<section class="section-divider"><h1>Part B — First Algorithms</h1></section>
+
+<!-- Slide 6: Exploration vs Exploitation -->
+<section>
+  <div class="frame-title">Exploration vs. Exploitation</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li><strong>Exploit:</strong> pick the arm with the best <em>current</em> estimate.</li>
+        <li><strong>Explore:</strong> pick a different arm to improve your estimates.</li>
+        <li>Both are needed; any single pull can't do both.</li>
+      </ul>
+      <p style="text-align:left; margin-top:.6em"><em>Short-term reward vs. long-term learning.</em></p>
+    </div>
+    <div><img src="images/image_06_exploration_exploitation_fork.png" style="max-width:100%; max-height:460px"></div>
+  </div>
+</section>
+
+<!-- Slide 7: Sample-average -->
+<section class="has-footnote">
+  <div class="frame-title">Sample-Average Action Values</div>
+  <p>Estimate the mean of arm \(a\) by averaging observed rewards:</p>
+  <p class="mathline">\( Q_t(a) \;\doteq\; \dfrac{\sum_{i=1}^{t-1} R_i \cdot \mathbb{1}\{A_i = a\}}{\sum_{i=1}^{t-1} \mathbb{1}\{A_i = a\}} \)</p>
+  <ul>
+    <li>By the Law of Large Numbers, \( Q_t(a) \to q_*(a) \) as the count grows.</li>
+    <li>Simple and unbiased — our default.</li>
+  </ul>
+  <div class="footnote">Sutton &amp; Barto, §2.2.</div>
+</section>
+
+<!-- Slide 8: Greedy -->
+<section>
+  <div class="frame-title">Greedy Action Selection</div>
+  <p class="mathline">\( A_t \;\doteq\; \operatorname*{arg\,max}_{a}\, Q_t(a) \)</p>
+  <ul>
+    <li>Always picks the arm that currently <em>looks</em> best.</li>
+    <li><strong>Failure mode:</strong> one unlucky early sample of the true best arm → never return.</li>
+    <li>No exploration at all.</li>
+  </ul>
+</section>
+
+<!-- Slide 9: ε-greedy -->
+<section class="has-footnote">
+  <div class="frame-title">ε-Greedy</div>
+  <ul>
+    <li>With probability \(1 - \varepsilon\): greedy.</li>
+    <li>With probability \(\varepsilon\): pick a <strong>uniform random</strong> arm.</li>
+    <li>Every arm gets pulled infinitely often → all \(Q_t(a) \to q_*(a)\) a.s.</li>
+    <li>Trade-off in the parameter \(\varepsilon\):
+      <ul>
+        <li>small \(\varepsilon\) → slow learning</li>
+        <li>large \(\varepsilon\) → learns fast but under-exploits</li>
+      </ul>
+    </li>
+  </ul>
+  <div class="footnote">Sutton &amp; Barto, §2.2.</div>
+</section>
+
+<!-- Slide 10: 10-armed testbed -->
+<section class="has-footnote full-slide">
+  <div class="frame-title">The 10-Armed Testbed</div>
+  <div class="full-img"><img src="images/sb_fig_2_1_testbed.jpeg" alt="10-armed testbed"></div>
+  <ul style="font-size:.75em">
+    <li>\(k = 10\); \(q_*(a) \sim \mathcal{N}(0,1)\); rewards \(R_t \sim \mathcal{N}(q_*(A_t), 1)\).</li>
+    <li>Evaluate algorithms over 1000 steps, averaged across 2000 runs.</li>
+  </ul>
+  <div class="footnote">Figure from Sutton &amp; Barto, <em>RL: An Introduction</em>, Fig. 2.1.</div>
+</section>
+
+<!-- Slide 11: Greedy vs ε-greedy empirical -->
+<section class="has-footnote full-slide">
+  <div class="frame-title">Empirical Results: Greedy vs. ε-Greedy</div>
+  <div class="full-img"><img src="images/sb_fig_2_2_greedy_vs_eps.jpeg" alt="greedy vs eps-greedy"></div>
+  <ul style="font-size:.75em">
+    <li>Greedy plateaus low — stuck on a suboptimal arm.</li>
+    <li>\(\varepsilon = 0.1\) learns fast, caps at ~91% optimal.</li>
+    <li>\(\varepsilon = 0.01\) slower but eventually best. <em>Decaying \(\varepsilon\)</em> gets the best of both.</li>
+  </ul>
+  <div class="footnote">Figure from Sutton &amp; Barto, <em>RL: An Introduction</em>, Fig. 2.2.</div>
+</section>
+
+<!-- Part C divider -->
+<section class="section-divider"><h1>Part C — Implementation</h1></section>
+
+<!-- Slide 12: Incremental update -->
+<section class="has-footnote">
+  <div class="frame-title">Incremental Update — Constant Memory</div>
+  <ul>
+    <li>Naively, computing \(Q_n = \frac{1}{n-1}\sum_{i=1}^{n-1} R_i\) needs \(\mathcal{O}(n)\) memory.</li>
+    <li>A simple algebraic rewrite gives an online update:</li>
+  </ul>
+  <p class="mathline" style="font-size:1.1em">\( Q_{n+1} \;=\; Q_n + \dfrac{1}{n}\bigl[\,R_n - Q_n\,\bigr] \)</p>
+  <div class="boardwork">🖊️ <strong>Board:</strong> Derive from \(Q_{n+1} = \frac{1}{n}\sum_{i=1}^n R_i\) by splitting the last term and telescoping.</div>
+  <div class="footnote">Sutton &amp; Barto, §2.4.</div>
+</section>
+
+<!-- Slide 13: General update template -->
+<section>
+  <div class="frame-title">A Template You'll See All Semester</div>
+  <p class="mathline" style="font-size:1.15em">\( \text{NewEstimate} \leftarrow \text{OldEstimate} + \alpha \big[\,\text{Target} - \text{OldEstimate}\,\big] \)</p>
+  <ul style="margin-top:.6em">
+    <li>\([\text{Target} - \text{OldEstimate}]\) is an <strong>error signal</strong>.</li>
+    <li>\(\alpha\) is the <strong>step size</strong>. Here \(\alpha_n = 1/n\) (sample average).</li>
+    <li>Constant \(\alpha\) forgets old data — useful when the world is <em>nonstationary</em> (next lecture).</li>
+    <li>Same pattern reappears in <strong>TD-learning</strong>, <strong>Q-learning</strong>, <strong>gradient methods</strong>.</li>
+  </ul>
+</section>
+
+<!-- Slide 14: Pseudocode -->
+<section>
+  <div class="frame-title">Pseudocode — Simple Bandit Algorithm</div>
+<pre><code>Initialize, for a = 1 to k:
+    Q(a) ← 0
+    N(a) ← 0
+
+Loop forever:
+    A ← argmax_a Q(a)    with prob 1 - ε
+        random action    with prob ε
+    R ← bandit(A)
+    N(A) ← N(A) + 1
+    Q(A) ← Q(A) + (1/N(A)) [ R - Q(A) ]</code></pre>
+  <p class="small" style="margin-top:.8em"><em>Ten lines. That's the whole thing.</em></p>
+</section>
+
+<!-- Question 1 -->
+<section>
+  <div class="frame-title">🎯 Question #1 — ε-Greedy Probability</div>
+  <p>In ε-greedy with <strong>two arms</strong> and \( \varepsilon = 0.5 \), what is the probability that the <em>greedy</em> arm is actually selected?</p>
+  <ul>
+    <li>(a) 0.50</li>
+    <li>(b) 0.625</li>
+    <li>(c) 0.75</li>
+    <li>(d) 1.00</li>
+  </ul>
+  <p style="margin-top:.8em; font-size:.8em"><em>Hint: the random branch still selects the greedy arm sometimes.</em></p>
+</section>
+
+<!-- Question 2 -->
+<section>
+  <div class="frame-title">🎯 Question #2 — Incremental Update</div>
+  <p>After 4 pulls of an arm, \( Q_5 = 2.0 \). The 5th pull returns \(R_5 = 5.0\).</p>
+  <ul>
+    <li>Compute \(Q_6\) with the <strong>sample-average</strong> update.</li>
+    <li>Compute \(Q_6\) with <strong>constant</strong> \(\alpha = 0.1\).</li>
+    <li>Which reacts faster? When would you prefer each?</li>
+  </ul>
+</section>
+
+<!-- Part D divider -->
+<section class="section-divider"><h1>Part D — Regret</h1></section>
+
+<!-- Slide 15: From reward to regret -->
+<section class="has-footnote">
+  <div class="frame-title">From "Maximize Reward" to "Minimize Regret"</div>
+  <ul>
+    <li>Raw reward depends on the scale of each instance — hard to compare.</li>
+    <li>Instead, measure how much we lose relative to an <strong>oracle</strong> who knows the best arm.</li>
+  </ul>
+  <p class="mathline" style="font-size:1.1em">\( \mathrm{Reg}(n) \;\doteq\; n\,q_*(a^*) \;-\; \mathbb{E}\!\left[\sum_{t=1}^n R_t\right] \)</p>
+  <p style="font-size:.85em">where \( a^* \in \arg\max_a q_*(a) \) — the optimal arm.</p>
+  <div class="footnote">Lattimore &amp; Szepesvári, §4.4.</div>
+</section>
+
+<!-- Slide 16: Properties of regret -->
+<section>
+  <div class="frame-title">Properties of Regret</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li>\( \mathrm{Reg}(n) \ge 0 \) always.</li>
+        <li>\( \mathrm{Reg}(n) = 0 \iff \) always play optimal arm.</li>
+        <li>Goal: <strong>sublinear</strong> regret — \( \mathrm{Reg}(n) / n \to 0 \).</li>
+        <li>Means: we play the right arm <em>almost all the time</em> eventually.</li>
+      </ul>
+    </div>
+    <div><img src="images/image_07_regret_growth_comparison.png" style="max-width:100%; max-height:460px"></div>
+  </div>
+</section>
+
+<!-- Slide 17: Suboptimality gaps -->
+<section class="has-footnote">
+  <div class="frame-title">Suboptimality Gaps</div>
+  <ul>
+    <li>Suboptimality gap: \( \Delta_a \;\doteq\; q_*(a^*) - q_*(a) \).</li>
+    <li>Pull count: \( T_a(n) = \sum_{t=1}^{n} \mathbb{1}\{A_t = a\} \).</li>
+    <li>Intuition: each pull of a suboptimal arm <em>a</em> costs you \(\Delta_a\) in expectation.</li>
+  </ul>
+  <div class="footnote">Lattimore &amp; Szepesvári, §4.5.</div>
+</section>
+
+<!-- Slide 18: Regret decomposition -->
+<section class="has-footnote">
+  <div class="frame-title">The Regret Decomposition Lemma</div>
+  <p class="mathline" style="font-size:1.2em">\( \mathrm{Reg}(n) \;=\; \displaystyle\sum_{a \in \mathcal{A}} \Delta_a \; \mathbb{E}\!\left[T_a(n)\right] \)</p>
+  <ul style="margin-top:.6em">
+    <li>Regret = Σ (gap of arm) × (expected pulls of arm).</li>
+    <li>The workhorse identity for <strong>every</strong> stochastic bandit proof.</li>
+  </ul>
+  <div class="boardwork">🖊️ <strong>Board:</strong> Proof. Insert \(\sum_a \mathbb{1}\{A_t=a\}=1\), condition on \(A_t\), use tower property.</div>
+  <div class="footnote">Lattimore &amp; Szepesvári, Lemma 4.5.</div>
+</section>
+
+<!-- Slide 19: What the lemma tells us -->
+<section>
+  <div class="frame-title">What the Lemma Tells the Designer</div>
+  <ul>
+    <li>Pull arms with <strong>large \(\Delta_a\)</strong> rarely.</li>
+    <li>Pull arms with <strong>\(\Delta_a \approx 0\)</strong> often — no regret for doing so.</li>
+    <li>But \(\Delta_a\) is <em>unknown</em>. We must estimate means and quantify our <strong>uncertainty</strong>.</li>
+  </ul>
+  <p style="margin-top:.6em"><em>Estimation quality depends on the reward distribution — which takes us to <strong>bandit classes</strong>.</em></p>
+</section>
+
+<!-- Question 3 -->
+<section>
+  <div class="frame-title">🎯 Question #3 — Regret Decomposition</div>
+  <p>A 3-armed Bernoulli bandit has arm values \(q_*(1) = 0.3\), \(q_*(2) = 0.5\), \(q_*(3) = 0.8\).</p>
+  <p>Over \( n = 1000 \) rounds, a policy pulls each arm in expectation (400, 350, 250) times.</p>
+  <p>What is the expected regret \( \mathrm{Reg}(n) \) ?</p>
+</section>
+
+<!-- Part E divider -->
+<section class="section-divider"><h1>Part E — Bandit Classes</h1></section>
+
+<!-- Slide 21: Why classes matter -->
+<section>
+  <div class="frame-title">Why Do Bandit Classes Matter?</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li>An algorithm is only as good as the <em>assumption</em> it makes about rewards.</li>
+        <li>Tighter class ⇒ tighter confidence intervals ⇒ lower regret.</li>
+        <li>This semester we focus on three classes:
+          <ul>
+            <li><strong>Bernoulli</strong></li>
+            <li><strong>Gaussian</strong></li>
+            <li><strong>Subgaussian</strong></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+    <div><img src="images/image_09_bandit_class_taxonomy.png" style="max-width:100%; max-height:460px"></div>
+  </div>
+</section>
+
+<!-- Slide 22: Bernoulli bandit -->
+<section>
+  <div class="frame-title">Bernoulli Bandit</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li>Rewards are <strong>binary</strong>: \( R_t \in \{0, 1\} \).</li>
+        <li>Each arm is a biased coin:
+          \[ \mathbb{P}(R_t = 1 \mid A_t = a) = q_*(a) \in [0, 1] \]
+        </li>
+        <li>One number per arm fully describes it.</li>
+        <li><strong>Examples:</strong> ad click / no click, cure / no cure, win / loss.</li>
+        <li><em>Conjugate Beta prior</em> → Thompson Sampling has a closed form (next lecture).</li>
+      </ul>
+    </div>
+    <div><img src="images/image_10_bernoulli_pmf.png" style="max-width:100%; max-height:460px"></div>
+  </div>
+</section>
+
+<!-- Slide 23: Gaussian bandit -->
+<section class="has-footnote full-slide">
+  <div class="frame-title">Gaussian Bandit</div>
+  <div class="full-img"><img src="images/sb_fig_2_1_testbed.jpeg" alt="10-armed testbed"></div>
+  <ul style="font-size:.78em">
+    <li>Rewards are real-valued and symmetric: \( R_t \mid A_t = a \;\sim\; \mathcal{N}(q_*(a), \sigma^2) \).</li>
+    <li>Variance \(\sigma^2\) is treated as known (a shared constant).</li>
+    <li>The <strong>10-armed testbed</strong> we saw earlier <em>is</em> a Gaussian bandit with \(\sigma^2 = 1\).</li>
+  </ul>
+  <div class="footnote">Figure reused from Sutton &amp; Barto, Fig. 2.1.</div>
+</section>
+
+<!-- Slide 24: Subgaussian definition -->
+<section class="has-footnote">
+  <div class="frame-title">Subgaussian — The Definition</div>
+  <div class="two-col w64">
+    <div>
+      <p style="text-align:left">A centered rv \(X\) (so \(\mathbb{E}[X] = 0\)) is <strong>\(\sigma\)-subgaussian</strong> if, for every \(\lambda \in \mathbb{R}\),</p>
+      <p class="mathline" style="font-size:1.05em">\( \mathbb{E}[e^{\lambda X}] \;\le\; e^{\lambda^2 \sigma^2 / 2} \)</p>
+      <ul>
+        <li>Read it as: the "MGF" of \(X\) is bounded by that of \(\mathcal{N}(0, \sigma^2)\).</li>
+        <li><em>Not a specific distribution</em> — a <strong>property</strong> many distributions share.</li>
+      </ul>
+    </div>
+    <div><img src="images/image_08_subgaussian_density.png" style="max-width:100%; max-height:460px"></div>
+  </div>
+  <div class="footnote">Lattimore &amp; Szepesvári, Def. 5.2.</div>
+</section>
+
+<!-- Slide 25: Subgaussian gallery -->
+<section>
+  <div class="frame-title">Subgaussian — A Gallery</div>
+  <div class="two-col w64">
+    <div>
+      <p style="text-align:left"><strong>Examples</strong> of \(\sigma\)-subgaussian rvs (centered):</p>
+      <ul>
+        <li>\( \mathcal{N}(0, \sigma^2) \) — the canonical case.</li>
+        <li>Bounded \( X \in [a, b] \) — \((b-a)/2\)-subgaussian.</li>
+        <li>Rademacher \((\pm 1\) each w.p. \(\tfrac12)\) — 1-subgaussian.</li>
+      </ul>
+      <p style="text-align:left; margin-top:.6em"><strong>Non-example:</strong> Exponential rewards — heavy right tail, <em>not</em> subgaussian for any finite \(\sigma\).</p>
+      <p style="text-align:left; margin-top:.4em"><em>Intuition: subgaussian = tails at least as thin as a Gaussian.</em></p>
+    </div>
+    <div><img src="images/image_11_subgaussian_gallery.png" style="max-width:100%; max-height:460px"></div>
+  </div>
+</section>
+
+<!-- Slide 26: Closure properties -->
+<section class="has-footnote">
+  <div class="frame-title">Why We Care — Closure Properties</div>
+  <ul>
+    <li>If \(X\) is \(\sigma\)-subgaussian, then \(cX\) is \(|c|\sigma\)-subgaussian.</li>
+    <li>If \(X_1, X_2\) are <em>independent</em> and \(\sigma_1, \sigma_2\)-subgaussian:
+      \[ X_1 + X_2 \text{ is } \sqrt{\sigma_1^2 + \sigma_2^2}\text{-subgaussian.} \]
+    </li>
+    <li><strong>Consequence for bandits:</strong> the sample mean of \(n\) iid \(\sigma\)-subgaussian rewards is \(\dfrac{\sigma}{\sqrt{n}}\)-subgaussian.</li>
+  </ul>
+  <p style="margin-top:.6em; max-width:85%"><em>This one property is what lets us build the \(\sqrt{\log t / N_t(a)}\) confidence bonus inside UCB — next lecture.</em></p>
+  <div class="footnote">Lattimore &amp; Szepesvári, Lemma 5.4.</div>
+</section>
+
+<!-- Slide 27: Bernoulli is ½-subgaussian -->
+<section class="has-footnote">
+  <div class="frame-title">Why Bernoulli is \(\tfrac{1}{2}\)-Subgaussian</div>
+  <ul>
+    <li>A centered Bernoulli: \( X = R_t - q_*(a) \in [-q_*(a),\; 1 - q_*(a)] \).</li>
+    <li>Range is an interval of width <strong>1</strong> — regardless of \(q_*(a)\).</li>
+    <li><strong>Hoeffding's lemma:</strong> any zero-mean rv bounded in an interval of width \(b - a\) is \(\tfrac{b - a}{2}\)-subgaussian.</li>
+    <li>Therefore centered Bernoulli is always \(\tfrac{1}{2}\)-subgaussian.</li>
+    <li><strong>But</strong> the bound is loose when \(q_*(a)\) is near 0 or 1 — true variance \(q_*(a)(1 - q_*(a))\) can be much smaller than \(\tfrac{1}{4}\).</li>
+  </ul>
+  <div class="boardwork">🖊️ <strong>Board (optional):</strong> Sketch \(X \in [-p, 1-p]\); cite Hoeffding's lemma as a black box; conclude \(\sigma = \tfrac12\). Motivate KL-UCB — tightens the bound when \(p\) is far from \(\tfrac12\).</div>
+  <div class="footnote">Lattimore &amp; Szepesvári, Ex. 5.11; Sutton &amp; Barto, §2.2.</div>
+</section>
+
+<!-- Question 4 -->
+<section>
+  <div class="frame-title">🎯 Question #4 — Class Identification</div>
+  <p>Which of the following reward distributions is <strong>not</strong> \(\sigma\)-subgaussian for any finite \(\sigma\)?</p>
+  <ul>
+    <li>(a) \( \mathcal{N}(0, 4) \)</li>
+    <li>(b) Uniform on \( [-3, 3] \)</li>
+    <li>(c) Centered Bernoulli with \( q_*(a) = 0.2 \) (i.e., \( R_t - 0.2 \))</li>
+    <li>(d) Exponential with rate 1</li>
+  </ul>
+  <p style="font-size:.8em; margin-top:.6em"><em>Hint: which one has a heavy right tail?</em></p>
+</section>
+
+<!-- Question 5 -->
+<section>
+  <div class="frame-title">🎯 Question #5 — Bernoulli Bound vs. Variance</div>
+  <p>A Bernoulli arm has true mean \( q_*(a) = 0.5 \). It is pulled \( n = 100 \) times.</p>
+  <ul>
+    <li>(1) What is the variance of a <em>single</em> reward \(R_t\)?</li>
+    <li>(2) What is the variance of the sample-mean estimate \(Q_{100}(a)\)?</li>
+    <li>(3) By Hoeffding's lemma, what subgaussian parameter does \(Q_{100}(a)\) inherit?</li>
+    <li>(4) Repeat (1)–(3) for \( q_*(a) = 0.01 \). What does the mismatch tell you?</li>
+  </ul>
+</section>
+
+<!-- Slide 28: Summary -->
+<section>
+  <div class="frame-title">Summary &amp; What's Next</div>
+  <ul>
+    <li><strong>Today:</strong> the bandit problem, ε-greedy with sample-average + incremental updates, regret and the decomposition \(\mathrm{Reg}(n) = \sum_a \Delta_a \mathbb{E}[T_a(n)]\), and three bandit classes: Bernoulli, Gaussian, subgaussian.</li>
+    <li><strong>Take-away:</strong> the class you assume about rewards determines which algorithm you can use — and how tight your regret bound can be.</li>
+    <li><strong>Next lecture:</strong>
+      <ul>
+        <li><strong>UCB</strong> (subgaussian) — generic, uses closure of σ-subgaussian under averaging.</li>
+        <li><strong>KL-UCB</strong> (Bernoulli) — tighter when \(q_*(a)\) is near 0 or 1.</li>
+        <li><strong>Thompson Sampling</strong> (Bernoulli with Beta prior).</li>
+        <li>Gradient bandits &amp; contextual bandits.</li>
+      </ul>
+    </li>
+  </ul>
+</section>
+
+<!-- Further reading -->
+<section>
+  <div class="frame-title">Further Reading</div>
+  <ul>
+    <li>Sutton &amp; Barto — <em>RL: An Introduction</em>, Chapter 2.
+      <br><span class="small">Free at <a href="http://incompleteideas.net/book/the-book.html">incompleteideas.net/book/the-book.html</a></span>
+    </li>
+    <li>Lattimore &amp; Szepesvári — <em>Bandit Algorithms</em>, Chapters 4–5.
+      <br><span class="small">Free at <a href="https://banditalgs.com">banditalgs.com</a></span>
+    </li>
+  </ul>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/math/math.js"></script>
+<script>
+  Reveal.initialize({
+    width: 1280, height: 720, margin: 0.04,
+    hash: true, slideNumber: 'c/t',
+    plugins: [ RevealMath.MathJax3 ],
+    mathjax3: { mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js' }
+  });
+</script>
+</body>
+</html>

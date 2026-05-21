@@ -1,0 +1,914 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RL Lecture 6 — MDP Agent-Environment Interface</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css" id="theme">
+<style>
+  :root { --rl-red: #213c8b; --rl-white: rgb(235,235,235); }
+  .reveal { font-family: "Lato", "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 30px; }
+  .reveal h1, .reveal h2, .reveal h3, .reveal h4 { color: var(--rl-red); font-weight: 700; text-transform: none; }
+  .reveal .slides > section, .reveal .slides > section > section {
+    top: 0 !important;
+    height: 100%;
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 70px 30px 60px 30px !important;
+    box-sizing: border-box;
+  }
+  .reveal .frame-title { position: absolute; top: 18px; left: 30px; right: 30px; color: var(--rl-red); font-size: 1.2em; font-weight: 700; border-bottom: 2px solid var(--rl-red); padding-bottom: .2em; margin: 0; text-align: left; }
+  .reveal section img { background: none; border: none; box-shadow: none; margin: .3em auto; }
+  .reveal .title-slide { background: #fff; color: var(--rl-red); padding: 2em; text-align: center !important; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%; }
+  .reveal .title-slide h1, .reveal .title-slide h2, .reveal .title-slide p { color: var(--rl-red); text-align: center !important; width: 100%; }
+  .reveal .section-divider { display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; text-align: center !important; }
+  .reveal .section-divider h1 { color: var(--rl-red); font-size: 1.8em; text-align: center !important; width: 100%; margin: 0 auto; }
+  .two-col { display: flex; gap: 1em; align-items: center; justify-content: center; }
+  .two-col > div { flex: 1; text-align: center; }
+  .two-col.w64 > div:first-child { flex: 0 0 60%; }
+  .two-col.w64 > div:last-child  { flex: 0 0 36%; }
+  .reveal ul { display: inline-block; text-align: left; margin: 0 auto; font-size: .90em; }
+  .reveal ul > li { margin-bottom: .6em; }
+  .reveal ul > li:last-child { margin-bottom: 0; }
+  .reveal ul ul > li { margin-bottom: 0; }
+  .reveal p { font-size: .95em; }
+  .reveal section { text-align: center; }
+  .reveal .small { font-size: .7em; }
+  .reveal .has-footnote img { max-height: 540px; max-width: 90%; height: auto; }
+  .reveal .full-img { width: 100%; text-align: center; }
+  .reveal .full-img img { height: 576px; width: auto; max-width: 95%; }
+  .reveal .has-footnote.full-slide .full-img img { height: 540px; }
+  .reveal section.full-slide { padding-top: 55px !important; padding-bottom: 25px !important; }
+  .reveal .footnote { position: absolute; left: 30px; right: 30px; bottom: 10px; font-size: .5em; font-style: italic; color: #555; border-top: 1px solid #888; padding-top: 4px; text-align: left; margin: 0; }
+  .img-stack { position: relative; display: inline-block; }
+  .img-stack img { position: absolute; top: 0; left: 0; }
+  .img-stack img:first-child { position: relative; }
+  .center { text-align: center; }
+  .reveal a { color: var(--rl-red); }
+  .callout { margin: 0.8em auto; padding: 0.7em 1.4em; border: 2px solid var(--rl-red); border-radius: 6px; background: #f0f4ff; max-width: 88%; text-align: center; }
+</style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- ============================================================ -->
+<!-- Title                                                        -->
+<!-- ============================================================ -->
+<section class="title-slide">
+  <h1 style="margin-bottom:.15em; font-size:2.4em">Reinforcement Learning</h1>
+  <h2 style="margin-top:0; font-size:1.6em">Lecture 6 — MDP Agent-Environment Interface</h2>
+  <p style="margin-top:1.8em; font-size:1.4em">Nishanth Koganti</p>
+  <p style="font-size:1em">VNR VJIET — M.Tech AI &amp; DS</p>
+</section>
+
+<!-- TOC -->
+<section>
+  <div class="frame-title">Table of Contents</div>
+  <ul>
+    <li>From Bandits to MDPs</li>
+    <li>Agent-Environment Interface</li>
+    <li>Observations, States &amp; Markov Property</li>
+    <li>Elements of an RL Agent</li>
+  </ul>
+  <p class="center" style="margin-top:1.5em"><strong>Lecture material:</strong>
+    <a href="https://buntyke.github.io/rlcourse-mtech-fall26">buntyke.github.io/rlcourse-mtech-fall26</a></p>
+</section>
+
+<!-- Acknowledgements -->
+<section>
+  <div class="frame-title">Acknowledgements</div>
+  <p>The slides of this lecture are based on:</p>
+  <ul>
+    <li>Lecture 2 of <strong>Google DeepMind's 2015</strong> lectures by <em>David Silver</em></li>
+    <li>Chapter 3 of <strong>Reinforcement Learning: An Introduction</strong> by <em>Sutton &amp; Barto</em></li>
+  </ul>
+  <p class="center" style="margin-top:1.5em"><strong>Lecture material:</strong>
+    <a href="https://buntyke.github.io/rlcourse-mtech-fall26">buntyke.github.io/rlcourse-mtech-fall26</a></p>
+</section>
+
+<!-- ============================================================ -->
+<!-- Section: From Bandits to MDPs                               -->
+<!-- ============================================================ -->
+<section class="section-divider"><h1>From Bandits to MDPs</h1></section>
+
+<!-- Bandit recap (progressive) -->
+<section>
+  <section>
+    <div class="frame-title">Recall: The Bandit Problem</div>
+    <div class="two-col w64" style="align-items:center;">
+      <div><img src="images/multi-armed-bandit.png" style="max-height:420px"></div>
+      <div style="text-align:left">
+        <ul>
+          <li>Agent chooses one arm per round</li>
+          <li>Receives a scalar reward \(R_t\)</li>
+          <li>Goal: maximise total reward over time</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Recall: The Bandit Problem</div>
+    <div class="two-col w64" style="align-items:center;">
+      <div><img src="images/multi-armed-bandit.png" style="max-height:420px"></div>
+      <div style="text-align:left">
+        <ul>
+          <li>Agent chooses one arm per round</li>
+          <li>Receives a scalar reward \(R_t\)</li>
+          <li>Goal: maximise total reward over time</li>
+          <li><strong>Key limitation</strong>: no state — actions do not affect future situations</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</section>
+
+<!-- What changes in an MDP (progressive) -->
+<section>
+  <section>
+    <div class="frame-title">What Changes in an MDP?</div>
+    <ul>
+      <li>The agent now exists in a <strong>state</strong> \(S_t\)</li>
+    </ul>
+  </section>
+  <section>
+    <div class="frame-title">What Changes in an MDP?</div>
+    <ul>
+      <li>The agent now exists in a <strong>state</strong> \(S_t\)</li>
+      <li>Actions influence both the <strong>immediate reward</strong> and the <strong>next state</strong> \(S_{t+1}\)</li>
+    </ul>
+  </section>
+  <section>
+    <div class="frame-title">What Changes in an MDP?</div>
+    <ul>
+      <li>The agent now exists in a <strong>state</strong> \(S_t\)</li>
+      <li>Actions influence both the <strong>immediate reward</strong> and the <strong>next state</strong> \(S_{t+1}\)</li>
+      <li>Goal: maximise <strong>cumulative future reward</strong> — not just the next one</li>
+    </ul>
+  </section>
+  <section>
+    <div class="frame-title">What Changes in an MDP?</div>
+    <ul>
+      <li>The agent now exists in a <strong>state</strong> \(S_t\)</li>
+      <li>Actions influence both the <strong>immediate reward</strong> and the <strong>next state</strong> \(S_{t+1}\)</li>
+      <li>Goal: maximise <strong>cumulative future reward</strong> — not just the next one</li>
+      <li>This requires <strong>sequential decision making</strong>: the right action depends on context</li>
+    </ul>
+  </section>
+</section>
+
+<!-- ============================================================ -->
+<!-- Section: Agent-Environment Interface                        -->
+<!-- ============================================================ -->
+<section class="section-divider"><h1>Agent-Environment Interface</h1></section>
+
+<!-- Agent formulation (full slide) -->
+<section class="full-slide">
+  <div class="frame-title">RL Formulation: Agent</div>
+  <div class="center full-img"><img src="images/agent-formulation.png"></div>
+</section>
+
+<!-- Agent + Environment (progressive) -->
+<section>
+  <section>
+    <div class="frame-title">RL Formulation: Agent and Environment</div>
+    <div class="two-col" style="width:100%; align-items:center;">
+      <div><img src="images/rl-formulation.png" style="max-width:100%; max-height:520px"></div>
+      <div style="text-align:left">
+        <ul>
+          <li>At each time step \(t\), the agent:
+            <ul>
+              <li>Receives state \(S_t\)</li>
+              <li>Receives <strong>scalar</strong> reward \(R_t\)</li>
+              <li>Executes action \(A_t\)</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">RL Formulation: Agent and Environment</div>
+    <div class="two-col" style="width:100%; align-items:center;">
+      <div><img src="images/rl-formulation.png" style="max-width:100%; max-height:520px"></div>
+      <div style="text-align:left">
+        <ul>
+          <li>At each time step \(t\), the agent:
+            <ul>
+              <li>Receives state \(S_t\)</li>
+              <li>Receives <strong>scalar</strong> reward \(R_t\)</li>
+              <li>Executes action \(A_t\)</li>
+            </ul>
+          </li>
+          <li>The environment:
+            <ul>
+              <li>Receives action \(A_t\)</li>
+              <li>Emits state \(S_{t+1}\)</li>
+              <li>Emits reward \(R_{t+1}\)</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">RL Formulation: Agent and Environment</div>
+    <div class="two-col" style="width:100%; align-items:center;">
+      <div><img src="images/rl-formulation.png" style="max-width:100%; max-height:520px"></div>
+      <div style="text-align:left">
+        <ul>
+          <li>At each time step \(t\), the agent:
+            <ul>
+              <li>Receives state \(S_t\)</li>
+              <li>Receives <strong>scalar</strong> reward \(R_t\)</li>
+              <li>Executes action \(A_t\)</li>
+            </ul>
+          </li>
+          <li>The environment:
+            <ul>
+              <li>Receives action \(A_t\)</li>
+              <li>Emits state \(S_{t+1}\)</li>
+              <li>Emits reward \(R_{t+1}\)</li>
+            </ul>
+          </li>
+          <li>This produces a <strong>trajectory</strong>: \(S_0,A_0,R_1,S_1,A_1,R_2,\ldots\)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</section>
+
+<!-- Grid World group (8 sub-slides) -->
+<section>
+<section>
+  <div class="frame-title">RL Example: Grid World</div>
+  <div class="two-col">
+    <div><img src="images/grid-world.png" style="max-height:420px"></div>
+    <div style="text-align:left">
+      <ul>
+        <li><strong>Task</strong>: Robot spawns at Start (blue) and must reach Goal (green)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+<section>
+  <div class="frame-title">RL Example: Grid World</div>
+  <div class="two-col">
+    <div><img src="images/grid-world-state.png" style="max-height:420px"></div>
+    <div style="text-align:left">
+      <ul>
+        <li><strong>State Space</strong>: Every non-wall (white) cell \(s_i\)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+<section>
+  <div class="frame-title">RL Example: Grid World</div>
+  <div class="two-col">
+    <div><img src="images/grid-world-state.png" style="max-height:420px"></div>
+    <div style="text-align:left">
+      <ul>
+        <li><strong>State Space</strong>: Every non-wall (white) cell \(s_i\)</li>
+        <li><strong>State</strong>: Current position of robot (red)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+<section>
+  <div class="frame-title">RL Example: Grid World</div>
+  <div class="two-col">
+    <div><img src="images/grid-world-action.png" style="max-height:420px"></div>
+    <div style="text-align:left">
+      <ul>
+        <li><strong>Action</strong>: North, South, East, West</li>
+      </ul>
+    </div>
+  </div>
+</section>
+<section>
+  <div class="frame-title">RL Example: Grid World</div>
+  <div class="two-col">
+    <div><img src="images/grid-world-reward.png" style="max-height:420px"></div>
+    <div style="text-align:left">
+      <ul>
+        <li><strong>Reward</strong>: \(-1\) for every cell other than goal
+          \[ R_t = \begin{cases} -1, & S_t \ne \text{Goal} \\ \;\,0, & S_t = \text{Goal} \end{cases} \]
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+<section>
+  <div class="frame-title">RL Example: Grid World</div>
+  <div class="two-col">
+    <div><img src="images/grid-world-action.png" style="max-height:420px"></div>
+    <div style="text-align:left">
+      <ul>
+        <li><strong>Environment</strong>: Action into a wall keeps the robot in place<br>
+          \((S_1,A_W)\!\to\!S_2\), \((S_1,A_N)\!\to\!S_1\)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+<section>
+  <div class="frame-title">RL Example: Grid World</div>
+  <div class="two-col">
+    <div><img src="images/grid-world-eps1.png" style="max-height:420px"></div>
+    <div style="text-align:left">
+      <ul>
+        <li><strong>Episode</strong>: Terminates when total reward reaches \(-30\) or robot reaches goal
+          \[ \text{Return} = \sum_{t=1}^{T} R_t \]
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+<section>
+  <div class="frame-title">RL Example: Grid World</div>
+  <div class="two-col">
+    <div><img src="images/grid-world-eps2.png" style="max-height:420px"></div>
+    <div style="text-align:left">
+      <ul>
+        <li><strong>Episode</strong>: Terminates when total reward reaches \(-30\) or robot reaches goal
+          \[ \text{Return} = \sum_{t=1}^{T} R_t \]
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+</section>
+
+<!-- Portfolio -->
+<section class="full-slide">
+  <div class="frame-title">Portfolio Management: State, Action, Reward?</div>
+  <div class="center full-img"><img src="images/portfolio-management-formulation.png"></div>
+</section>
+
+<!-- Self-Driving -->
+<section class="full-slide">
+  <div class="frame-title">Self Driving: State, Action, Reward?</div>
+  <div class="center full-img"><img src="images/self-driving-formulation.png"></div>
+</section>
+
+<!-- Reward Signal (progressive) -->
+<section>
+  <section>
+    <div class="frame-title">Reward Signal</div>
+    <ul>
+      <li>Reward \(R_t\) is a <strong>scalar feedback</strong> signal at each time step</li>
+      <li>Measures how well the agent is doing at that instant</li>
+    </ul>
+  </section>
+  <section>
+    <div class="frame-title">Reward Signal</div>
+    <ul>
+      <li>Reward \(R_t\) is a <strong>scalar feedback</strong> signal at each time step</li>
+      <li>Measures how well the agent is doing at that instant</li>
+    </ul>
+    <div class="callout" style="margin-top:1.2em">
+      <strong>Reward Hypothesis</strong><br>
+      <em>All</em> goals can be expressed as maximisation of <em>expected cumulative reward</em>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Reward Signal</div>
+    <ul>
+      <li>Reward \(R_t\) is a <strong>scalar feedback</strong> signal at each time step</li>
+      <li>Measures how well the agent is doing at that instant</li>
+    </ul>
+    <div class="callout" style="margin-top:1.2em">
+      <strong>Reward Hypothesis</strong><br>
+      <em>All</em> goals can be expressed as maximisation of <em>expected cumulative reward</em>
+    </div>
+    <ul style="margin-top:1em">
+      <li>Reward communicates <strong>what</strong> to achieve — not <strong>how</strong> to achieve it</li>
+    </ul>
+  </section>
+</section>
+
+<!-- ============================================================ -->
+<!-- Section: Observations, States & Markov Property            -->
+<!-- ============================================================ -->
+<section class="section-divider"><h1>Observations, States &amp; Markov Property</h1></section>
+
+<!-- Observations vs States (progressive) -->
+<section>
+  <section>
+    <div class="frame-title">Observations vs States</div>
+    <div class="two-col" style="width:100%; align-items:center;">
+      <div><img src="images/obs-formulation.png" style="max-width:100%; max-height:520px"></div>
+      <div style="text-align:left">
+        <ul>
+          <li><strong>Observation</strong> \(O_t\): what the agent actually perceives from the environment</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Observations vs States</div>
+    <div class="two-col" style="width:100%; align-items:center;">
+      <div><img src="images/obs-formulation.png" style="max-width:100%; max-height:520px"></div>
+      <div style="text-align:left">
+        <ul>
+          <li><strong>Observation</strong> \(O_t\): what the agent actually perceives from the environment</li>
+          <li>At each step the agent:
+            <ul>
+              <li>Receives observation \(O_t\) and reward \(R_t\)</li>
+              <li>Executes action \(A_t\)</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Observations vs States</div>
+    <div class="two-col" style="width:100%; align-items:center;">
+      <div><img src="images/obs-formulation.png" style="max-width:100%; max-height:520px"></div>
+      <div style="text-align:left">
+        <ul>
+          <li><strong>Observation</strong> \(O_t\): what the agent actually perceives from the environment</li>
+          <li>At each step the agent:
+            <ul>
+              <li>Receives observation \(O_t\) and reward \(R_t\)</li>
+              <li>Executes action \(A_t\)</li>
+            </ul>
+          </li>
+          <li><strong>State</strong> \(S_t\): a summary of history used to select actions</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</section>
+
+<!-- History and State -->
+<section>
+  <div class="frame-title">History and State</div>
+  <ul>
+    <li><strong>History</strong> is the full sequence of observations, actions, and rewards:
+      \[ H_t = O_0, A_0, R_1, O_1, A_1, \ldots, A_{t-1}, R_t, O_t \]
+    </li>
+    <li>What happens next depends on the history:
+      <ul>
+        <li>Agent selects the next action \(A_t\)</li>
+        <li>Environment returns \(R_{t+1}, O_{t+1}\)</li>
+      </ul>
+    </li>
+    <li><strong>State</strong> is a sufficient summary of history for decision-making:
+      \[ S_t = f(H_t) \]
+    </li>
+  </ul>
+</section>
+
+<!-- Environment State (progressive) -->
+<section>
+  <section>
+    <div class="frame-title">Environment State</div>
+    <div class="two-col" style="width:100%; align-items:center;">
+      <div><img src="images/env-state.png" style="max-width:100%; max-height:520px"></div>
+      <div style="text-align:left">
+        <ul>
+          <li>Environment state \(S_t^e\): the environment's private internal representation</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Environment State</div>
+    <div class="two-col" style="width:100%; align-items:center;">
+      <div><img src="images/env-state.png" style="max-width:100%; max-height:520px"></div>
+      <div style="text-align:left">
+        <ul>
+          <li>Environment state \(S_t^e\): the environment's private internal representation</li>
+          <li>Used to generate the next observation and reward</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Environment State</div>
+    <div class="two-col" style="width:100%; align-items:center;">
+      <div><img src="images/env-state.png" style="max-width:100%; max-height:520px"></div>
+      <div style="text-align:left">
+        <ul>
+          <li>Environment state \(S_t^e\): the environment's private internal representation</li>
+          <li>Used to generate the next observation and reward</li>
+          <li>May be <strong>invisible</strong> to the agent, or contain irrelevant information</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</section>
+
+<!-- Agent State (progressive) -->
+<section>
+  <section>
+    <div class="frame-title">Agent State</div>
+    <div class="two-col" style="width:100%; align-items:center;">
+      <div><img src="images/agent-state.png" style="max-width:100%; max-height:520px"></div>
+      <div style="text-align:left">
+        <ul>
+          <li>Agent state \(S_t^a\): the agent's own internal representation</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Agent State</div>
+    <div class="two-col" style="width:100%; align-items:center;">
+      <div><img src="images/agent-state.png" style="max-width:100%; max-height:520px"></div>
+      <div style="text-align:left">
+        <ul>
+          <li>Agent state \(S_t^a\): the agent's own internal representation</li>
+          <li>Information the RL algorithm uses to pick the next action</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Agent State</div>
+    <div class="two-col" style="width:100%; align-items:center;">
+      <div><img src="images/agent-state.png" style="max-width:100%; max-height:520px"></div>
+      <div style="text-align:left">
+        <ul>
+          <li>Agent state \(S_t^a\): the agent's own internal representation</li>
+          <li>Information the RL algorithm uses to pick the next action</li>
+          <li>Can be any function of history:
+            \[ S_t^a = g(H_t) \]
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</section>
+
+<!-- Rat Example -->
+<section>
+  <div class="frame-title">Agent State: Rat Example</div>
+  <img src="images/rat-example.png" style="max-height:380px">
+  <ul style="margin-top:0.6em">
+    <li>What should the agent state be?
+      <ul>
+        <li>Last 3 items in sequence?</li>
+        <li>Counts of lights, bells, and levers?</li>
+        <li>Complete sequence?</li>
+      </ul>
+    </li>
+  </ul>
+</section>
+
+<!-- Markov State (progressive) -->
+<section>
+  <section>
+    <div class="frame-title">Markov State (Information State)</div>
+    <div class="callout">
+      <strong>Markov Property</strong><br>
+      A state \(S_t\) is Markov if and only if:
+      \[ \mathbb{P}[S_{t+1} \mid S_t] = \mathbb{P}[S_{t+1} \mid S_0, S_1, \ldots, S_t] \]
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Markov State (Information State)</div>
+    <div class="callout">
+      <strong>Markov Property</strong><br>
+      A state \(S_t\) is Markov if and only if:
+      \[ \mathbb{P}[S_{t+1} \mid S_t] = \mathbb{P}[S_{t+1} \mid S_0, S_1, \ldots, S_t] \]
+    </div>
+    <ul style="margin-top:1em">
+      <li>The future is <strong>independent of the past</strong> given the present:
+        \[ H_{1:t} \;\to\; S_t \;\to\; H_{t+1:\infty} \]
+      </li>
+    </ul>
+  </section>
+  <section>
+    <div class="frame-title">Markov State (Information State)</div>
+    <div class="callout">
+      <strong>Markov Property</strong><br>
+      A state \(S_t\) is Markov if and only if:
+      \[ \mathbb{P}[S_{t+1} \mid S_t] = \mathbb{P}[S_{t+1} \mid S_0, S_1, \ldots, S_t] \]
+    </div>
+    <ul style="margin-top:1em">
+      <li>The future is <strong>independent of the past</strong> given the present:
+        \[ H_{1:t} \;\to\; S_t \;\to\; H_{t+1:\infty} \]
+      </li>
+      <li>A Markov state is a <strong>sufficient statistic</strong> for all future interaction</li>
+      <li>Both the environment state \(S_t^e\) and full history \(H_t\) are always Markov</li>
+    </ul>
+  </section>
+</section>
+
+<!-- Fully Observable -->
+<section>
+  <div class="frame-title">Fully Observable Environments</div>
+  <div class="two-col" style="width:100%; align-items:center;">
+    <div><img src="images/rl-formulation.png" style="max-width:100%; max-height:480px"></div>
+    <div style="text-align:left">
+      <p><strong>Full Observability</strong>: agent directly observes the environment state</p>
+      \[ O_t = S_t^e = S_t^a = S_t \]
+      <p>Formally this is a <strong>Markov Decision Process (MDP)</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- Partially Observable -->
+<section>
+  <div class="frame-title">Partially Observable Environments</div>
+  <div class="two-col" style="width:100%; align-items:center;">
+    <div><img src="images/humanoid-robot.png" style="max-width:100%; max-height:480px"></div>
+    <div style="text-align:left">
+      <p><strong>Partial Observability</strong>: agent sees only limited information</p>
+      <p>Formally a <strong>POMDP</strong> — agent must construct its own state:</p>
+      <ul>
+        <li>Complete history: \(S_t^a = H_t\)</li>
+        <li>Recurrent network: \(S_t^a = \sigma(S_{t-1}^a W_s + O_t W_o)\)</li>
+        <li>Belief state: \(S_t^a = (p(s_1), \ldots, p(s_n))\)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- Section: Elements of an RL Agent                           -->
+<!-- ============================================================ -->
+<section class="section-divider"><h1>Elements of an RL Agent</h1></section>
+
+<!-- Components overview -->
+<section>
+  <div class="frame-title">Components of an RL Agent</div>
+  <div class="two-col w64" style="align-items:center;">
+    <div><img src="images/agent-internals.png" style="max-height:480px"></div>
+    <div style="text-align:left">
+      <ul>
+        <li><strong>Policy</strong>: agent's behaviour function</li>
+        <li><strong>Value Function</strong>: how good is each state and/or action?</li>
+        <li><strong>Model</strong>: agent's representation of the environment</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Policy (progressive) -->
+<section>
+  <section>
+    <div class="frame-title">Policy Function</div>
+    <div class="two-col" style="width:100%; align-items:center;">
+      <div><img src="images/grid-world.png" style="max-height:480px"></div>
+      <div style="text-align:left">
+        <ul>
+          <li>Agent's behaviour: a map from state to action</li>
+          <li>Deterministic: \(a = \pi(s)\)</li>
+          <li>Stochastic: \(\pi(a|s) = \mathbb{P}[A_t = a \mid S_t = s]\)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Policy Function</div>
+    <div class="two-col" style="width:100%; align-items:center;">
+      <div><img src="images/grid-world-policy.png" style="max-height:480px"></div>
+      <div style="text-align:left">
+        <ul>
+          <li>Agent's behaviour: a map from state to action</li>
+          <li>Deterministic: \(a = \pi(s)\)</li>
+          <li>Stochastic: \(\pi(a|s) = \mathbb{P}[A_t = a \mid S_t = s]\)</li>
+          <li>Arrows show \(\pi(s)\) for each state</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</section>
+
+<!-- Value Function (progressive) -->
+<section>
+  <section>
+    <div class="frame-title">Value Function</div>
+    <div class="two-col" style="width:100%; align-items:center;">
+      <div><img src="images/grid-world.png" style="max-height:480px"></div>
+      <div style="text-align:left">
+        <ul>
+          <li>Prediction of future reward used to evaluate states</li>
+          <li>\[ v^\pi(s) = \mathbb{E}^\pi\!\left[ R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \cdots \;\middle|\; S_t = s \right] \]</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Value Function</div>
+    <div class="two-col" style="width:100%; align-items:center;">
+      <div><img src="images/grid-world-value.png" style="max-height:480px"></div>
+      <div style="text-align:left">
+        <ul>
+          <li>Prediction of future reward used to evaluate states</li>
+          <li>\[ v^\pi(s) = \mathbb{E}^\pi\!\left[ R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \cdots \;\middle|\; S_t = s \right] \]</li>
+          <li>Numbers in grid represent \(v^\pi(s)\)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</section>
+
+<!-- Model (progressive) -->
+<section>
+  <section>
+    <div class="frame-title">Model</div>
+    <div class="two-col" style="width:100%; align-items:center;">
+      <div><img src="images/grid-world.png" style="max-height:480px"></div>
+      <div style="text-align:left">
+        <ul>
+          <li>Predicts what the environment does next</li>
+          <li>Transition model: \(\mathcal{P}_{ss'}^a = \mathbb{P}[S_{t+1}=s' \mid S_t=s, A_t=a]\)</li>
+          <li>Reward model: \(\mathcal{R}_s^a = \mathbb{E}[R_{t+1} \mid S_t=s, A_t=a]\)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Model</div>
+    <div class="two-col" style="width:100%; align-items:center;">
+      <div><img src="images/grid-world-model.png" style="max-height:480px"></div>
+      <div style="text-align:left">
+        <ul>
+          <li>Predicts what the environment does next</li>
+          <li>Transition model: \(\mathcal{P}_{ss'}^a = \mathbb{P}[S_{t+1}=s' \mid S_t=s, A_t=a]\)</li>
+          <li>Reward model: \(\mathcal{R}_s^a = \mathbb{E}[R_{t+1} \mid S_t=s, A_t=a]\)</li>
+          <li>May be an imperfect representation of the environment</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</section>
+
+<!-- Types: Value / Policy / Actor-Critic (progressive) -->
+<section>
+  <section>
+    <div class="frame-title">Types of RL Agents</div>
+    <div class="two-col w64" style="align-items:center;">
+      <div style="text-align:left">
+        <ul>
+          <li><strong>Value Based</strong>
+            <ul>
+              <li>No explicit policy (implicit)</li>
+              <li>Learns value function</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+      <div><img src="images/atari-rl.png" style="max-height:360px"></div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Types of RL Agents</div>
+    <div class="two-col w64" style="align-items:center;">
+      <div style="text-align:left">
+        <ul>
+          <li><strong>Value Based</strong>
+            <ul>
+              <li>No explicit policy (implicit)</li>
+              <li>Learns value function</li>
+            </ul>
+          </li>
+          <li><strong>Policy Based</strong>
+            <ul>
+              <li>Learns policy directly</li>
+              <li>No value function</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+      <div><img src="images/policy-based.png" style="max-height:360px"></div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Types of RL Agents</div>
+    <div class="two-col w64" style="align-items:center;">
+      <div style="text-align:left">
+        <ul>
+          <li><strong>Value Based</strong>
+            <ul>
+              <li>No explicit policy (implicit)</li>
+              <li>Learns value function</li>
+            </ul>
+          </li>
+          <li><strong>Policy Based</strong>
+            <ul>
+              <li>Learns policy directly</li>
+              <li>No value function</li>
+            </ul>
+          </li>
+          <li><strong>Actor Critic</strong>
+            <ul>
+              <li>Learns both policy and value function</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+      <div><img src="images/actor-critic.png" style="max-height:360px"></div>
+    </div>
+  </section>
+</section>
+
+<!-- Types: Model-Free / Model-Based (progressive) -->
+<section>
+  <section>
+    <div class="frame-title">Types of RL Agents</div>
+    <div class="two-col w64" style="align-items:center;">
+      <div style="text-align:left">
+        <ul>
+          <li><strong>Model Free</strong>
+            <ul>
+              <li>Policy and/or value function</li>
+              <li>No model of the environment</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+      <div><img src="images/atari-rl.png" style="max-height:360px"></div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Types of RL Agents</div>
+    <div class="two-col w64" style="align-items:center;">
+      <div style="text-align:left">
+        <ul>
+          <li><strong>Model Free</strong>
+            <ul>
+              <li>Policy and/or value function</li>
+              <li>No model of the environment</li>
+            </ul>
+          </li>
+          <li><strong>Model Based</strong>
+            <ul>
+              <li>Policy and/or value function</li>
+              <li>Learns a model to plan ahead</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+      <div><img src="images/helicopter-flight.png" style="max-height:360px"></div>
+    </div>
+  </section>
+</section>
+
+<!-- RL Taxonomy (full slide) -->
+<section class="full-slide">
+  <div class="frame-title">RL Agent Taxonomy</div>
+  <div class="center full-img"><img src="images/rl-taxonomy.png"></div>
+</section>
+
+<!-- Prediction and Control -->
+<section>
+  <div class="frame-title">Prediction and Control</div>
+  <ul>
+    <li><strong>Prediction</strong>: evaluate the future
+      <ul><li>Given a policy, what is the value function?</li></ul>
+    </li>
+    <li><strong>Control</strong>: optimise the future
+      <ul><li>Find the best policy</li></ul>
+    </li>
+  </ul>
+</section>
+
+<!-- Grid World: Prediction -->
+<section>
+  <div class="frame-title">Grid World: Prediction</div>
+  <img src="images/gridworld-prediction.png" style="max-height:480px; margin-bottom:0.3em">
+  <p style="font-size:0.85em; margin-top:0">What is the value function for the uniform random policy?</p>
+</section>
+
+<!-- Grid World: Control -->
+<section>
+  <div class="frame-title">Grid World: Control</div>
+  <img src="images/gridworld-control.png" style="max-height:480px; margin-bottom:0.3em">
+  <p style="font-size:0.85em; margin-top:0">What is the optimal value function and optimal policy?</p>
+</section>
+
+<!-- Summary -->
+<section>
+  <div class="frame-title">Summary</div>
+  <ul>
+    <li>MDPs extend bandits: actions now shape <strong>state</strong> and all future rewards</li>
+    <li>The interface produces a trajectory \(S_0,A_0,R_1,S_1,A_1,R_2,\ldots\)</li>
+    <li>A <strong>Markov state</strong> captures all that history needs to predict the future</li>
+    <li>In a <strong>fully observable</strong> MDP: \(O_t = S_t^e = S_t^a\)</li>
+    <li>RL agents have three components: <strong>Policy</strong>, <strong>Value Function</strong>, <strong>Model</strong></li>
+    <li><em>Next lecture</em>: returns, discounting, episodic vs continuing tasks</li>
+  </ul>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/math/math.js"></script>
+<script>
+  Reveal.initialize({
+    width: 1280, height: 720, margin: 0.04,
+    hash: true, slideNumber: 'c/t',
+    plugins: [ RevealMath.MathJax3 ],
+    mathjax3: { mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js' }
+  });
+</script>
+</body>
+</html>

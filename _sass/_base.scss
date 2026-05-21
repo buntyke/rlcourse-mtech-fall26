@@ -302,10 +302,14 @@ a.tosu {
 
     .table-row-assignment {
         background-color: #d9edf7;
+        border-left: 4px solid #31708f;
+        border-right: 4px solid #31708f;
     }
 
     .table-row-due {
         background-color: #FCF8E5;
+        border-left: 4px solid #8a6d3b;
+        border-right: 4px solid #8a6d3b;
     }
 
     .table-row-exam {

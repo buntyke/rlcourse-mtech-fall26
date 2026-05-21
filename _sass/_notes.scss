@@ -1,0 +1,208 @@
+// ─── Notes feature ────────────────────────────────────────────────────────────
+
+// Two-column layout: sticky sidebar + main content
+.note-page {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  margin-top: 1.5rem;
+}
+
+// ── Sidebar ────────────────────────────────────────────────────────────────────
+.note-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 1.5rem;
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
+  border-right: 1px solid $grey-color-light;
+  padding-right: 1rem;
+}
+
+.note-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+
+.note-sidebar-title {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-weight: 700;
+  color: $grey-color;
+  font-family: 'Titillium Web', sans-serif;
+}
+
+.note-sidebar-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.65rem;
+  color: $grey-color;
+  padding: 2px 4px;
+  line-height: 1;
+
+  &:hover { color: $primary-color; }
+}
+
+// TOC list — hidden by default on mobile, shown via .toc-open
+.note-toc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: none;
+
+  &.toc-open { display: block; }
+
+  li {
+    margin: 0;
+    padding: 0;
+
+    &::before { content: none; }
+  }
+
+  li.toc-h2 > a {
+    display: block;
+    padding: 5px 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: $text-color;
+    text-decoration: none;
+    border-left: 3px solid transparent;
+    border-radius: 0 3px 3px 0;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+
+    &:hover {
+      color: $primary-color;
+      border-left-color: $primary-color;
+      background: lighten($primary-color, 52%);
+    }
+
+    &.active {
+      color: $primary-color;
+      border-left-color: $primary-color;
+      background: lighten($primary-color, 52%);
+    }
+  }
+
+  li.toc-h3 > a {
+    display: block;
+    padding: 3px 8px 3px 22px;
+    font-size: 0.76rem;
+    color: $grey-color;
+    text-decoration: none;
+    border-left: 3px solid transparent;
+    transition: border-color 0.15s, color 0.15s;
+
+    &:hover {
+      color: $primary-color;
+      border-left-color: lighten($primary-color, 25%);
+    }
+
+    &.active {
+      color: $primary-color;
+      border-left-color: lighten($primary-color, 25%);
+    }
+  }
+}
+
+// ── Main content ───────────────────────────────────────────────────────────────
+.note-main {
+  flex: 1;
+  min-width: 0;
+}
+
+// ── Problem block ──────────────────────────────────────────────────────────────
+.problem {
+  background: #f0f7ff;
+  border-left: 4px solid $primary-color;
+  border-radius: 0 5px 5px 0;
+  padding: 1rem 1.25rem;
+  margin: 1.75rem 0;
+
+  &::before {
+    content: "Problem";
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: $primary-color;
+    margin-bottom: 0.5rem;
+    font-family: 'Titillium Web', sans-serif;
+  }
+
+  p:last-child { margin-bottom: 0; }
+}
+
+// ── Practice sections ──────────────────────────────────────────────────────────
+.practice-short,
+.practice-long {
+  border-radius: 5px;
+  padding: 1.2rem 1.5rem;
+  margin: 2rem 0 1rem;
+
+  &::before {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 0.75rem;
+    font-family: 'Titillium Web', sans-serif;
+  }
+
+  ol {
+    padding-left: 1.4rem;
+    margin: 0;
+
+    li {
+      margin-bottom: 0.55rem;
+      font-size: 0.92rem;
+      list-style-type: decimal;
+
+      &::before { content: none; }
+    }
+  }
+}
+
+.practice-short {
+  background: #fff8f0;
+  border: 1px solid #f5d9b0;
+
+  &::before {
+    content: "Short Answer Questions";
+    color: $accent-color;
+  }
+}
+
+.practice-long {
+  background: #f8f0ff;
+  border: 1px solid #d4b0f0;
+
+  &::before {
+    content: "JNTU Sessional Practice";
+    color: $title-color;
+  }
+}
+
+// ── Mobile: collapse sidebar to an inline dropdown ─────────────────────────────
+@include media-query($on-laptop) {
+  .note-page {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .note-sidebar {
+    width: 100%;
+    position: static;
+    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid $grey-color-light;
+    padding-right: 0;
+    padding-bottom: 0.75rem;
+  }
+}

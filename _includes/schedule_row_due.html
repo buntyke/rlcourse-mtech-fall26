@@ -1,11 +1,16 @@
-<div class="col col-1" style="color: #8a6d3b ;font-weight: bold;" data-label="Event">Due</div>
+<div class="col col-1" style="color: #8a6d3b; font-weight: bold;" data-label="Event">Due</div>
 <div class="col col-1-2" style="font-weight: bold" data-label="Date">
-    {{ event.date | date: site.dateformat }}
-    {{ event.date | date: "%H:%M" }}
-    <br class="date-spliter" />{{ event.date | date: "%A" }}
+    {{ include.event.date | date: site.dateformat }}
+    {{ include.event.date | date: "%H:%M" }}
+    <br class="date-spliter" />{{ include.event.date | date: "%A" }}
 </div>
 <div class="col col-2" style="font-weight: bold" data-label="Description">
     {{ include.event.description }}
 </div>
-<div class="col col-4" data-label="Course Material">
+<div class="col col-res" data-label="Resources">
+    {% if include.event.assignment_url %}
+    <a href="{{ include.event.assignment_url | prepend: site.baseurl }}" title="View assignment page" style="display:inline-block;">
+        <i class="fas fa-file-alt"></i> Details
+    </a>
+    {% endif %}
 </div>

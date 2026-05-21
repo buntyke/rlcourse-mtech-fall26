@@ -1,0 +1,36 @@
+---
+layout: page
+---
+
+{{ content }}
+
+{% assign published_notes = site.notes | where: "status", "available" | sort: "unit" %}
+
+{% if published_notes.size > 0 %}
+<table style="width:100%; border-collapse: collapse; margin-top: 1em;">
+  <thead>
+    <tr style="border-bottom: 2px solid #ccc;">
+      <th style="text-align:center; padding: 8px 12px; width:60px;">Unit</th>
+      <th style="text-align:left; padding: 8px 12px;">Title</th>
+      <th style="text-align:left; padding: 8px 12px;">Topics</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for note in published_notes %}
+    <tr style="border-bottom: 1px solid #eee;">
+      <td style="text-align:center; padding: 8px 12px; font-weight:600; color:#213c8b;">
+        {{ note.unit }}
+      </td>
+      <td style="padding: 8px 12px;">
+        <a href="{{ note.url | prepend: site.baseurl }}">{{ note.title }}</a>
+      </td>
+      <td style="padding: 8px 12px; font-size:0.88em; color:#555;">
+        {{ note.topics }}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p style="color:#888; margin-top:1.5em;">Notes will be posted here as each unit is covered in class. Check back soon.</p>
+{% endif %}

@@ -8,6 +8,7 @@ due_event:
     type: due
     date: 2026-05-18T23:59:00+05:30
     description: "Assignment 1 due"
+    assignment_url: /assignments/assignment1/
 ---
 
 **Topics covered:** Unit I — Foundations & Bandit Algorithms

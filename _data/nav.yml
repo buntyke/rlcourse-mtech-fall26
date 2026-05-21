@@ -15,6 +15,10 @@ items:
   name: Assignments
   icon_class: fas fa-user-graduate
 
+- url: /notes/
+  name: Notes
+  icon_class: fas fa-file-alt
+
 - url: /materials/
   name: Materials
   icon_class: fas fa-book

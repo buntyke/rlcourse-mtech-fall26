@@ -64,31 +64,19 @@ MathJax = {
 </div>
 
 <div class="note-page">
+  <div class="post">
+    <header class="post-header">
+      <span class="class-type-badge" style="background:#e8f0fe; color:#213c8b;">Unit {{ page.unit }}</span>
+      <h1 class="post-title">{{ page.title }}</h1>
+      {% if page.topics %}
+      <p class="post-meta" style="margin-top:0.4em;">{{ page.topics }}</p>
+      {% endif %}
+    </header>
 
-  <aside class="note-sidebar">
-    <div class="note-sidebar-header">
-      <span class="note-sidebar-title">Contents</span>
-      <button class="note-sidebar-toggle" aria-expanded="true" aria-label="Toggle table of contents">&#9660;</button>
-    </div>
-    <ul class="note-toc-list" id="note-toc"></ul>
-  </aside>
-
-  <div class="note-main">
-    <div class="post">
-      <header class="post-header">
-        <span class="class-type-badge" style="background:#e8f0fe; color:#213c8b;">Unit {{ page.unit }}</span>
-        <h1 class="post-title">{{ page.title }}</h1>
-        {% if page.topics %}
-        <p class="post-meta" style="margin-top:0.4em;">{{ page.topics }}</p>
-        {% endif %}
-      </header>
-
-      <article class="post-content note-main-content">
-        {{ content }}
-      </article>
-    </div>
+    <article class="post-content">
+      {{ content }}
+    </article>
   </div>
-
 </div>
 
 <div class="class-nav-bar class-nav-bar-bottom">
@@ -111,68 +99,3 @@ MathJax = {
   </div>
 </div>
 
-<script>
-(function () {
-  var content = document.querySelector('.note-main-content');
-  var toc     = document.getElementById('note-toc');
-  var toggle  = document.querySelector('.note-sidebar-toggle');
-  if (!content || !toc) return;
-
-  // Build TOC from h2 and h3 headings
-  var headings = content.querySelectorAll('h2, h3');
-  headings.forEach(function (h, i) {
-    if (!h.id) {
-      h.id = 'sec-' + i + '-' + h.textContent.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    }
-    var li = document.createElement('li');
-    li.className = h.tagName === 'H2' ? 'toc-h2' : 'toc-h3';
-    var a = document.createElement('a');
-    a.href = '#' + h.id;
-    a.textContent = h.textContent;
-    li.appendChild(a);
-    toc.appendChild(li);
-  });
-
-  // Scroll spy via IntersectionObserver
-  var links = toc.querySelectorAll('a');
-  var activeLink = null;
-
-  function setActive(id) {
-    links.forEach(function (a) { a.classList.remove('active'); });
-    var target = toc.querySelector('a[href="#' + id + '"]');
-    if (target) {
-      target.classList.add('active');
-      activeLink = target;
-    }
-  }
-
-  if ('IntersectionObserver' in window) {
-    var observer = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          setActive(entry.target.id);
-        }
-      });
-    }, { rootMargin: '0px 0px -65% 0px', threshold: 0 });
-
-    headings.forEach(function (h) { observer.observe(h); });
-  }
-
-  // Mobile toggle
-  if (toggle) {
-    toggle.addEventListener('click', function () {
-      var open = toc.classList.toggle('toc-open');
-      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-      toggle.textContent = open ? '▼' : '▶';
-    });
-    // Start open on desktop, closed on mobile
-    if (window.innerWidth > 950) {
-      toc.classList.add('toc-open');
-      toggle.setAttribute('aria-expanded', 'true');
-      toggle.textContent = '▼';
-    } else {
-      toggle.textContent = '▶';
-    }
-  }
-})();
-</script>

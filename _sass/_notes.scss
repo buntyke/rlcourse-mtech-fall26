@@ -1,121 +1,82 @@
 // ─── Notes feature ────────────────────────────────────────────────────────────
 
-// Two-column layout: sticky sidebar + main content
 .note-page {
-  display: flex;
-  gap: 2rem;
-  align-items: flex-start;
   margin-top: 1.5rem;
 }
 
-// ── Sidebar ────────────────────────────────────────────────────────────────────
-.note-sidebar {
-  width: 220px;
-  flex-shrink: 0;
-  position: sticky;
-  top: 1.5rem;
-  max-height: calc(100vh - 3rem);
-  overflow-y: auto;
-  border-right: 1px solid $grey-color-light;
-  padding-right: 1rem;
-}
+// ── Inline collapsible TOC (uses native <details>/<summary>) ──────────────────
+.toc-inline {
+  border: 1px solid $grey-color-light;
+  border-radius: 5px;
+  margin: 0 0 2rem;
+  background: #f9f9fb;
 
-.note-sidebar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.6rem;
-}
-
-.note-sidebar-title {
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  font-weight: 700;
-  color: $grey-color;
-  font-family: 'Titillium Web', sans-serif;
-}
-
-.note-sidebar-toggle {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 0.65rem;
-  color: $grey-color;
-  padding: 2px 4px;
-  line-height: 1;
-
-  &:hover { color: $primary-color; }
-}
-
-// TOC list — hidden by default on mobile, shown via .toc-open
-.note-toc-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: none;
-
-  &.toc-open { display: block; }
-
-  li {
-    margin: 0;
-    padding: 0;
-
-    &::before { content: none; }
-  }
-
-  li.toc-h2 > a {
-    display: block;
-    padding: 5px 8px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: $text-color;
-    text-decoration: none;
-    border-left: 3px solid transparent;
-    border-radius: 0 3px 3px 0;
-    transition: border-color 0.15s, color 0.15s, background 0.15s;
-
-    &:hover {
-      color: $primary-color;
-      border-left-color: $primary-color;
-      background: lighten($primary-color, 52%);
-    }
-
-    &.active {
-      color: $primary-color;
-      border-left-color: $primary-color;
-      background: lighten($primary-color, 52%);
-    }
-  }
-
-  li.toc-h3 > a {
-    display: block;
-    padding: 3px 8px 3px 22px;
-    font-size: 0.76rem;
+  summary.toc-summary {
+    cursor: pointer;
+    padding: 0.6rem 1rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
     color: $grey-color;
-    text-decoration: none;
-    border-left: 3px solid transparent;
-    transition: border-color 0.15s, color 0.15s;
+    font-family: 'Titillium Web', sans-serif;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    user-select: none;
 
-    &:hover {
-      color: $primary-color;
-      border-left-color: lighten($primary-color, 25%);
+    &::-webkit-details-marker { display: none; }
+
+    &::before {
+      content: '▶';
+      font-size: 0.55rem;
+      transition: transform 0.2s;
+      display: inline-block;
+    }
+  }
+
+  &[open] summary.toc-summary::before {
+    transform: rotate(90deg);
+  }
+
+  .toc-body {
+    padding: 0.5rem 1rem 0.75rem 1.25rem;
+    columns: 2;
+    column-gap: 2rem;
+
+    @include media-query($on-palm) {
+      columns: 1;
     }
 
-    &.active {
-      color: $primary-color;
-      border-left-color: lighten($primary-color, 25%);
+    ol {
+      margin: 0;
+      padding-left: 1.2rem;
+      break-inside: avoid;
+
+      li {
+        font-size: 0.85rem;
+        margin-bottom: 0.25rem;
+        list-style-type: decimal;
+        &::before { content: none; }
+
+        a {
+          color: $text-color;
+          text-decoration: none;
+          &:hover { color: $primary-color; text-decoration: underline; }
+        }
+
+        ol {
+          margin-top: 0.2rem;
+          padding-left: 1rem;
+          list-style-type: lower-alpha;
+        }
+      }
     }
   }
 }
 
-// ── Main content ───────────────────────────────────────────────────────────────
-.note-main {
-  flex: 1;
-  min-width: 0;
-}
-
-// ── Problem block ──────────────────────────────────────────────────────────────
+// ── Problem / worked-example block ────────────────────────────────────────────
 .problem {
   background: #f0f7ff;
   border-left: 4px solid $primary-color;
@@ -138,7 +99,7 @@
   p:last-child { margin-bottom: 0; }
 }
 
-// ── Practice sections ──────────────────────────────────────────────────────────
+// ── Practice question sections ─────────────────────────────────────────────────
 .practice-short,
 .practice-long {
   border-radius: 5px;
@@ -163,7 +124,6 @@
       margin-bottom: 0.55rem;
       font-size: 0.92rem;
       list-style-type: decimal;
-
       &::before { content: none; }
     }
   }
@@ -172,37 +132,11 @@
 .practice-short {
   background: #fff8f0;
   border: 1px solid #f5d9b0;
-
-  &::before {
-    content: "Short Answer Questions";
-    color: $accent-color;
-  }
+  &::before { content: "Short Answer Questions"; color: $accent-color; }
 }
 
 .practice-long {
   background: #f8f0ff;
   border: 1px solid #d4b0f0;
-
-  &::before {
-    content: "JNTU Sessional Practice";
-    color: $title-color;
-  }
-}
-
-// ── Mobile: collapse sidebar to an inline dropdown ─────────────────────────────
-@include media-query($on-laptop) {
-  .note-page {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .note-sidebar {
-    width: 100%;
-    position: static;
-    max-height: none;
-    border-right: none;
-    border-bottom: 1px solid $grey-color-light;
-    padding-right: 0;
-    padding-bottom: 0.75rem;
-  }
+  &::before { content: "Long Answer Questions"; color: $title-color; }
 }

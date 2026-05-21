@@ -1,0 +1,11 @@
+Style: clean academic textbook illustration, flat vector aesthetic with subtle gradients, deep navy blue (#213c8b) as primary color on a white background, soft accent in warm amber (#e8a83a), minimal line work, no photorealism, generous whitespace, suitable for a university lecture slide.
+
+A single image divided into TWO equal vertical halves by one thin vertical divider line down the middle. There must be EXACTLY ONE horizontal flow per half — no duplicated or smaller inline copies anywhere.
+
+LEFT HALF: at the very top a single heading reading "Value-based" in deep navy bold sans-serif. Below the heading, ONE single horizontal row of FOUR rounded rectangles connected left-to-right by three warm-amber arrows. The four rectangles each contain (in order, left to right): (1) a small data cloud icon with a one-word caption "Data" beneath it; (2) a small bar chart with three bars and the caption "Q(a) estimates" beneath it; (3) a small trophy icon with the caption "argmax" beneath it; (4) a small pointing-hand icon with the caption "Action" beneath it.
+
+RIGHT HALF: at the very top a single heading reading "Preference-based" in deep navy bold sans-serif. Below the heading, ONE single horizontal row of FOUR rounded rectangles connected left-to-right by three warm-amber arrows. The four rectangles each contain (in order, left to right): (1) a small data cloud icon with caption "Data" beneath; (2) three slider knobs of varying heights with caption "H(a) preferences" beneath; (3) a soft bell curve shape with caption "Softmax π(a)" beneath; (4) a die-with-arrow icon with caption "Sampled action" beneath.
+
+Important constraints: the two halves must be visually parallel — same rectangle size, same vertical position, same row count. There must be only ONE row of icons per half. Do not draw a second smaller row underneath. Do not duplicate the flow.
+
+Color palette: deep navy (#213c8b) for line work, icons, and labels; warm amber (#e8a83a) for arrows. White background. Sans-serif font for all text. All caption text must be short (one or two words), legible, and rendered cleanly without spelling errors.

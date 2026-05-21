@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RL Lecture 5 — Gradient Bandits &amp; Contextual Bandits</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css" id="theme">
+<style>
+  :root { --rl-red: #213c8b; --rl-white: rgb(235,235,235); --muted:#666; --soft:#eef2fb; --green:#3f7f5f; --amber:#d99a26; --rose:#b45858; }
+  .reveal { font-family: "Lato", "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 30px; }
+  .reveal h1, .reveal h2, .reveal h3, .reveal h4 { color: var(--rl-red); font-weight: 700; text-transform: none; }
+  .reveal .slides > section, .reveal .slides > section > section {
+    top: 0 !important; height: 100%; display: flex !important; flex-direction: column;
+    justify-content: center; align-items: center; padding: 70px 30px 60px 30px !important; box-sizing: border-box;
+  }
+  .reveal .frame-title { position: absolute; top: 18px; left: 30px; right: 30px; color: var(--rl-red); font-size: 1.2em; font-weight: 700; border-bottom: 2px solid var(--rl-red); padding-bottom: .2em; margin: 0; text-align: left; }
+  .reveal section img { background: none; border: none; box-shadow: none; margin: .3em auto; }
+  .reveal .title-slide { background: #fff; color: var(--rl-red); padding: 2em; text-align: center !important; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%; }
+  .reveal .title-slide h1, .reveal .title-slide h2, .reveal .title-slide p { color: var(--rl-red); text-align: center !important; width: 100%; }
+  .two-col { display: flex; gap: 1em; align-items: center; justify-content: center; width: 100%; }
+  .two-col > div { flex: 1; text-align: center; }
+  .two-col.w64 > div:first-child { flex: 0 0 60%; }
+  .two-col.w64 > div:last-child  { flex: 0 0 36%; }
+  .reveal ul { display: inline-block; text-align: left; margin: 0 auto; font-size: .90em; }
+  .reveal ul > li { margin-bottom: .6em; }
+  .reveal ul > li:last-child { margin-bottom: 0; }
+  .reveal ul ul > li { margin-bottom: 0; }
+  .reveal p { font-size: .95em; }
+  .reveal section { text-align: center; }
+  .reveal .small { font-size: .7em; }
+  .reveal .has-footnote img { max-height: 480px; max-width: 85%; height: auto; }
+  .reveal .full-img { width: 100%; text-align: center; }
+  .reveal .full-img img { height: 540px; width: auto; max-width: 95%; }
+  .reveal .has-footnote.full-slide .full-img img { height: 500px; }
+  .reveal section.full-slide { padding-top: 55px !important; padding-bottom: 25px !important; }
+  .reveal .footnote { position: absolute; left: 30px; right: 30px; bottom: 10px; font-size: .5em; font-style: italic; color: #555; border-top: 1px solid #888; padding-top: 4px; text-align: left; margin: 0; }
+  .reveal .center { text-align: center; }
+  .reveal a { color: var(--rl-red); }
+  .reveal .boardwork { background: #f6f1e7; border-left: 4px solid var(--rl-red); padding: .5em .9em; font-size: .8em; text-align: left; max-width: 85%; margin: .8em auto; }
+  .reveal .mathline { margin: .5em auto; font-size: 1em; text-align: center; }
+  .reveal pre code { font-size: .65em; line-height: 1.25; text-align: left; }
+  .reveal pre.large-pseudo { width: 92%; min-height: 470px; display: flex; align-items: center; justify-content: center; padding: 1em 1.4em; }
+  .reveal pre.large-pseudo code { font-size: 1.35em; line-height: 1.7; width: 100%; }
+  .reveal .intuition { background:#fff7e6; border-left:4px solid var(--amber); padding:.55em .9em; font-size:.85em; text-align:left; max-width:85%; margin:.6em auto; }
+  .reveal .definition { background:#eef2fb; border-left:4px solid var(--rl-red); padding:.65em 1em; font-size:.95em; text-align:left; max-width:88%; margin:.5em auto; }
+  .reveal table.env { border-collapse: collapse; margin: .4em auto; font-size: .68em; }
+  .reveal table.env th, .reveal table.env td { border: 1px solid #999; padding: .3em .55em; }
+  .reveal table.env th { background: #f0ecdd; color: var(--rl-red); }
+  .reveal .question { border-left: 4px solid var(--rl-red); background: var(--soft); padding: .65em .9em; text-align: left; width: 82%; font-size: .82em; }
+  .reveal .question ol { margin: .4em 0 0 1.2em; }
+  .reveal .question li { margin-bottom: .22em; }
+  .reveal .pill-row { display:flex; gap:.7em; justify-content:center; align-items:center; flex-wrap:wrap; }
+  .reveal .pill { border:1px solid #9aa8cf; padding:.45em .75em; border-radius:6px; color:#233; background:#fff; font-size:.78em; }
+  .reveal .mini-cards { display:grid; grid-template-columns: repeat(3, 1fr); gap:.8em; width:90%; }
+  .reveal .mini-card { border:1px solid #aeb8d6; border-radius:6px; padding:.75em; text-align:left; font-size:.78em; background:#fff; }
+  .reveal .accent { color: var(--rl-red); font-weight:700; }
+</style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- ========== F1 — Title slide ========== -->
+<section class="title-slide">
+  <h1 style="margin-bottom:.15em; font-size:2.4em">Reinforcement Learning</h1>
+  <h2 style="margin-top:0; font-size:1.6em">Lecture 5 — Gradient Bandits &amp; Contextual Bandits</h2>
+  <p style="margin-top:1.8em; font-size:1.4em">Nishanth Koganti</p>
+  <p style="font-size:1em">VNR VJIET — M.Tech AI &amp; DS</p>
+</section>
+
+<!-- ========== F2 — Today's Journey ========== -->
+<section>
+  <div class="frame-title">Today's Journey</div>
+  <ul>
+    <li>Part A — From action values to action <strong>preferences</strong></li>
+    <li>Part B — The gradient bandit update rule</li>
+    <li>Part C — Why it works: stochastic gradient ascent derivation</li>
+    <li>Part D — Empirical behaviour and the role of the baseline</li>
+    <li>Part E — Associative search and contextual bandits</li>
+    <li>Part F — Wrap-up, comparison, and bridge to policy gradient</li>
+  </ul>
+  <p class="center" style="margin-top:1.5em"><strong>Lecture material:</strong>
+    <a href="https://buntyke.github.io/rlcourse-mtech-fall26">buntyke.github.io/rlcourse-mtech-fall26</a></p>
+</section>
+
+<!-- ========== F3 — Acknowledgements ========== -->
+<section>
+  <div class="frame-title">Acknowledgements</div>
+  <p>The content of this lecture is based on:</p>
+  <ul>
+    <li>Chapter 2 of <strong>Reinforcement Learning: An Introduction</strong> (2nd ed.) by <em>Sutton &amp; Barto</em></li>
+  </ul>
+  <p class="center" style="margin-top:1.5em"><strong>Lecture material:</strong>
+    <a href="https://buntyke.github.io/rlcourse-mtech-fall26">buntyke.github.io/rlcourse-mtech-fall26</a></p>
+</section>
+
+<!-- ============================ PART A ============================ -->
+
+<!-- Slide 1 — Recap -->
+<section>
+  <div class="frame-title">Recap: What We've Done with Values So Far</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li>Callback: \(Q_t(a)\) drove every selection rule — greedy, \(\epsilon\)-greedy, UCB, KL-UCB, Thompson Sampling.</li>
+        <li>All previous methods <strong>estimate value, then act</strong>.</li>
+        <li>New idea today: skip the value estimate; learn a <em>preference</em> for each action directly.</li>
+      </ul>
+      <p class="mathline">\(\pi_t(a) \doteq \mathbb{P}[A_t = a]\)</p>
+    </div>
+    <div><img src="images/image_01_value_vs_preference.png" style="max-width:100%; max-height:430px"></div>
+  </div>
+</section>
+
+<!-- Slide 2 — Why preferences? -->
+<section>
+  <div class="frame-title">Why Learn Preferences Instead of Values?</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li>Action values have a fixed numerical meaning (expected reward).</li>
+        <li><strong>Preferences</strong> \(H_t(a) \in \mathbb{R}\) carry <strong>no absolute meaning</strong> — only relative differences matter.</li>
+        <li>Adding a constant to every preference leaves the policy unchanged.</li>
+        <li>This freedom enables a clean <strong>gradient-based</strong> update.</li>
+      </ul>
+    </div>
+    <div><img src="images/image_02_preference_invariance.png" style="max-width:100%; max-height:430px"></div>
+  </div>
+</section>
+
+<!-- Slide 3 — Softmax distribution -->
+<section>
+  <div class="frame-title">Softmax (Gibbs / Boltzmann) Distribution</div>
+  <div class="two-col w64">
+    <div>
+      <p class="mathline">\(\mathbb{P}[A_t = a] \doteq \dfrac{e^{H_t(a)}}{\sum_{x=1}^{k} e^{H_t(x)}} \doteq \pi_t(a)\)</p>
+      <ul>
+        <li>Initially \(H_1(a) = 0\) for all \(a\) — uniform policy.</li>
+        <li>Larger preference \(\Rightarrow\) higher selection probability, but never zero.</li>
+        <li>Built-in exploration: every action keeps non-zero probability.</li>
+      </ul>
+    </div>
+    <div><img src="images/image_03_softmax_curves.png" style="max-width:100%; max-height:430px"></div>
+  </div>
+</section>
+
+<!-- Slide 4 — Question #1 -->
+<section>
+  <div class="frame-title">Question #1 — Softmax = Sigmoid for k = 2</div>
+  <div class="question">
+    Show that for two actions, the softmax distribution reduces to the logistic / sigmoid function.
+    <br><br><em>Hint:</em> divide numerator and denominator by \(e^{H_t(1)}\) and let \(x = H_t(2) - H_t(1)\).
+  </div>
+  <aside class="notes">
+    \(\pi_t(2) = \frac{e^{H_t(2)}}{e^{H_t(1)} + e^{H_t(2)}} = \frac{1}{1 + e^{-(H_t(2)-H_t(1))}} = \sigma(x)\).
+  </aside>
+</section>
+
+<!-- ============================ PART B ============================ -->
+
+<!-- Slide 5 — Gradient Bandit in one sentence -->
+<section>
+  <div class="frame-title">Gradient Bandit in One Sentence</div>
+  <div class="definition">
+    <strong>Gradient bandit:</strong> maintain a real-valued preference \(H_t(a)\) for each action, sample actions from a softmax over these preferences, and update the preferences after each step using a stochastic-gradient rule that pushes preference up when reward beats a baseline and down when it falls short.
+  </div>
+  <ul style="margin-top:.6em">
+    <li>No \(Q\)-estimate is ever computed.</li>
+    <li>Update is differentiable in \(H\) — that's what makes it "gradient".</li>
+  </ul>
+  <div class="full-img" style="margin-top:.4em"><img src="images/image_04_gradient_bandit_cartoon.png" style="max-height:240px"></div>
+</section>
+
+<!-- Slide 6 — The Update Rule -->
+<section class="has-footnote">
+  <div class="frame-title">The Update Rule (Eq. 2.12)</div>
+  <p class="mathline">\(H_{t+1}(a) \doteq \begin{cases} H_t(a) + \alpha\,(R_t - \bar R_t)\,(1 - \pi_t(a)) & a = A_t \\[6pt] H_t(a) - \alpha\,(R_t - \bar R_t)\,\pi_t(a) & a \neq A_t \end{cases}\)</p>
+  <ul>
+    <li>\(\alpha &gt; 0\): step size.</li>
+    <li>\(\bar R_t\): running average of past rewards (the <strong>baseline</strong>).</li>
+    <li>Reward above baseline \(\Rightarrow\) selected action's preference increases.</li>
+    <li>Non-selected actions move in the <strong>opposite</strong> direction.</li>
+  </ul>
+  <div class="footnote">Sutton &amp; Barto, <em>Reinforcement Learning: An Introduction</em>, Ch. 2.8, Eq. 2.12.</div>
+</section>
+
+<!-- Slide 7 — The Baseline -->
+<section>
+  <div class="frame-title">The Baseline \(\bar R_t\)</div>
+  <p class="mathline">\(\bar R_{t+1} = \bar R_t + \tfrac{1}{t}\,(R_t - \bar R_t)\)</p>
+  <ul>
+    <li>\(\bar R_t\) is the incremental average of all rewards up to (but not including) time \(t\).</li>
+    <li>For nonstationary problems, replace \(\tfrac{1}{t}\) with a constant step size \(\alpha\).</li>
+    <li>Choice of baseline does <strong>not</strong> change the expected update — only its variance (we'll prove this).</li>
+  </ul>
+</section>
+
+<!-- Slide 8 — Pseudocode -->
+<section class="has-footnote">
+  <div class="frame-title">Gradient Bandit Algorithm</div>
+  <pre class="large-pseudo"><code>initialize H(a) = 0  for all a
+initialize R_bar = 0,  n = 0
+
+for t = 1, 2, ..., T:
+
+    pi(a) = exp(H(a)) / sum_b exp(H(b))    # softmax
+
+    A_t  ~  Categorical( pi )              # sample action
+    observe reward R_t
+
+    for each arm a:
+        if a == A_t:
+            H(a) += alpha * (R_t - R_bar) * (1 - pi(a))
+        else:
+            H(a) -= alpha * (R_t - R_bar) * pi(a)
+
+    n += 1
+    R_bar += (R_t - R_bar) / n             # update baseline</code></pre>
+  <div class="footnote">Sutton &amp; Barto, Ch. 2.8.</div>
+</section>
+
+<!-- Slide 9 — Worked Numeric Example -->
+<section>
+  <div class="frame-title">Worked Example: One Update Step</div>
+  <table class="env" style="font-size:.85em">
+    <tr><th>arm</th><th>H(a) before</th><th>π(a) before</th><th>H(a) after</th></tr>
+    <tr><td>1</td><td>0.00</td><td>0.33</td><td>−0.033</td></tr>
+    <tr><td>2 ← chosen</td><td>0.00</td><td>0.33</td><td class="accent">+0.067</td></tr>
+    <tr><td>3</td><td>0.00</td><td>0.33</td><td>−0.033</td></tr>
+  </table>
+  <p class="mathline">\(H_{t+1}(a) \doteq \begin{cases} H_t(a) + \alpha\,(R_t - \bar R_t)\,(1 - \pi_t(a)) & x = A_t \\[6pt] H_t(a) - \alpha\,(R_t - \bar R_t)\,\pi_t(a) & x \neq A_t \end{cases}\)</p>
+  <p style="margin-top:.3em; font-size:.85em"><em>Setup:</em> \(A_t = 2\), \(R_t = 1.0\), \(\bar R_t = 0\), \(\alpha = 0.1\).</p>
+  <div class="intuition" style="margin-top:.5em">
+    New softmax: \(\pi \approx (0.32,\,0.36,\,0.32)\). Arm 2 is now slightly more likely; the other two have shifted down by exactly the same amount.
+  </div>
+</section>
+
+<!-- Slide 10 — Question #2 -->
+<section>
+  <div class="frame-title">Question #2 — Effect of Subtracting the Baseline</div>
+  <div class="two-col w64">
+    <div>
+      <div class="question">
+        <strong>Scenario:</strong> Every reward in your problem lies between +9 and +11 — large absolute values, small differences between arms.
+        <br><br>(a) What does the algorithm look like with \(\bar R_t = 0\)?
+        <br>(b) Why does subtracting \(\bar R_t \approx 10\) make learning more reliable?
+      </div>
+    </div>
+    <div><img src="images/image_05_baseline_effect.png" style="max-width:100%; max-height:430px"></div>
+  </div>
+  <aside class="notes">
+    Without baseline every (R−0) is large &amp; positive → every selected action has its preference pushed up regardless of relative quality.
+    With baseline near 10 the sign of the update reflects above-vs-below average — exactly what we want.
+  </aside>
+</section>
+
+<!-- ============================ PART C — Vertical Stack (Slides 11–16) ============================ -->
+
+<section>
+
+  <!-- Slide 11 (vertical 1) — The Goal -->
+  <section>
+    <div class="frame-title">Why the Update Works — Step 1: The Goal</div>
+    <p class="mathline">\(H_{t+1}(a) \doteq H_t(a) + \alpha\,\dfrac{\partial \mathbb{E}[R_t]}{\partial H_t(a)}\)</p>
+    <p class="mathline">\(\mathbb{E}[R_t] = \sum_x \pi_t(x)\,q_*(x)\)</p>
+    <ul>
+      <li>We <em>want</em> exact gradient ascent on the expected reward.</li>
+      <li>Problem: we don't know \(q_*(x)\).</li>
+      <li>Plan: rewrite the gradient as an <strong>expectation we can sample</strong>.</li>
+    </ul>
+  </section>
+
+  <!-- Slide 12 (vertical 2) — Introduce a Baseline -->
+  <section>
+    <div class="frame-title">Step 2: Introduce a Baseline \(B_t\)</div>
+    <p class="mathline">\(\dfrac{\partial \mathbb{E}[R_t]}{\partial H_t(a)} = \sum_x q_*(x)\,\dfrac{\partial \pi_t(x)}{\partial H_t(a)}\)</p>
+    <p class="mathline">\(= \sum_x \big(q_*(x) - B_t\big)\,\dfrac{\partial \pi_t(x)}{\partial H_t(a)}\)</p>
+    <p class="mathline" style="font-size:.9em">because \(\sum_x \dfrac{\partial \pi_t(x)}{\partial H_t(a)} = 0\)</p>
+    <div class="boardwork">🖊️ <strong>Board:</strong> probabilities sum to 1, so their gradient sums to 0 — the baseline term vanishes.</div>
+  </section>
+
+  <!-- Slide 13 (vertical 3) — Multiply and Divide by π -->
+  <section>
+    <div class="frame-title">Step 3: Multiply and Divide by \(\pi_t(x)\)</div>
+    <p class="mathline">\(\dfrac{\partial \mathbb{E}[R_t]}{\partial H_t(a)} = \sum_x \pi_t(x)\,(q_*(x) - B_t)\,\dfrac{\partial \pi_t(x)/\partial H_t(a)}{\pi_t(x)}\)</p>
+    <p class="mathline">\(= \mathbb{E}\!\left[(q_*(A_t) - B_t)\,\dfrac{\partial \pi_t(A_t)/\partial H_t(a)}{\pi_t(A_t)}\right]\)</p>
+    <p style="font-size:.85em">Choose \(B_t = \bar R_t\) and substitute \(\mathbb{E}[R_t \mid A_t] = q_*(A_t)\):</p>
+    <p class="mathline">\(= \mathbb{E}\!\left[(R_t - \bar R_t)\,\dfrac{\partial \pi_t(A_t)/\partial H_t(a)}{\pi_t(A_t)}\right]\)</p>
+  </section>
+
+  <!-- Slide 14 (vertical 4) — Softmax Derivative -->
+  <section>
+    <div class="frame-title">Step 4: The Softmax Derivative (Boardwork)</div>
+    <div class="boardwork">🖊️ <strong>Claim:</strong> \(\dfrac{\partial \pi_t(x)}{\partial H_t(a)} = \pi_t(x)\,\big(\mathbb{1}_{a=x} - \pi_t(a)\big)\)</div>
+    <p style="font-size:.85em">Quotient rule on the softmax:</p>
+    <p class="mathline" style="font-size:.85em">\(\dfrac{\partial}{\partial H_t(a)}\dfrac{e^{H_t(x)}}{\sum_y e^{H_t(y)}}
+      = \dfrac{\mathbb{1}_{a=x}\,e^{H_t(x)}\sum_y e^{H_t(y)} \;-\; e^{H_t(x)}\,e^{H_t(a)}}{\left(\sum_y e^{H_t(y)}\right)^2}\)</p>
+    <p class="mathline">\(= \mathbb{1}_{a=x}\,\pi_t(x) - \pi_t(x)\,\pi_t(a) = \pi_t(x)\,(\mathbb{1}_{a=x} - \pi_t(a))\)</p>
+  </section>
+
+  <!-- Slide 15 (vertical 5) — Plug In and Recover -->
+  <section>
+    <div class="frame-title">Step 5: Plug In and Recover Eq. 2.12</div>
+    <p style="font-size:.85em">Substituting the derivative into the expectation:</p>
+    <p class="mathline">\(\dfrac{\partial \mathbb{E}[R_t]}{\partial H_t(a)} = \mathbb{E}\!\left[(R_t - \bar R_t)\,(\mathbb{1}_{a=A_t} - \pi_t(a))\right]\)</p>
+    <p style="font-size:.85em">A single sample of this expectation is exactly the update from Slide 6:</p>
+    <p class="mathline">\(H_{t+1}(a) = H_t(a) + \alpha\,(R_t - \bar R_t)\,(\mathbb{1}_{a=A_t} - \pi_t(a))\)</p>
+    <div class="intuition"><strong>Conclusion:</strong> Eq. 2.12 is <em>stochastic gradient ascent</em> on \(\mathbb{E}[R_t]\).</div>
+  </section>
+
+  <!-- Slide 16 (vertical 6) — What the derivation bought us -->
+  <section>
+    <div class="frame-title">Step 6: What the Derivation Bought Us</div>
+    <div class="two-col w64">
+      <div>
+        <ul>
+          <li>Expected update equals the true gradient \(\Rightarrow\) <strong>SGA convergence</strong> applies.</li>
+          <li>Baseline \(B_t\) is a free choice — affects <strong>variance</strong>, not expectation.</li>
+          <li>\(B_t = \bar R_t\) is simple and works well; it is not provably optimal.</li>
+          <li><strong>Same recipe powers REINFORCE and policy gradient methods.</strong></li>
+        </ul>
+      </div>
+      <div><img src="images/image_06_sga_landscape.png" style="max-width:100%; max-height:430px"></div>
+    </div>
+  </section>
+
+</section>
+
+<!-- Slide 17 — Question #3 -->
+<section>
+  <div class="frame-title">Why the Baseline Doesn't Bias the Update</div>
+  <div class="question">
+    <strong>Question:</strong> In the derivation we added \(-B_t\,\dfrac{\partial \pi_t(x)}{\partial H_t(a)}\) to each term in the gradient sum. Why is the <em>expected</em> update unchanged for any choice of \(B_t\) (constant, zero, or \(\bar R_t\))?
+  </div>
+  <aside class="notes">
+    Because \(\sum_x \partial \pi_t(x)/\partial H_t(a) = 0\): multiplying by any \(B_t\) that doesn't depend on \(x\) and summing gives zero. Variance of the estimator changes; expectation does not.
+  </aside>
+</section>
+
+<!-- ============================ PART D — Empirical ============================ -->
+
+<!-- Slide 18 — Shifted testbed -->
+<section class="has-footnote">
+  <div class="frame-title">The 10-Armed Testbed Shifted by +4</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li>S&amp;B re-run the testbed with all true means shifted up by <strong>+4</strong>: \(q_*(a) \sim \mathcal{N}(+4, 1)\).</li>
+        <li>Raw rewards are now uniformly positive — a stress test for the baseline.</li>
+        <li>Without a baseline, every \((R_t - 0)\) is positive — preferences will drift.</li>
+      </ul>
+    </div>
+    <div><img src="images/sb_fig_2_5_gradient_bandit_baseline.jpeg" style="max-width:100%; max-height:430px"></div>
+  </div>
+  <div class="footnote">Sutton &amp; Barto, <em>Reinforcement Learning: An Introduction</em>, Ch. 2, Fig. 2.5.</div>
+</section>
+
+<!-- Slide 19 — With vs Without Baseline -->
+<section class="has-footnote full-slide">
+  <div class="frame-title">With vs Without the Baseline</div>
+  <div class="full-img"><img src="images/sb_fig_2_5_gradient_bandit_baseline.jpeg"></div>
+  <div class="footnote">Sutton &amp; Barto, <em>RL: An Introduction</em>, Ch. 2, Fig. 2.5 — gradient bandit with and without a reward baseline on the +4-shifted 10-armed testbed.</div>
+</section>
+
+<!-- Slide 20 — Parameter study -->
+<section class="has-footnote">
+  <div class="frame-title">Choosing \(\alpha\): A Parameter Study</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li>Like \(\epsilon\)-greedy and UCB, the gradient bandit has a sweet-spot \(\alpha\).</li>
+        <li>Too small \(\Rightarrow\) learns too slowly. Too large \(\Rightarrow\) noisy, unstable preferences.</li>
+        <li>S&amp;B's parameter study shows the characteristic <strong>inverted-U</strong> curve.</li>
+      </ul>
+    </div>
+    <div><img src="images/sb_fig_2_6_parameter_study.jpeg" style="max-width:100%; max-height:430px"></div>
+  </div>
+  <div class="footnote">Sutton &amp; Barto, <em>RL: An Introduction</em>, Ch. 2, Fig. 2.6.</div>
+</section>
+
+<!-- Slide 21 — Question #4 -->
+<section>
+  <div class="frame-title">Question #4 — What If \(B_t = 1000\)?</div>
+  <div class="question">
+    <strong>Scenario:</strong> You replace the baseline \(\bar R_t\) with the constant \(B_t = 1000\) — much larger than any actual reward.
+    <br><br>(a) Will the algorithm still converge to the optimal policy <em>in expectation</em>?
+    <br>(b) What practical problem will you observe in your training curves?
+  </div>
+  <aside class="notes">
+    (a) Yes — expected gradient is unchanged (Slide 17).
+    (b) Variance explodes: every \((R_t - 1000)\) is large and negative, so each step makes a huge swing. Convergence will be slow and noisy.
+  </aside>
+</section>
+
+<!-- ============================ PART E — Contextual Bandits ============================ -->
+
+<!-- Slide 22 — From nonassociative to associative -->
+<section>
+  <div class="frame-title">From Nonassociative to Associative</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li>All bandit settings so far: a <em>single</em> situation, find the best arm.</li>
+        <li>Real problems: the best action <strong>depends on context</strong> (time of day, user, sensor reading, screen colour).</li>
+        <li>We need a <strong>policy</strong> — a mapping from contexts to actions, not just one action.</li>
+      </ul>
+    </div>
+    <div><img src="images/image_07_nonassociative_vs_contextual.png" style="max-width:100%; max-height:430px"></div>
+  </div>
+</section>
+
+<!-- Slide 23 — The Coloured Slot Machine Story -->
+<section class="has-footnote">
+  <div class="frame-title">The Coloured-Slot-Machine Story (S&amp;B §2.9)</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li>Several different \(k\)-armed bandit tasks; one shown each step at random.</li>
+        <li>The machine displays a <strong>colour</strong> indicating which task it is.</li>
+        <li>Goal: learn a <em>policy</em> — "if red, pull arm 1; if green, pull arm 2; …"</li>
+        <li>Reward depends on the <strong>(context, action)</strong> pair.</li>
+      </ul>
+    </div>
+    <div><img src="images/image_08_coloured_slot_machines.png" style="max-width:100%; max-height:430px"></div>
+  </div>
+  <div class="footnote">Sutton &amp; Barto, <em>RL: An Introduction</em>, Ch. 2.9.</div>
+</section>
+
+<!-- Slide 24 — Definition slide -->
+<section>
+  <div class="frame-title">Contextual Bandit / Associative Search</div>
+  <div class="definition">
+    <strong>Contextual bandit (associative search):</strong> at each step the agent observes a context \(C_t\), selects an action \(A_t\), and receives a reward \(R_t\) drawn from a distribution depending on \(C_t\) and \(A_t\). Goal: learn a policy \(\pi : \text{contexts} \to \text{actions}\) that maximises expected reward.
+  </div>
+  <ul style="margin-top:.6em">
+    <li>Like a bandit: action affects only the <strong>immediate</strong> reward.</li>
+    <li>Like full RL: requires learning a <strong>policy</strong>, not a single action.</li>
+    <li>Bridge problem between Lecture 1's bandits and the next lecture's MDPs.</li>
+  </ul>
+</section>
+
+<!-- Slide 25 — Where contextual bandits sit -->
+<section class="has-footnote">
+  <div class="frame-title">Where Contextual Bandits Sit in the RL Landscape</div>
+  <table class="env" style="font-size:.78em">
+    <tr><th></th><th><em>k</em>-armed bandit</th><th>Contextual bandit</th><th>Full RL (MDP)</th></tr>
+    <tr><th>Situations</th><td>One</td><td>Many</td><td>Many</td></tr>
+    <tr><th>Goal</th><td>Best action</td><td>Best action <em>per context</em></td><td>Best action sequence</td></tr>
+    <tr><th>State transitions</th><td>None</td><td>None</td><td>Yes — action affects next state</td></tr>
+    <tr><th>Reward</th><td>Immediate</td><td>Immediate</td><td>Delayed, cumulative</td></tr>
+  </table>
+  <div style="text-align:center; margin-top:.5em"><img src="images/image_09_rl_landscape_flow.png" style="max-height:310px; width:auto; max-width:90%;"></div>
+  <div class="footnote">Sutton &amp; Barto, Ch. 2.9 (bridge to Ch. 3).</div>
+</section>
+
+<!-- Slide 26 — Application Lens -->
+<section>
+  <div class="frame-title">Application Lens: Personalised Recommendations</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li>Arms = candidate articles / ads / products.</li>
+        <li>Context = user features (location, time, history).</li>
+        <li>Reward = click / no-click, purchase / no-purchase.</li>
+        <li>Industry deployments (news feeds, ad targeting, A/B testing) are mostly contextual bandits — not full RL.</li>
+        <li>Why: feedback is immediate; no long-horizon planning needed (yet).</li>
+      </ul>
+    </div>
+    <div><img src="images/image_10_contextual_recommender.png" style="max-width:100%; max-height:430px"></div>
+  </div>
+</section>
+
+<!-- Slide 27 — Question #5 -->
+<section>
+  <div class="frame-title">Question #5 — The Value of Context (Exercise 2.10)</div>
+  <div class="question">
+    A 2-armed bandit task whose true values switch between two cases:
+    <ul style="margin:.4em 0 .4em 1.2em; font-size:1em">
+      <li>Case A: \(q_*(1) = 10,\; q_*(2) = 20\) — probability 0.5</li>
+      <li>Case B: \(q_*(1) = 90,\; q_*(2) = 80\) — probability 0.5</li>
+    </ul>
+    <br>
+    <br>(a) If you <strong>cannot</strong> tell which case you face, what is the best expected reward, and how should you act?
+    <br>
+    <br>(b) If you <strong>are told</strong> which case (associative / contextual), what is the best expected reward, and how should you act?
+  </div>
+
+  <aside class="notes">
+    (a) Marginal values: arm 1 → 50, arm 2 → 50. Indifferent; best expected reward = 50.
+    (b) Pick arm 2 in case A (= 20) and arm 1 in case B (= 90) → 0.5·20 + 0.5·90 = 55. Context is worth +5 per step.
+  </aside>
+</section>
+
+<!-- ============================ PART F — Wrap ============================ -->
+
+<!-- Slide 28 — Comparison Table -->
+<section class="has-footnote">
+  <div class="frame-title">Comparison: All Four Bandit Approaches</div>
+  <table class="env">
+    <tr><th></th><th>\(\epsilon\)-greedy</th><th>UCB</th><th>Gradient bandit</th><th>Contextual bandit</th></tr>
+    <tr><th>Learns</th><td>values</td><td>values + bonus</td><td>preferences</td><td>per-context policy</td></tr>
+    <tr><th>Exploration</th><td>random \(\epsilon\)</td><td>optimism</td><td>softmax</td><td>depends on inner alg.</td></tr>
+    <tr><th>Tunable</th><td>\(\epsilon\)</td><td>\(c\)</td><td>\(\alpha\) (and baseline)</td><td>varies</td></tr>
+    <tr><th>Best when</th><td>simple, robust</td><td>generic rewards</td><td>gradient-friendly</td><td>context observable</td></tr>
+  </table>
+  <div class="intuition" style="margin-top:.6em">All four follow the same arc: balance exploration and exploitation — only the <em>mechanism</em> changes.</div>
+  <div class="footnote">Sutton &amp; Barto, Ch. 2.7–2.9.</div>
+</section>
+
+<!-- Slide 29 — Bridge to Policy Gradient -->
+<section>
+  <div class="frame-title">Bridge to Policy Gradient</div>
+  <div class="two-col w55">
+    <div>
+      <ul>
+        <li>Gradient-bandit derivation is a <strong>template</strong> for a much bigger family.</li>
+        <li>Replace softmax-over-preferences with softmax-over-<strong>neural-network-outputs</strong> \(\Rightarrow\) policy network.</li>
+        <li>Replace average-reward baseline with a learned <strong>value function</strong> \(\Rightarrow\) actor–critic.</li>
+        <li>Replace immediate reward with the <strong>return</strong> \(G_t\) \(\Rightarrow\) REINFORCE.</li>
+      </ul>
+    </div>
+    <div><img src="images/image_11_policy_gradient_evolution.png" style="max-width:100%; max-height:700px"></div>
+  </div>
+</section>
+
+<!-- Slide 30 — Exit Check -->
+<section>
+  <div class="frame-title">Exit Check &amp; Next Lecture Bridge</div>
+  <ul>
+    <li><strong>Gradient bandit:</strong> preferences + softmax + stochastic gradient ascent.</li>
+    <li><strong>Baseline</strong> reduces variance, never biases the expected update.</li>
+    <li><strong>Contextual bandit:</strong> policy maps context → action; bridge to full RL.</li>
+    <li>All bandit settings share one feature: actions affect <em>only</em> the immediate reward.</li>
+    <li><strong>Next:</strong> Markov Decision Processes — when actions also affect <em>the next state</em>.</li>
+  </ul>
+</section>
+
+<!-- Slide 31 — Question #6 — Exit -->
+<section>
+  <div class="frame-title">Question #6 — Exit Check</div>
+  <div class="question">
+    <strong>Scenario:</strong> You are designing an algorithm for a news app that picks 1 of 5 headlines per visitor. You have rich user features (location, recent reads).
+    <br><br>(a) Is this a bandit, contextual bandit, or full RL problem? Why?
+    <br>(b) Would you reach for a <strong>gradient bandit</strong> here, or does the contextual nature change your choice? What would you change in the algorithm to make it context-aware?
+  </div>
+  <aside class="notes">
+    (a) Contextual bandit — feedback is immediate (click / no-click) and there's no long horizon, but the best headline depends on user features.
+    (b) Plain gradient bandit ignores context. Make preferences functions of context: \(H_t(a) = \theta_a^\top \phi(C_t)\). The same SGA derivation now gives a per-context policy update — the springboard to policy-gradient with function approximation.
+  </aside>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/math/math.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
+<script>
+  Reveal.initialize({
+    width: 1280, height: 720, margin: 0.04,
+    hash: true, slideNumber: 'c/t',
+    plugins: [ RevealMath.MathJax3, RevealNotes ],
+    mathjax3: { mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js' }
+  });
+</script>
+</body>
+</html>

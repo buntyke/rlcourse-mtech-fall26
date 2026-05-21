@@ -1,0 +1,18 @@
+Style: clean academic textbook illustration, flat vector aesthetic with subtle gradients, deep navy blue (#213c8b) as primary color on a white background, soft accent in warm amber (#e8a83a), minimal line work, no photorealism, generous whitespace, suitable for a university lecture slide.
+
+A two-panel side-by-side composition separated by a thin vertical divider, each panel containing a labelled scene.
+
+LEFT PANEL:
+- Title at the top: "Nonassociative bandit" in deep navy bold sans-serif.
+- A single navy slot machine drawn in the center of the panel, with three levers visible on its right side.
+- A small stick-figure agent stands on the left of the machine, its arm extended pointing at one specific lever (always the same one).
+- A short caption beneath the scene reads "One situation → one best lever" in deep navy italic sans-serif.
+
+RIGHT PANEL:
+- Title at the top: "Contextual bandit" in deep navy bold sans-serif.
+- Three smaller slot machines arranged in a horizontal row, each rendered with navy line work plus a distinct top-banner color: red, green, and amber respectively. Each machine has three identical levers.
+- Beneath each machine, a small color label: "Red", "Green", "Amber" in deep navy sans-serif.
+- In front of each machine is a small stick-figure agent pointing at a DIFFERENT lever on each machine: the agent on the red machine points at the leftmost lever, the agent on the green machine points at the middle lever, the agent on the amber machine points at the rightmost lever.
+- A short caption beneath the row reads "Best lever depends on context" in deep navy italic sans-serif.
+
+Color palette: deep navy (#213c8b) for line work, agents, and all text labels; red, green, and warm amber (#e8a83a) for the colored machine banners. White background. Sans-serif font throughout. All text must be short, legible, and spelled correctly.

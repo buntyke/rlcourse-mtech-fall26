@@ -1,0 +1,20 @@
+Style: clean academic textbook illustration, flat vector aesthetic with subtle gradients, deep navy blue (#213c8b) as primary color on a white background, soft accent in warm amber (#e8a83a), minimal line work, no photorealism, generous whitespace, suitable for a university lecture slide.
+
+A horizontal evolution diagram of FOUR rounded rectangle boxes arranged left to right across the center of the image, connected by THREE warm-amber rightward arrows.
+
+EACH BOX has the same size, contains a small distinguishing abstract icon at the top, and a clear caption at the bottom inside the box:
+- Box 1 (leftmost): three vertical bars of varying height, with the caption "Gradient Bandit" in deep navy bold sans-serif beneath.
+- Box 2: a small neural-network-shaped graph with one hidden layer of three nodes, with the caption "REINFORCE" in deep navy bold sans-serif beneath.
+- Box 3: a similar small network paired with a separate value-function meter dial beside it, with the caption "Actor–Critic" in deep navy bold sans-serif beneath.
+- Box 4 (rightmost): a more elaborate two-network sketch with a small refinement-loop arrow inside, with the caption "PPO / Modern PG" in deep navy bold sans-serif beneath.
+
+EACH ARROW between boxes has a clear label written above it in small deep navy sans-serif text:
+- Arrow 1 (between Box 1 and Box 2): "+ neural net policy"
+- Arrow 2 (between Box 2 and Box 3): "+ learned value baseline"
+- Arrow 3 (between Box 3 and Box 4): "+ trust region / clipping"
+
+The arrows progressively increase slightly in thickness from left to right, suggesting an evolution.
+
+At the very top of the image, centered, a single title reads "From gradient bandit to modern policy gradient" in deep navy bold sans-serif.
+
+Color palette: deep navy (#213c8b) for box outlines, icons, dial accent, and all text; warm amber (#e8a83a) for the connecting arrows. White background. Sans-serif font throughout. All text must be short, legible, and spelled correctly.

@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 5 — Instructor Reading Notes</title>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  body {
+    font-family: "Lato", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.7;
+    color: #222;
+    background: #fff;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2em 2.5em 4em;
+  }
+  h1 { color: #213c8b; font-size: 1.9em; border-bottom: 3px solid #213c8b; padding-bottom: .3em; margin-top: 1.5em; }
+  h2 { color: #213c8b; font-size: 1.35em; margin-top: 2em; border-left: 4px solid #213c8b; padding-left: .6em; }
+  h3 { color: #213c8b; font-size: 1.1em; margin-top: 1.5em; }
+  hr { border: none; border-top: 1px solid #ccc; margin: 2em 0; }
+  blockquote {
+    border-left: 4px solid #e8a83a;
+    background: #fffbf0;
+    margin: 1em 0;
+    padding: .6em 1em;
+    font-style: italic;
+    color: #555;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+    font-size: .93em;
+  }
+  th {
+    background: #213c8b;
+    color: #fff;
+    padding: .5em .8em;
+    text-align: left;
+  }
+  td {
+    border: 1px solid #ccc;
+    padding: .45em .8em;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #f4f6fb; }
+  code {
+    font-family: "Consolas", "Fira Mono", monospace;
+    background: #f0f0f0;
+    padding: .15em .35em;
+    border-radius: 3px;
+    font-size: .88em;
+  }
+  pre code {
+    display: block;
+    padding: .8em 1em;
+    background: #f4f6fb;
+    border-left: 3px solid #213c8b;
+    overflow-x: auto;
+    font-size: .85em;
+    line-height: 1.5;
+  }
+  .boardwork {
+    background: #f6f1e7;
+    border-left: 4px solid #213c8b;
+    padding: .6em 1em;
+    margin: 1em 0;
+    border-radius: 2px;
+  }
+  .boardwork strong { color: #213c8b; }
+  .meta {
+    background: #f4f6fb;
+    border: 1px solid #c8d4f0;
+    border-radius: 4px;
+    padding: .7em 1em;
+    margin-bottom: 1.5em;
+    font-size: .92em;
+  }
+  .meta p { margin: .2em 0; }
+  .time-budget th { text-align: center; }
+  .time-budget td { text-align: center; }
+  .time-budget td:first-child, .time-budget td:nth-child(2) { text-align: left; }
+</style>
+</head>
+<body>
+
+<h1>Lecture 5 — Reading Notes for the Instructor</h1>
+
+<div class="meta">
+  <p><strong>Topic:</strong> Gradient Bandits &amp; Contextual Bandits</p>
+  <p><strong>Source:</strong> Sutton &amp; Barto, <em>Reinforcement Learning: An Introduction</em> (2nd ed.), Ch. 2.8–2.9</p>
+  <p><strong>Slide deck:</strong> <code>lecture5.html</code> (3 filler + 30 content + 6 questions)</p>
+  <p><strong>Total class time target:</strong> ~90 minutes</p>
+</div>
+
+<p>These notes follow the slide order. For each slide they give: the <em>one-line message</em>, the <em>story to tell</em>, the <em>gotchas / common student confusions</em>, and (where applicable) the <em>full board derivation</em> with every step spelled out.</p>
+
+<hr>
+
+<h1>Filler F1–F3 — Title, Journey, Acknowledgements</h1>
+
+<p>Standard openers. Spend ~2 minutes total.</p>
+<ul>
+  <li>On the <strong>journey slide</strong>, emphasize that today is a <em>philosophical pivot</em>: until now we estimated values; today we estimate the <em>policy itself</em>. This is the seed idea of policy gradient.</li>
+  <li>Mention that §2.9 (contextual bandits) is short in S&amp;B but disproportionately important — it's the bridge to the rest of the course (MDPs next lecture).</li>
+</ul>
+
+<hr>
+
+<h1>PART A — From Values to Preferences</h1>
+
+<h2>Slide 1 — Recap</h2>
+
+<p><strong>Message:</strong> Every method we've seen so far follows the recipe <em>(estimate Q) → (act on Q)</em>.</p>
+
+<p><strong>Story:</strong></p>
+<ul>
+  <li>Quick verbal roll call: ε-greedy (Lecture 3), UCB / KL-UCB / Thompson Sampling (Lecture 4). Ask the class to name the <em>one quantity</em> every method maintained. Answer: \(Q_t(a)\).</li>
+  <li>Today we drop \(Q_t(a)\) entirely. Instead we keep a number per arm called the <em>preference</em> \(H_t(a)\), and we let actions be <strong>sampled</strong> from a distribution defined by these preferences.</li>
+</ul>
+
+<p><strong>Gotcha:</strong> Some students will assume \(H\) is "just \(Q\) by another name". It is not — \(H\) has no units and no probabilistic interpretation. It is just a knob.</p>
+
+<hr>
+
+<h2>Slide 2 — Why Preferences?</h2>
+
+<p><strong>Message:</strong> Preferences are <em>invariant under additive shifts</em>. That's the algebraic property that makes gradient updates clean.</p>
+
+<p><strong>Story:</strong></p>
+<ul>
+  <li>Write on the board: if you replace \(H(a) \leftarrow H(a) + 1000\) for every arm, the softmax outputs the same probabilities. Verify by inspection of the formula.</li>
+  <li>Implication: only <em>differences</em> between preferences matter. We do not need to anchor \(H\) to anything (no "true value").</li>
+  <li>This is what lets us derive a tidy gradient — there's no constraint like "values must equal expected reward" to fight against.</li>
+</ul>
+
+<p><strong>Forward pointer:</strong> Mention this is exactly the same property neural-network policy parameters \(\theta\) will have in REINFORCE.</p>
+
+<hr>
+
+<h2>Slide 3 — The Softmax Distribution</h2>
+
+<p><strong>Message:</strong> The link between preferences and behaviour is the softmax (Gibbs / Boltzmann) distribution.</p>
+
+<p><strong>Story:</strong></p>
+<ul>
+  <li>Start with the formula on the slide. Walk through the three properties:
+    <ol>
+      <li>All probabilities are positive (because exp is always positive).</li>
+      <li>They sum to 1 (because of the normalisation in the denominator).</li>
+      <li>Larger \(H \Rightarrow\) larger \(\pi\), but never zero.</li>
+    </ol>
+  </li>
+  <li>Point at the right-hand image: as preferences grow, the distribution sharpens to a near-deterministic policy.</li>
+  <li><strong>Temperature comment</strong> (optional): if you scale all preferences by \(\beta\) (an inverse-temperature), small \(\beta\) → uniform exploration, large \(\beta\) → near-greedy. S&amp;B don't introduce \(\beta\) but it's worth a sentence for the curious.</li>
+</ul>
+
+<hr>
+
+<h2>Slide 4 — Question #1 (Softmax = Sigmoid for k=2)</h2>
+
+<p><strong>Message:</strong> The softmax is just the multi-class generalisation of the logistic / sigmoid.</p>
+
+<p><strong>Board derivation:</strong> start from</p>
+\[
+\pi_t(2) = \frac{e^{H_t(2)}}{e^{H_t(1)} + e^{H_t(2)}}.
+\]
+<p>Divide numerator and denominator by \(e^{H_t(2)}\) (or \(e^{H_t(1)}\)):</p>
+\[
+= \frac{1}{e^{H_t(1) - H_t(2)} + 1} = \frac{1}{1 + e^{-(H_t(2) - H_t(1))}} = \sigma\!\big(H_t(2) - H_t(1)\big).
+\]
+
+<p><strong>Why this matters:</strong> every "softmax classifier" you've seen in deep learning is a generalisation of logistic regression. Same algebraic skeleton. Now the same softmax is going to be our <em>policy</em>.</p>
+
+<hr>
+
+<h1>PART B — The Gradient Bandit Algorithm</h1>
+
+<h2>Slide 5 — Definition</h2>
+
+<p><strong>Message:</strong> Three moving parts: preferences, softmax sampling, and a stochastic-gradient update keyed off a baseline.</p>
+
+<p><strong>Story:</strong> Read the definition box aloud. Then unpack three words:</p>
+<ul>
+  <li><strong>"Preference"</strong> — a knob with no units.</li>
+  <li><strong>"Softmax"</strong> — turns the knobs into probabilities.</li>
+  <li><strong>"Stochastic-gradient rule"</strong> — the update we'll meet on Slide 6, which we'll later prove (Slides 11–16) is exactly stochastic gradient ascent on \(\mathbb{E}[R_t]\).</li>
+</ul>
+
+<hr>
+
+<h2>Slide 6 — The Update Rule (Eq. 2.12)</h2>
+
+<p><strong>Message:</strong> Two equations — one for the chosen arm, one for everyone else. Same scalar \((R_t - \bar R_t)\) sets the magnitude.</p>
+
+<p><strong>Story walk-through:</strong></p>
+<ul>
+  <li>Look at the <em>chosen</em> arm's update. The factor \((1 - \pi_t(A_t))\) is positive but small if the chosen arm was already very likely (already-confident arm gets a small kick).</li>
+  <li>Look at the <em>non-chosen</em> arms. They all get pushed in the <em>opposite direction</em>, weighted by their current probability \(\pi_t(a)\). High-probability competitors get pushed down more.</li>
+  <li><strong>Conservation law:</strong> the sum of changes across all arms is exactly zero (because \((1 - \pi(A_t)) + \sum_{a \neq A_t}(-\pi(a)) = 0\)). So the <em>centre of mass</em> of \(H\) is unchanged — only the spread changes. Mention this is consistent with the additive-shift invariance from Slide 2.</li>
+</ul>
+
+<p><strong>Common confusion:</strong> "Why does an unchosen arm get updated at all?" Because the softmax couples them — increasing \(H(A_t)\) by itself would shift mass off the others, so the gradient wants those others to drop in compensation.</p>
+
+<hr>
+
+<h2>Slide 7 — The Baseline</h2>
+
+<p><strong>Message:</strong> \(\bar R_t\) is just the running mean of <em>all</em> rewards (not per-arm).</p>
+
+<p><strong>Story:</strong></p>
+<ul>
+  <li>Write the incremental form on the board (it's on the slide too).</li>
+  <li><strong>Why subtract it?</strong> Two ways to motivate:
+    <ol>
+      <li><em>Algebraic:</em> it doesn't change the expected gradient (we'll prove this in Part C).</li>
+      <li><em>Variance:</em> it dramatically reduces the noise in each update — the stress test will be Slide 18 (the +4 shift).</li>
+    </ol>
+  </li>
+  <li>For nonstationary problems, replace the \(1/t\) step with a constant \(\alpha\) (callback to §2.5).</li>
+</ul>
+
+<hr>
+
+<h2>Slide 8 — Pseudocode</h2>
+
+<p><strong>Message:</strong> It's about 12 lines of code.</p>
+
+<p><strong>Story:</strong> Read it line by line. Stress that the <em>only</em> per-step computation is one softmax, one sample, one categorical observation, and a vectorised update.</p>
+
+<p><strong>Gotcha:</strong> in a real implementation, the inner loop "for each arm a" can be vectorised. The branch "if a == A_t" turns into the indicator \(\mathbb{1}_{a = A_t}\) and can be computed with a one-hot vector. Mention this if you have programmers in the room.</p>
+
+<hr>
+
+<h2>Slide 9 — Worked Numeric Example</h2>
+
+<p><strong>Message:</strong> Make the update tangible with one step.</p>
+
+<p><strong>Board sanity check:</strong> before the step, \(\sum_a H_t(a) = 0\). After the step, the changes are \(+0.067, -0.033, -0.033\). Sum: \(+0.067 - 0.033 - 0.033 = 0.001\) (rounding) ≈ 0. The conservation law holds.</p>
+
+<p><strong>Pedagogy:</strong> ask the class "what would happen if \(R_t\) were \(-1.0\) instead?" Answer: arm 2's preference would <em>drop</em>, the other two would <em>rise</em>. Update direction follows the sign of \((R_t - \bar R_t)\).</p>
+
+<hr>
+
+<h2>Slide 10 — Question #2 (Baseline necessity)</h2>
+
+<p><strong>Discussion before revealing the answer:</strong></p>
+<ul>
+  <li>Ask the class: "if every reward is in \([+9, +11]\), and \(\bar R_t = 0\), what direction does <em>every</em> update push?"</li>
+  <li>(Answer: every selected arm's preference goes up; every unselected arm's preference goes down. This is <em>not</em> learning which arm is best — it's just "whichever arm I pulled, that one is now more likely.")</li>
+  <li>With a baseline near 10, the sign of \((R_t - \bar R_t)\) reflects whether <em>this</em> arm did better than the <em>average</em> arm — that's the actual learning signal.</li>
+</ul>
+
+<p><strong>Punchline:</strong> the baseline turns "absolute rewards" into "relative advantages". This is the same idea as the <em>advantage function</em> in actor–critic methods.</p>
+
+<hr>
+
+<h1>PART C — Why It Works: Stochastic Gradient Ascent</h1>
+
+<blockquote>
+  This is the longest chunk and the most math-heavy. The slides use a vertical stack so you can pace it. Total time ~25 minutes. Two boardwork moments are flagged: Slides 12 and 14.
+</blockquote>
+
+<h2>Slide 11 — The Goal</h2>
+
+<p><strong>Message:</strong> State the dream: do gradient ascent on \(\mathbb{E}[R_t]\). State the obstacle: we don't know \(q_*\). State the plan: rewrite the gradient as an expectation we can sample.</p>
+
+<p><strong>Story:</strong> The whole derivation is one trick repeated in different guises — <em>the log-derivative / score-function trick</em>. We're going to peel it apart slowly.</p>
+
+<hr>
+
+<h2>Slide 12 — Step 2: Introduce a Baseline</h2>
+
+<div class="boardwork">
+  <strong>🖊️ BOARDWORK — write this out fully</strong>
+</div>
+
+<p><strong>Slide claim:</strong> Adding any baseline \(B_t\) (independent of \(x\)) to the gradient sum doesn't change its value.</p>
+
+<p><strong>Board derivation (write this out cleanly):</strong></p>
+
+<p>Start from the chain rule applied to \(\mathbb{E}[R_t]\):</p>
+\[
+\frac{\partial \mathbb{E}[R_t]}{\partial H_t(a)}
+= \frac{\partial}{\partial H_t(a)} \sum_x \pi_t(x)\,q_*(x)
+= \sum_x q_*(x)\,\frac{\partial \pi_t(x)}{\partial H_t(a)}.
+\]
+
+<p>Now insert a baseline \(B_t\) that does not depend on \(x\):</p>
+\[
+\sum_x q_*(x)\,\frac{\partial \pi_t(x)}{\partial H_t(a)}
+= \sum_x \big(q_*(x) - B_t\big)\,\frac{\partial \pi_t(x)}{\partial H_t(a)}
++ B_t \underbrace{\sum_x \frac{\partial \pi_t(x)}{\partial H_t(a)}}_{=\,0}.
+\]
+
+<p><strong>Why is the marked sum zero?</strong> Differentiate the identity \(\sum_x \pi_t(x) = 1\) with respect to \(H_t(a)\):</p>
+\[
+\frac{\partial}{\partial H_t(a)} \sum_x \pi_t(x) = \frac{\partial 1}{\partial H_t(a)} = 0,
+\]
+<p>so the sum of partials is zero.</p>
+
+<p><strong>Conclusion (write below the derivation):</strong></p>
+\[
+\frac{\partial \mathbb{E}[R_t]}{\partial H_t(a)} = \sum_x \big(q_*(x) - B_t\big)\,\frac{\partial \pi_t(x)}{\partial H_t(a)}, \qquad \text{for any } B_t.
+\]
+
+<p><strong>Pedagogical note:</strong> circle the "= 0" on the board. This single observation is the <em>entire</em> reason gradient bandit and REINFORCE work in practice. The baseline doesn't bias the gradient.</p>
+
+<hr>
+
+<h2>Slide 13 — Step 3: Multiply and Divide by π</h2>
+
+<p><strong>Slide claim:</strong> Algebraic trick to turn the sum into an expectation.</p>
+
+<p><strong>Board (you can do this verbally if time is short, or write it out):</strong></p>
+
+<p>Multiply each term by \(\pi_t(x) / \pi_t(x) = 1\):</p>
+\[
+\sum_x \big(q_*(x) - B_t\big)\,\frac{\partial \pi_t(x)}{\partial H_t(a)}
+= \sum_x \pi_t(x) \cdot \big(q_*(x) - B_t\big) \cdot \frac{1}{\pi_t(x)}\frac{\partial \pi_t(x)}{\partial H_t(a)}.
+\]
+
+<p>Recognise the \(\sum_x \pi_t(x) [\,\cdot\,]\) as expectation over \(A_t \sim \pi_t\):</p>
+\[
+= \mathbb{E}_{A_t \sim \pi_t}\!\left[\big(q_*(A_t) - B_t\big)\,\frac{1}{\pi_t(A_t)}\frac{\partial \pi_t(A_t)}{\partial H_t(a)}\right].
+\]
+
+<p>Now use the tower property \(\mathbb{E}[R_t \mid A_t] = q_*(A_t)\) and pick the convenient baseline \(B_t = \bar R_t\):</p>
+\[
+= \mathbb{E}\!\left[(R_t - \bar R_t)\,\frac{1}{\pi_t(A_t)}\frac{\partial \pi_t(A_t)}{\partial H_t(a)}\right].
+\]
+
+<p><strong>Why this matters:</strong> we have rewritten an expectation over \(q_*\) (which we don't know) as an expectation over actually-observed rewards \(R_t\) (which we do see). That's the whole game.</p>
+
+<hr>
+
+<h2>Slide 14 — Step 4: Softmax Derivative</h2>
+
+<div class="boardwork">
+  <strong>🖊️ BOARDWORK — write this out fully</strong>
+</div>
+
+<p><strong>Slide claim:</strong> \(\dfrac{\partial \pi_t(x)}{\partial H_t(a)} = \pi_t(x)\,(\mathbb{1}_{a=x} - \pi_t(a))\).</p>
+
+<p><strong>Board derivation (write this out — students will see it again in deep learning):</strong></p>
+
+<p>Let \(Z = \sum_y e^{H_t(y)}\), so \(\pi_t(x) = e^{H_t(x)} / Z\). Apply the quotient rule with respect to \(H_t(a)\):</p>
+\[
+\frac{\partial \pi_t(x)}{\partial H_t(a)}
+= \frac{\dfrac{\partial e^{H_t(x)}}{\partial H_t(a)}\, Z \;-\; e^{H_t(x)}\,\dfrac{\partial Z}{\partial H_t(a)}}{Z^2}.
+\]
+
+<p>Compute each derivative:</p>
+<ul>
+  <li>\(\dfrac{\partial e^{H_t(x)}}{\partial H_t(a)} = \mathbb{1}_{a=x}\,e^{H_t(x)}\) (zero unless we are differentiating with respect to the same index).</li>
+  <li>\(\dfrac{\partial Z}{\partial H_t(a)} = \dfrac{\partial}{\partial H_t(a)}\sum_y e^{H_t(y)} = e^{H_t(a)}\) (only the \(y = a\) term survives).</li>
+</ul>
+
+<p>Substitute:</p>
+\[
+\frac{\partial \pi_t(x)}{\partial H_t(a)}
+= \frac{\mathbb{1}_{a=x}\,e^{H_t(x)}\,Z - e^{H_t(x)}\,e^{H_t(a)}}{Z^2}
+= \mathbb{1}_{a=x}\,\frac{e^{H_t(x)}}{Z} - \frac{e^{H_t(x)}}{Z}\cdot\frac{e^{H_t(a)}}{Z}.
+\]
+
+<p>Recognise the softmaxes:</p>
+\[
+= \mathbb{1}_{a=x}\,\pi_t(x) - \pi_t(x)\,\pi_t(a) = \pi_t(x)\,\big(\mathbb{1}_{a=x} - \pi_t(a)\big). \qquad \blacksquare
+\]
+
+<p><strong>Pedagogical anchors:</strong></p>
+<ul>
+  <li>This is the same Jacobian that appears in cross-entropy backprop: \(\partial \text{softmax}_x / \partial \text{logit}_a = \pi_x(\delta_{ax} - \pi_a)\).</li>
+  <li>For \(a = x\) (own derivative): \(\pi_x(1 - \pi_x)\) — same shape as the Bernoulli variance, no coincidence.</li>
+  <li>For \(a \neq x\): \(-\pi_x \pi_a\) — competing classes drag each other down.</li>
+</ul>
+
+<hr>
+
+<h2>Slide 15 — Step 5: Plug In and Recover Eq. 2.12</h2>
+
+<p><strong>Slide claim:</strong> Substituting the softmax derivative into the expectation produces exactly the gradient bandit update.</p>
+
+<p><strong>Board:</strong></p>
+
+<p>Substitute Slide 14's identity into the expression from Slide 13:</p>
+\[
+\frac{1}{\pi_t(A_t)}\frac{\partial \pi_t(A_t)}{\partial H_t(a)}
+= \frac{1}{\pi_t(A_t)} \cdot \pi_t(A_t)\,(\mathbb{1}_{a=A_t} - \pi_t(a))
+= \mathbb{1}_{a=A_t} - \pi_t(a).
+\]
+
+<p>So</p>
+\[
+\frac{\partial \mathbb{E}[R_t]}{\partial H_t(a)} = \mathbb{E}\!\left[(R_t - \bar R_t)\,(\mathbb{1}_{a=A_t} - \pi_t(a))\right].
+\]
+
+<p>A <em>single sample</em> of this expectation, plugged into the gradient ascent rule \(H_{t+1}(a) = H_t(a) + \alpha \cdot (\text{sample})\), gives exactly Eq. 2.12.</p>
+
+<p><strong>Punchline (say it out loud):</strong> "What looked like an ad-hoc heuristic — push the chosen arm up, push the others down — is <em>literally</em> one step of stochastic gradient ascent on the expected reward."</p>
+
+<hr>
+
+<h2>Slide 16 — Step 6: Takeaways</h2>
+
+<p><strong>Story (4 short beats):</strong></p>
+<ol>
+  <li>The expected update equals the true gradient \(\Rightarrow\) standard SGA convergence theory applies (Robbins–Monro step-size conditions, etc.).</li>
+  <li>The baseline \(B_t\) is <strong>not unique</strong>. Any function independent of the action is admissible. Bad baselines just mean noisy updates.</li>
+  <li>Optimal baseline (advanced, optional): the variance-minimising choice is <em>not</em> \(\bar R_t\) — it's a weighted average. S&amp;B Bibliographic Note 2.8 references Greensmith et al. for the curious. \(\bar R_t\) is "good enough".</li>
+  <li><strong>The whole derivation is the policy-gradient theorem in miniature.</strong> When we get to REINFORCE in Unit IV, we will redo this proof with one substitution: replace \(R_t\) by the return \(G_t\). Nothing else changes structurally.</li>
+</ol>
+
+<hr>
+
+<h2>Slide 17 — Question #3 (Why baseline doesn't bias)</h2>
+
+<p><strong>Drawing it out:</strong> ask the class to articulate the answer in their own words. Then write the one-liner on the board:</p>
+\[
+\sum_x \frac{\partial \pi_t(x)}{\partial H_t(a)} = 0 \quad\Longrightarrow\quad \mathbb{E}[\text{baseline term}] = 0.
+\]
+<p>That's the entire argument. Variance changes; mean does not.</p>
+
+<hr>
+
+<h1>PART D — Empirical Behaviour</h1>
+
+<h2>Slide 18 — The +4 Shift</h2>
+
+<p><strong>Message:</strong> S&amp;B test the algorithm on a deliberately <em>adversarial</em> problem for the no-baseline case.</p>
+
+<p><strong>Story:</strong> all reward distributions are shifted up by +4. Now every reward is comfortably positive. With \(\bar R_t = 0\), every update pushes the selected arm up — there is <em>no signal</em> about <em>which</em> arm is better. The baseline rescues us.</p>
+
+<hr>
+
+<h2>Slide 19 — With vs Without (Fig. 2.5 full slide)</h2>
+
+<p><strong>Message:</strong> Empirically, the no-baseline curve <em>flatlines</em> at a worse level. The with-baseline curve climbs to near-optimal.</p>
+
+<p><strong>Things to point out on the figure:</strong></p>
+<ul>
+  <li>The no-baseline curve is roughly the same shape as the with-baseline curve, just <em>shifted down</em> — it is still learning <em>something</em>, just not the right thing.</li>
+  <li>Both curves start at the same place because at t = 1 the algorithm has no preference yet.</li>
+</ul>
+
+<hr>
+
+<h2>Slide 20 — Parameter Study (Fig. 2.6)</h2>
+
+<p><strong>Message:</strong> Like every algorithm in Ch. 2, gradient bandit has an inverted-U vs \(\alpha\). It is reasonably robust over an order of magnitude.</p>
+
+<p><strong>Story:</strong> Sutton &amp; Barto's overall verdict in Fig. 2.6 is that <strong>UCB</strong> is the strongest on the (stationary, mean-zero) testbed. But that's setting-specific — gradient bandit is the one that <em>generalises</em> most cleanly to function approximation, which is why it matters more than the empirical comparison suggests.</p>
+
+<hr>
+
+<h2>Slide 21 — Question #4 (\(B_t = 1000\))</h2>
+
+<p><strong>Discussion:</strong></p>
+<ul>
+  <li>(a) <strong>Yes</strong>, expectation is unchanged — that's exactly Slide 17.</li>
+  <li>(b) <strong>Variance explodes.</strong> Each \((R_t - 1000)\) is a ~−1000-magnitude number, and \(\alpha \cdot (-1000) \cdot (\mathbb{1} - \pi)\) is a giant swing per step. Training curves will be <em>jagged</em> and convergence (in number of samples) will be wildly slow.</li>
+</ul>
+
+<p><strong>Numerical illustration on the board</strong> (if time): with \(\alpha = 0.1\), one step changes \(H(A_t)\) by \(\approx 0.1 \cdot (-1000) \cdot (1 - 0.5) = -50\). After this one step, the softmax is essentially deterministic on the <em>other</em> arms — the system is unstable.</p>
+
+<hr>
+
+<h1>PART E — Contextual Bandits / Associative Search</h1>
+
+<h2>Slide 22 — From Nonassociative to Associative</h2>
+
+<p><strong>Message:</strong> All bandit problems we've seen so far have a <em>single</em> situation. Real life has many.</p>
+
+<p><strong>Story:</strong> Open with a question: "Is it the same headline that's best for <em>every</em> user?" No. The best action depends on the context.</p>
+
+<hr>
+
+<h2>Slide 23 — Coloured Slot Machines</h2>
+
+<p><strong>Message:</strong> S&amp;B's intuition pump for §2.9.</p>
+
+<p><strong>Story:</strong> the slot machine displays a colour, and the colour determines which underlying bandit task you're playing. With no signal, you're trying to track a randomly shifting target. With the signal, you can learn one policy <em>per colour</em>.</p>
+
+<p><strong>Quick exercise (verbal):</strong> "If there are 3 colours and 4 actions, how many decisions does the policy specify?" Answer: 3 actions, one per colour — the policy is a <em>table</em> of size 3 (or a function from colour to action).</p>
+
+<hr>
+
+<h2>Slide 24 — Definition</h2>
+
+<p><strong>Message:</strong> State it formally. Three pieces: context \(C_t\), action \(A_t\), reward \(R_t\). The policy is now \(\pi : C \to A\).</p>
+
+<p><strong>Gotcha:</strong> <strong>No state transitions.</strong> Crucial bridge property — actions affect <em>only</em> the immediate reward, just like a bandit. This is why contextual bandits are <em>not</em> full RL.</p>
+
+<hr>
+
+<h2>Slide 25 — Where They Sit (Comparison Table)</h2>
+
+<p><strong>Message:</strong> Three rungs on a ladder.</p>
+
+<p><strong>Story:</strong> Walk down the table column by column.</p>
+<ul>
+  <li><em>k</em>-armed bandit: one situation, find the best arm.</li>
+  <li>Contextual bandit: many situations, find the best arm <em>in each</em>.</li>
+  <li>MDP: many situations <em>that you transition between based on your actions</em>.</li>
+</ul>
+
+<p>The jump from "bandit → contextual bandit" adds <strong>state</strong>. The jump from "contextual bandit → MDP" adds <strong>dynamics</strong> (state transitions caused by actions).</p>
+
+<hr>
+
+<h2>Slide 26 — Application Lens</h2>
+
+<p><strong>Message:</strong> Most "RL in production" stories are actually contextual bandits.</p>
+
+<p><strong>Story (concrete examples):</strong></p>
+<ul>
+  <li>News feed ranking (Yahoo!, MSN).</li>
+  <li>Ad auction selection.</li>
+  <li>Recommendation systems.</li>
+  <li>A/B testing with personalisation.</li>
+</ul>
+
+<p>These all share: many contexts, many candidate actions, immediate single-step feedback, no need to plan ahead. <strong>Why contextual bandits and not MDPs?</strong> Because the per-impression decision is short-horizon, and the engineering burden of an MDP solver is much higher.</p>
+
+<hr>
+
+<h2>Slide 27 — Question #5 (Exercise 2.10)</h2>
+
+<p><strong>Numeric walk-through (do this at the board):</strong></p>
+
+<p><em>Without context:</em> compute the marginal expected value of each arm.</p>
+<ul>
+  <li>\(\mathbb{E}[\text{arm 1}] = 0.5 \cdot 10 + 0.5 \cdot 90 = 50\).</li>
+  <li>\(\mathbb{E}[\text{arm 2}] = 0.5 \cdot 20 + 0.5 \cdot 80 = 50\).</li>
+  <li>Indifferent. Best expected reward = <strong>50</strong> per step.</li>
+</ul>
+
+<p><em>With context:</em> in each case, pick the better arm.</p>
+<ul>
+  <li>Case A (prob 0.5): pick arm 2 (value 20).</li>
+  <li>Case B (prob 0.5): pick arm 1 (value 90).</li>
+  <li>Best expected reward = \(0.5 \cdot 20 + 0.5 \cdot 90 = 55\) per step.</li>
+</ul>
+
+<p><strong>Information value</strong> = 55 − 50 = <strong>5 per step</strong>. Knowing the context is worth +5 per pull.</p>
+
+<p><strong>Pedagogical anchor:</strong> this is the simplest possible quantification of the <em>value of information</em> — which is itself a deep topic in Bayesian decision theory.</p>
+
+<hr>
+
+<h1>PART F — Wrap-up &amp; Bridge</h1>
+
+<h2>Slide 28 — Comparison Table</h2>
+
+<p><strong>Story:</strong> Summarise the four flavours we've now seen. The point is not to memorise the table — it's to internalise that <strong>all four are different mechanisms for the same job</strong>: balance exploration and exploitation.</p>
+
+<hr>
+
+<h2>Slide 29 — Bridge to Policy Gradient</h2>
+
+<p><strong>Message:</strong> The whole derivation we just did is REINFORCE in disguise.</p>
+
+<p><strong>Mapping (write on the board):</strong></p>
+
+<table>
+  <tr><th>Gradient bandit</th><th>REINFORCE / actor–critic</th></tr>
+  <tr><td>preference \(H_t(a)\)</td><td>parameterised policy \(\pi_\theta(a \mid s)\)</td></tr>
+  <tr><td>softmax over preferences</td><td>softmax over network outputs</td></tr>
+  <tr><td>\(R_t\)</td><td>return \(G_t = \sum_{k} \gamma^k R_{t+k+1}\)</td></tr>
+  <tr><td>baseline \(\bar R_t\)</td><td>learned value function \(V_\phi(s)\)</td></tr>
+  <tr><td>no state</td><td>full state \(s\)</td></tr>
+  <tr><td>no transitions</td><td>full Markov dynamics</td></tr>
+</table>
+
+<p><strong>Punchline:</strong> "Today's lecture is the cleanest, smallest version of policy gradient. The rest of the course is just adding more moving parts to the same skeleton."</p>
+
+<hr>
+
+<h2>Slide 30 — Exit Check</h2>
+
+<p>Read aloud. Emphasise the next-lecture bridge: actions starting to <strong>affect the next state</strong> — that's the qualitative jump to MDPs.</p>
+
+<hr>
+
+<h2>Slide 31 — Question #6 (Exit Question)</h2>
+
+<p><strong>Discussion structure:</strong></p>
+<ul>
+  <li>(a) <strong>Contextual bandit.</strong> Reasoning: per-visitor click feedback is immediate (no temporal credit assignment), the action is one-shot per visitor, but the optimal headline depends on user features.</li>
+  <li>(b) <strong>A plain gradient bandit ignores context.</strong> Promote the preferences to functions of context: \(H_t(a) = \theta_a^\top \phi(C_t)\). The exact same derivation goes through with a chain rule:
+    \[
+    \theta_a \leftarrow \theta_a + \alpha\,(R_t - \bar R_t)\,(\mathbb{1}_{a = A_t} - \pi_t(a))\,\phi(C_t).
+    \]
+    This is the springboard to <strong>policy gradient with linear function approximation</strong> — and from there, to deep policy networks.
+  </li>
+</ul>
+
+<hr>
+
+<h1>Boardwork Cheat Sheet</h1>
+
+<p>Two formal board derivations are flagged in the deck:</p>
+
+<table>
+  <tr><th>#</th><th>Slide</th><th>What to derive</th><th>Key one-liner</th></tr>
+  <tr><td>1</td><td>12</td><td>Why \(\sum_x \partial \pi_t(x)/\partial H_t(a) = 0\)</td><td>Differentiate \(\sum_x \pi_t(x) = 1\).</td></tr>
+  <tr><td>2</td><td>14</td><td>Softmax Jacobian \(\partial \pi_t(x)/\partial H_t(a) = \pi_t(x)(\mathbb{1}_{a=x} - \pi_t(a))\)</td><td>Quotient rule with \(Z = \sum_y e^{H_t(y)}\).</td></tr>
+</table>
+
+<p>I recommend rehearsing both derivations once before class — they go quickly with practice but feel rushed if you're working them out fresh in front of students.</p>
+
+<p>Optional but useful additional board moments:</p>
+<ul>
+  <li><strong>Slide 9:</strong> verify the conservation law \(\sum_a \Delta H(a) = 0\) for the worked numeric example.</li>
+  <li><strong>Slide 21:</strong> demonstrate the variance explosion concretely with \(\alpha = 0.1\), \(R_t \in [9, 11]\), \(B_t = 1000\) — one step moves \(H(A_t)\) by ~50 units.</li>
+  <li><strong>Slide 27:</strong> the Exercise 2.10 calculation. This is concrete and quick — do it at the board, don't just say the answer.</li>
+</ul>
+
+<hr>
+
+<h1>Suggested Time Budget (90 min class)</h1>
+
+<table class="time-budget">
+  <tr><th>Part</th><th>Slides</th><th>Minutes</th><th>Notes</th></tr>
+  <tr><td>Filler + Recap</td><td>F1–F3, 1–2</td><td>8</td><td>Quick warmup</td></tr>
+  <tr><td>Softmax + intuition</td><td>3–5</td><td>10</td><td>Build the mental model</td></tr>
+  <tr><td>Update rule</td><td>6–9</td><td>12</td><td>Spend time on conservation law</td></tr>
+  <tr><td>Question #2</td><td>10</td><td>5</td><td>Discussion</td></tr>
+  <tr><td><strong>SGA derivation</strong></td><td>11–16</td><td>25</td><td>Two boardwork slots — pace carefully</td></tr>
+  <tr><td>Question #3</td><td>17</td><td>3</td><td>Quick</td></tr>
+  <tr><td>Empirical</td><td>18–20</td><td>8</td><td>Skim figures</td></tr>
+  <tr><td>Question #4</td><td>21</td><td>4</td><td>Variance discussion</td></tr>
+  <tr><td>Contextual bandits</td><td>22–26</td><td>12</td><td>Slow down for the ladder slide (25)</td></tr>
+  <tr><td>Question #5</td><td>27</td><td>5</td><td>Do the calculation at the board</td></tr>
+  <tr><td>Wrap</td><td>28–31</td><td>8</td><td>Bridge slide is the most important</td></tr>
+</table>
+
+<p>If you're tight on time, the SGA derivation (slides 11–16) is the part most worth protecting — it's the conceptual core and it sets up the entire policy-gradient arc later in the course.</p>
+
+</body>
+</html>

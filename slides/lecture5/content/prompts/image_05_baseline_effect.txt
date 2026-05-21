@@ -1,0 +1,19 @@
+Style: clean academic textbook illustration, flat vector aesthetic with subtle gradients, deep navy blue (#213c8b) as primary color on a white background, soft accent in warm amber (#e8a83a), minimal line work, no photorealism, generous whitespace, suitable for a university lecture slide.
+
+A two-panel side-by-side composition separated by a thin vertical divider, each panel containing a labelled line chart.
+
+LEFT PANEL:
+- Title at the top: "No baseline (B = 0)" in deep navy bold sans-serif.
+- X-axis along the bottom labelled "Step t" in deep navy sans-serif.
+- Y-axis on the left labelled "H(a)" in deep navy sans-serif.
+- Three smooth navy curves drifting upward together in roughly the same direction, ending close to one another in the upper-right corner of the panel — representing preferences that all rise without separation.
+
+RIGHT PANEL:
+- Title at the top: "With baseline (B = R̄)" in deep navy bold sans-serif.
+- X-axis along the bottom labelled "Step t" in deep navy sans-serif.
+- Y-axis on the left labelled "H(a)" in deep navy sans-serif.
+- Three smooth curves on identical axes: one navy curve clearly rising upward (labelled "best arm" with a small inline text label near its right end), and two amber-tinted curves clearly falling downward (labelled "other arms" with a single inline text label near their right ends), producing a wide vertical separation between the rising and falling curves by the end of the time axis.
+
+At the very bottom of the image, centered across both panels, a small caption reads "Baseline turns rewards into relative advantages" in deep navy italic sans-serif.
+
+Color palette: deep navy (#213c8b) for axes, axis labels, titles, captions, and the rising curves; warm amber (#e8a83a) for the falling curves and accent strokes. White background. Sans-serif font throughout. All text must be short, legible, and spelled correctly.

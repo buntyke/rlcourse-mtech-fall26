@@ -1,0 +1,13 @@
+Style: clean academic textbook illustration, flat vector aesthetic with subtle gradients, deep navy blue (#213c8b) as primary color on a white background, soft accent in warm amber (#e8a83a), minimal line work, no photorealism, generous whitespace, suitable for a university lecture slide.
+
+Three slot machines arranged side by side in a horizontal row across the center of the image, each rendered with navy line work and a distinct top-banner color: the leftmost machine has a red banner, the middle has a green banner, the rightmost has a soft amber banner. Each machine has three levers of identical shape.
+
+Above each machine floats a rounded thought-bubble cloud in light grey containing a small icon — a left-pointing finger above the red machine, a center-pointing finger above the green machine, and a right-pointing finger above the amber machine — representing which lever the agent remembers as best for that color.
+
+A small stick-figure agent stands centered below the row, looking up at the machines.
+
+There must be NO caption text, NO figure number, NO label text, and NO title anywhere in the image. Do NOT include any text such as "Figure 2.1", "Slot Machine Color Association", "Levers Memory Model", or "AGENT'S REMEMBERED LEVER CHOICE FOR EACH COLOR" — the image must be completely free of all text, captions, figure numbers, and titles.
+
+Color palette: deep navy (#213c8b) for line work and the agent; red, green, and warm amber (#e8a83a) for the three machine banners; light grey for the thought bubbles. White background.
+
+Absolutely no letters, numbers, words, captions, figure numbers, or written symbols anywhere in the image.

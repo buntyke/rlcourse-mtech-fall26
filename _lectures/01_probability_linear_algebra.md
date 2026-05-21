@@ -6,7 +6,7 @@ tldr: "Random variables, expectations, conditional probability, Bayes' theorem, 
 hide_from_announcments: true
 links:
     - url: /slides/lecture2/lecture2.html
-      name: slides
+      name: Slides
 ---
 **Unit I — Foundations & Bandit Algorithms**
 

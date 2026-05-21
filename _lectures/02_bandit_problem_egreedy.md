@@ -6,7 +6,7 @@ tldr: "The stochastic multi-armed bandit problem, the exploration vs exploitatio
 hide_from_announcments: true
 links:
     - url: /slides/lecture3/lecture3.html
-      name: slides
+      name: Slides
 ---
 **Unit I — Foundations & Bandit Algorithms**
 

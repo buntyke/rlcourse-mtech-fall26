@@ -6,7 +6,7 @@ tldr: "Upper Confidence Bound action selection, KL-UCB (brief), and Thompson Sam
 hide_from_announcments: true
 links:
     - url: /slides/lecture4/lecture4.html
-      name: slides
+      name: Slides
 ---
 **Unit I — Foundations & Bandit Algorithms**
 

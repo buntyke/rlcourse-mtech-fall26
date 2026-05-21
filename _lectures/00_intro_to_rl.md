@@ -6,11 +6,11 @@ tldr: "What is RL, why it matters, how it fits in the ML landscape, and a walkth
 hide_from_announcments: true
 links:
     - url: /slides/lecture1/lecture1.html
-      name: slides
+      name: Slides
     - url: https://www.youtube.com/watch?v=fSwZiEdZC9Y&list=PLmPmjyValVKFsWebn9Mis95DGM2pHlBIJ
-      name: video1
+      name: Video1
     - url: https://www.youtube.com/watch?v=o7SJnq2tmOc&list=PLmPmjyValVKFsWebn9Mis95DGM2pHlBIJ&index=3
-      name: video2
+      name: Video2
 ---
 **Welcome & Course Orientation**
 

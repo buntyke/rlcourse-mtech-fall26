@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RL Lecture 7 — Returns, Reward Formulations &amp; Episodic vs Continuing Tasks</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css" id="theme">
+<style>
+  :root { --rl-red: #213c8b; --rl-white: rgb(235,235,235); }
+  .reveal { font-family: "Lato", "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 30px; }
+  .reveal h1, .reveal h2, .reveal h3, .reveal h4 { color: var(--rl-red); font-weight: 700; text-transform: none; }
+  .reveal .slides > section, .reveal .slides > section > section {
+    top: 0 !important;
+    height: 100%;
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 70px 30px 60px 30px !important;
+    box-sizing: border-box;
+  }
+  .reveal .frame-title { position: absolute; top: 18px; left: 30px; right: 30px; color: var(--rl-red); font-size: 1.2em; font-weight: 700; border-bottom: 2px solid var(--rl-red); padding-bottom: .2em; margin: 0; text-align: left; }
+  .reveal section img { background: none; border: none; box-shadow: none; margin: .3em auto; }
+  .reveal .title-slide { background: #fff; color: var(--rl-red); padding: 2em; text-align: center !important; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%; }
+  .reveal .title-slide h1, .reveal .title-slide h2, .reveal .title-slide p { color: var(--rl-red); text-align: center !important; width: 100%; }
+  .reveal .section-divider { display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; text-align: center !important; }
+  .reveal .section-divider h1 { color: var(--rl-red); font-size: 1.8em; text-align: center !important; width: 100%; margin: 0 auto; }
+  .two-col { display: flex; gap: 1em; align-items: center; justify-content: center; }
+  .two-col > div { flex: 1; text-align: center; }
+  .two-col.w64 > div:first-child { flex: 0 0 60%; }
+  .two-col.w64 > div:last-child  { flex: 0 0 36%; }
+  .reveal ul { display: inline-block; text-align: left; margin: 0 auto; font-size: .90em; }
+  .reveal ul > li { margin-bottom: .6em; }
+  .reveal ul > li:last-child { margin-bottom: 0; }
+  .reveal ul ul > li { margin-bottom: 0; }
+  .reveal p { font-size: .95em; }
+  .reveal section { text-align: center; }
+  .reveal .small { font-size: .7em; }
+  .reveal .has-footnote img { max-height: 540px; max-width: 90%; height: auto; }
+  .reveal .full-img { width: 100%; text-align: center; }
+  .reveal .full-img img { height: 576px; width: auto; max-width: 95%; }
+  .reveal .has-footnote.full-slide .full-img img { height: 540px; }
+  .reveal section.full-slide { padding-top: 55px !important; padding-bottom: 25px !important; }
+  .reveal .footnote { position: absolute; left: 30px; right: 30px; bottom: 10px; font-size: .5em; font-style: italic; color: #555; border-top: 1px solid #888; padding-top: 4px; text-align: left; margin: 0; }
+  .img-stack { position: relative; display: inline-block; }
+  .img-stack img { position: absolute; top: 0; left: 0; }
+  .img-stack img:first-child { position: relative; }
+  .center { text-align: center; }
+  .reveal a { color: var(--rl-red); }
+  .callout { margin: 0.8em auto; padding: 0.7em 1.4em; border: 2px solid var(--rl-red); border-radius: 6px; background: #f0f4ff; max-width: 88%; text-align: center; }
+  .reveal .boardwork { background: #f6f1e7; border-left: 4px solid var(--rl-red); padding: .5em .9em; font-size: .8em; text-align: left; max-width: 85%; margin: .8em auto; }
+</style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- ============================================================ -->
+<!-- Title                                                        -->
+<!-- ============================================================ -->
+<section class="title-slide">
+  <h1 style="margin-bottom:.15em; font-size:2.4em">Reinforcement Learning</h1>
+  <h2 style="margin-top:0; font-size:1.4em">Lecture 7 — Returns, Reward Formulations &amp; Episodic vs Continuing Tasks</h2>
+  <p style="margin-top:1.8em; font-size:1.4em">Nishanth Koganti</p>
+  <p style="font-size:1em">VNR VJIET — M.Tech AI &amp; DS</p>
+</section>
+
+<!-- TOC -->
+<section>
+  <div class="frame-title">Table of Contents</div>
+  <ul>
+    <li>Markov Processes</li>
+    <li>Markov Reward Processes</li>
+    <li>Markov Decision Processes</li>
+    <li>Episodic vs Continuing Tasks</li>
+  </ul>
+  <p class="center" style="margin-top:1.5em"><strong>Lecture material:</strong>
+    <a href="https://buntyke.github.io/rlcourse-mtech-fall26">buntyke.github.io/rlcourse-mtech-fall26</a></p>
+</section>
+
+<!-- Acknowledgements -->
+<section>
+  <div class="frame-title">Acknowledgements</div>
+  <p>The slides of this lecture are based on:</p>
+  <ul>
+    <li>Lecture 2 of <strong>Google DeepMind's 2015</strong> lectures by <em>David Silver</em></li>
+    <li>Ch. 3.3–3.4 of <strong>Reinforcement Learning: An Introduction</strong> by <em>Sutton &amp; Barto</em></li>
+  </ul>
+  <p class="center" style="margin-top:1.5em"><strong>Lecture material:</strong>
+    <a href="https://buntyke.github.io/rlcourse-mtech-fall26">buntyke.github.io/rlcourse-mtech-fall26</a></p>
+</section>
+
+<!-- ============================================================ -->
+<!-- Section 1: Markov Processes                                  -->
+<!-- ============================================================ -->
+<section class="section-divider"><h1>Markov Processes</h1></section>
+
+<!-- Markov Property -->
+<section>
+  <section>
+    <div class="frame-title">Markov Property</div>
+    <p style="font-style:italic; margin-bottom:0.8em">"The future is independent of the past given the present"</p>
+    <div class="callout">
+      <strong>Definition</strong><br>
+      A state \(S_t\) is Markov if and only if
+      \[ \mathbb{P}[S_{t+1} \mid S_t] = \mathbb{P}[S_{t+1} \mid S_1, \ldots, S_t] \]
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Markov Property</div>
+    <p style="font-style:italic; margin-bottom:0.8em">"The future is independent of the past given the present"</p>
+    <div class="callout">
+      <strong>Definition</strong><br>
+      A state \(S_t\) is Markov if and only if
+      \[ \mathbb{P}[S_{t+1} \mid S_t] = \mathbb{P}[S_{t+1} \mid S_1, \ldots, S_t] \]
+    </div>
+    <ul style="margin-top:0.8em">
+      <li>State captures all relevant information from the history</li>
+      <li>i.e., the state is a <strong>sufficient statistic</strong> of the future</li>
+    </ul>
+  </section>
+</section>
+
+<!-- State Transition Matrix -->
+<section>
+  <div class="frame-title">State Transition Matrix</div>
+  <p>For a Markov state \(s\) and successor state \(s'\), the <strong>transition probability</strong> is:</p>
+  \[ \mathcal{P}_{ss'} = \mathbb{P}[S_{t+1} = s' \mid S_t = s] \]
+  <p style="margin-top:0.6em">The <strong>state transition matrix</strong> \(\mathcal{P}\) collects all pairwise probabilities:</p>
+  \[
+    \mathcal{P} = \begin{bmatrix}
+      \mathcal{P}_{11} & \cdots & \mathcal{P}_{1n} \\
+      \vdots & \ddots & \vdots \\
+      \mathcal{P}_{n1} & \cdots & \mathcal{P}_{nn}
+    \end{bmatrix}
+  \]
+  <p class="small" style="margin-top:0.4em">Each row sums to 1.</p>
+</section>
+
+<!-- Markov Process Definition -->
+<section>
+  <div class="frame-title">Markov Process</div>
+  <p>A Markov process is a <strong>memoryless random process</strong> — a sequence of random states \(S_1, S_2, \ldots\) with the Markov property.</p>
+  <div class="callout" style="margin-top:1em">
+    <strong>Definition</strong><br>
+    A <em>Markov Process</em> (or Markov Chain) is a tuple \(\langle \mathcal{S}, \mathcal{P} \rangle\)
+    <ul style="margin-top:0.5em; text-align:left; display:inline-block">
+      <li>\(\mathcal{S}\) is a (finite) set of states</li>
+      <li>\(\mathcal{P}\) is a state transition probability matrix,
+        \(\mathcal{P}_{ss'} = \mathbb{P}[S_{t+1} = s' \mid S_t = s]\)
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- Student MP: full image -->
+<section class="full-slide">
+  <div class="frame-title">Student Markov Process</div>
+  <div class="full-img"><img src="images/student-mp.png"></div>
+</section>
+
+<!-- Student MP: Sample Episodes -->
+<section>
+  <div class="frame-title">Student Markov Process: Sample Episodes</div>
+  <div class="two-col">
+    <div><img src="images/student-mp.png" style="max-height:460px"></div>
+    <div style="text-align:left">
+      <p style="margin-bottom:0.4em">Sample episodes starting from \(S_1 = C1\):</p>
+      <ul>
+        <li>\(C1 \to C2 \to C3 \to \text{Pass} \to \text{Sleep}\)</li>
+        <li>\(C1 \to FB \to FB \to C1 \to C2 \to \text{Sleep}\)</li>
+        <li>\(C1 \to C2 \to C3 \to Pub \to C2 \to C3 \to \text{Pass} \to \text{Sleep}\)</li>
+        <li>\(C1 \to FB \to FB \to C1 \to C2 \to C3 \to Pub \to C1 \to \ldots\)</li>
+        <li>\(C1 \to C2 \to C3 \to Pub \to C2 \to \text{Sleep}\)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Student MP: Transition Matrix -->
+<section>
+  <div class="frame-title">Student Markov Process: Transition Matrix</div>
+  <div class="two-col">
+    <div><img src="images/student-mp.png" style="max-height:460px"></div>
+    <div><img src="images/student-mp-dynamics.png" style="max-height:380px"></div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- Section 2: Markov Reward Processes                           -->
+<!-- ============================================================ -->
+<section class="section-divider"><h1>Markov Reward Processes</h1></section>
+
+<!-- MRP Definition -->
+<section>
+  <div class="frame-title">Markov Reward Process</div>
+  <p>A Markov reward process is a <strong>Markov chain with rewards</strong>.</p>
+  <div class="callout" style="margin-top:0.8em">
+    <strong>Definition</strong><br>
+    A <em>Markov Reward Process</em> is a tuple \(\langle \mathcal{S}, \mathcal{P}, \mathcal{R}, \gamma \rangle\)
+    <ul style="margin-top:0.5em; text-align:left; display:inline-block">
+      <li>\(\mathcal{S}\) is a finite set of states</li>
+      <li>\(\mathcal{P}\) is a state transition probability matrix</li>
+      <li>\(\mathcal{R}\) is a reward function, \(\mathcal{R}_s = \mathbb{E}[R_{t+1} \mid S_t = s]\)</li>
+      <li>\(\gamma\) is a discount factor, \(\gamma \in [0, 1]\)</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Student MRP: full image -->
+<section class="full-slide">
+  <div class="frame-title">Student Markov Reward Process</div>
+  <div class="full-img"><img src="images/student-mrp.png"></div>
+</section>
+
+<!-- Returns: progressive -->
+<section>
+  <section>
+    <div class="frame-title">Concept of Returns</div>
+    <p>How do we measure the <strong>total reward</strong> accumulated from time step \(t\)?</p>
+    <p style="margin-top:0.8em"><strong>Episodic (finite-horizon) return</strong> — when the task ends at time \(T\):</p>
+    \[ G_t \doteq R_{t+1} + R_{t+2} + R_{t+3} + \cdots + R_T \]
+  </section>
+  <section>
+    <div class="frame-title">Concept of Returns</div>
+    <p>How do we measure the <strong>total reward</strong> accumulated from time step \(t\)?</p>
+    <p style="margin-top:0.8em"><strong>Episodic (finite-horizon) return</strong> — when the task ends at time \(T\):</p>
+    \[ G_t \doteq R_{t+1} + R_{t+2} + R_{t+3} + \cdots + R_T \]
+    <p style="margin-top:0.8em"><strong>Discounted return</strong> — for infinite or continuing tasks:</p>
+    <div class="callout">
+      \[ G_t \doteq R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \cdots = \sum_{k=0}^{\infty} \gamma^k R_{t+k+1} \]
+    </div>
+    <p class="small">The discount \(\gamma \in [0,1]\) is the <em>present value</em> of future rewards.</p>
+  </section>
+</section>
+
+<!-- Why Discount -->
+<section>
+  <section>
+    <div class="frame-title">Why Discount Rewards?</div>
+    <ul>
+      <li>Avoids infinite returns in cyclic Markov Reward Processes</li>
+    </ul>
+  </section>
+  <section>
+    <div class="frame-title">Why Discount Rewards?</div>
+    <ul>
+      <li>Avoids infinite returns in cyclic Markov Reward Processes</li>
+      <li>Uncertainty about the future may not be fully represented</li>
+    </ul>
+  </section>
+  <section>
+    <div class="frame-title">Why Discount Rewards?</div>
+    <ul>
+      <li>Avoids infinite returns in cyclic Markov Reward Processes</li>
+      <li>Uncertainty about the future may not be fully represented</li>
+      <li>If reward is financial, immediate rewards earn more interest than delayed rewards</li>
+    </ul>
+  </section>
+  <section>
+    <div class="frame-title">Why Discount Rewards?</div>
+    <ul>
+      <li>Avoids infinite returns in cyclic Markov Reward Processes</li>
+      <li>Uncertainty about the future may not be fully represented</li>
+      <li>If reward is financial, immediate rewards earn more interest than delayed rewards</li>
+      <li>Animal/human behaviour shows preference for immediate reward</li>
+    </ul>
+    <p style="margin-top:1em">
+      \(\gamma \to 0\): <em>myopic</em> — only immediate reward matters<br>
+      \(\gamma \to 1\): <em>far-sighted</em> — distant rewards matter equally
+    </p>
+  </section>
+</section>
+
+<!-- Recursive Return -->
+<section>
+  <div class="frame-title">Recursive Return</div>
+  <p>Returns at successive time steps are related by a useful recursion:</p>
+  \[
+    G_t = R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \cdots
+  \]
+  \[
+    = R_{t+1} + \gamma \bigl( R_{t+2} + \gamma R_{t+3} + \cdots \bigr)
+  \]
+  <div class="callout" style="margin-top:0.4em">
+    \[ G_t = R_{t+1} + \gamma G_{t+1} \]
+  </div>
+  <p class="small" style="margin-top:0.6em">Holds for all \(t < T\); define \(G_T = 0\) at the terminal step.</p>
+</section>
+
+<!-- Value Function for MRP -->
+<section>
+  <div class="frame-title">Value Function</div>
+  <ul>
+    <li>The value function \(v(s)\) gives the <strong>long-term value</strong> of state \(s\)</li>
+  </ul>
+  <div class="callout" style="margin-top:1em">
+    <strong>Definition</strong><br>
+    The state value function \(v(s)\) of an MRP is the expected return starting from state \(s\):
+    \[ v(s) = \mathbb{E}[G_t \mid S_t = s] \]
+  </div>
+</section>
+
+<!-- Student MRP Returns -->
+<section>
+  <div class="frame-title">Student MRP: Sample Returns</div>
+  <div class="two-col">
+    <div style="text-align:left">
+      <p>Starting from \(S_1 = C1\) with \(\gamma = 1\):</p>
+      \[ G_1 = R_2 + \gamma R_3 + \cdots + \gamma^{T-2} R_T \]
+      <p style="margin-top:0.6em">Each episode yields a different sample return depending on the trajectory taken.</p>
+    </div>
+    <div><img src="images/student-mrp-returns.png" style="max-height:460px"></div>
+  </div>
+</section>
+
+<!-- Student MRP: State Value Function (progressive) -->
+<section>
+  <section class="full-slide">
+    <div class="frame-title">Student MRP: State Value Function (\(\gamma = 0\))</div>
+    <div class="full-img"><img src="images/student-mrp-value1.png"></div>
+  </section>
+  <section class="full-slide">
+    <div class="frame-title">Student MRP: State Value Function (\(\gamma = 0.9\))</div>
+    <div class="full-img"><img src="images/student-mrp-value2.png"></div>
+  </section>
+  <section class="full-slide">
+    <div class="frame-title">Student MRP: State Value Function (\(\gamma = 1\))</div>
+    <div class="full-img"><img src="images/student-mrp-value3.png"></div>
+  </section>
+</section>
+
+<!-- Bellman Equation for MRPs I -->
+<section>
+  <div class="frame-title">Bellman Equation for MRPs</div>
+  <p>The value function decomposes into <strong>immediate reward</strong> + <strong>discounted future value</strong>:</p>
+  \[
+  \begin{aligned}
+    v(s) &= \mathbb{E}[G_t \mid S_t = s] \\
+         &= \mathbb{E}[R_{t+1} + \gamma R_{t+2} + \cdots \mid S_t = s] \\
+         &= \mathbb{E}[R_{t+1} + \gamma G_{t+1} \mid S_t = s]
+  \end{aligned}
+  \]
+  <div class="callout" style="margin-top:0.6em">
+    \[ v(s) = \mathbb{E}[R_{t+1} + \gamma v(S_{t+1}) \mid S_t = s] \]
+  </div>
+</section>
+
+<!-- Bellman Equation for MRPs II -->
+<section>
+  <div class="frame-title">Bellman Equation for MRPs</div>
+  <div class="two-col">
+    <div><img src="images/mrp-transition.png" style="max-height:260px"></div>
+    <div style="text-align:left">
+      <p>Expanding the expectation over successor states \(s'\):</p>
+      \[ v(s) = \mathcal{R}_s + \gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}\, v(s') \]
+      <p style="margin-top:0.8em">Each successor \(s'\) is weighted by its transition probability \(\mathcal{P}_{ss'}\).</p>
+    </div>
+  </div>
+</section>
+
+<!-- Student MRP: Bellman update example -->
+<section class="full-slide">
+  <div class="frame-title">Student MRP: Bellman Equation Example</div>
+  <div class="full-img"><img src="images/mrp-bellman-update.png"></div>
+</section>
+
+<!-- Matrix Form -->
+<section>
+  <div class="frame-title">Bellman Equation in Matrix Form</div>
+  <p>The Bellman equation can be written concisely for all states simultaneously:</p>
+  \[ \mathbf{v} = \mathcal{R} + \gamma \mathcal{P} \mathbf{v} \]
+  <p style="margin-top:0.6em">where \(\mathbf{v}\) is a column vector with one entry per state.</p>
+  \[
+    \begin{bmatrix} v(1) \\ \vdots \\ v(n) \end{bmatrix}
+    =
+    \begin{bmatrix} \mathcal{R}_1 \\ \vdots \\ \mathcal{R}_n \end{bmatrix}
+    + \gamma
+    \begin{bmatrix}
+      \mathcal{P}_{11} & \cdots & \mathcal{P}_{1n} \\
+      \vdots & \ddots & \vdots \\
+      \mathcal{P}_{n1} & \cdots & \mathcal{P}_{nn}
+    \end{bmatrix}
+    \begin{bmatrix} v(1) \\ \vdots \\ v(n) \end{bmatrix}
+  \]
+</section>
+
+<!-- Solving the Bellman Equation -->
+<section>
+  <div class="frame-title">Solving the MRP Bellman Equation</div>
+  <p>The Bellman equation is a <strong>linear equation</strong> — it can be solved directly:</p>
+  \[
+    \mathbf{v} = \mathcal{R} + \gamma \mathcal{P} \mathbf{v}
+    \;\Rightarrow\;
+    (\mathbf{I} - \gamma \mathcal{P})\,\mathbf{v} = \mathcal{R}
+    \;\Rightarrow\;
+    \mathbf{v} = (\mathbf{I} - \gamma \mathcal{P})^{-1} \mathcal{R}
+  \]
+  <ul style="margin-top:1em">
+    <li>Computational complexity is \(\mathcal{O}(n^3)\) for \(n\) states</li>
+    <li>Direct solution only practical for <strong>small MRPs</strong></li>
+    <li>For large MRPs: iterative methods (e.g., dynamic programming, TD learning)</li>
+  </ul>
+</section>
+
+<!-- ============================================================ -->
+<!-- Section 3: Markov Decision Processes                         -->
+<!-- ============================================================ -->
+<section class="section-divider"><h1>Markov Decision Processes</h1></section>
+
+<!-- MDP Definition -->
+<section>
+  <div class="frame-title">Markov Decision Process</div>
+  <p>A Markov decision process (MDP) is a <strong>Markov reward process with decisions</strong>.</p>
+  <div class="callout" style="margin-top:0.8em">
+    <strong>Definition</strong><br>
+    A <em>Markov Decision Process</em> is a tuple \(\langle \mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{R}, \gamma \rangle\)
+    <ul style="margin-top:0.5em; text-align:left; display:inline-block">
+      <li>\(\mathcal{S}\) is a finite set of states</li>
+      <li>\(\mathcal{A}\) is a finite set of actions</li>
+      <li>\(\mathcal{P}^a_{ss'} = \mathbb{P}[S_{t+1} = s' \mid S_t = s,\, A_t = a]\) — transition dynamics</li>
+      <li>\(\mathcal{R}^a_s = \mathbb{E}[R_{t+1} \mid S_t = s,\, A_t = a]\) — reward function</li>
+      <li>\(\gamma \in [0,1]\) — discount factor</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Student MDP: full image -->
+<section class="full-slide">
+  <div class="frame-title">Example: Student MDP</div>
+  <div class="full-img"><img src="images/student-mdp.png"></div>
+</section>
+
+<!-- MDP Policy -->
+<section>
+  <section>
+    <div class="frame-title">MDP Policy</div>
+    <div class="callout">
+      <strong>Definition</strong><br>
+      A <em>policy</em> \(\pi\) is a distribution over actions given states:
+      \[ \pi(a \mid s) = \mathbb{P}[A_t = a \mid S_t = s] \]
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">MDP Policy</div>
+    <div class="callout">
+      <strong>Definition</strong><br>
+      A <em>policy</em> \(\pi\) is a distribution over actions given states:
+      \[ \pi(a \mid s) = \mathbb{P}[A_t = a \mid S_t = s] \]
+    </div>
+    <ul style="margin-top:0.8em">
+      <li>A policy <strong>fully defines</strong> the behaviour of an agent</li>
+      <li>MDP policies depend on the <strong>current state only</strong> — not the history</li>
+      <li>Policies are <strong>stationary</strong> (time-independent): \(A_t \sim \pi(\cdot \mid S_t),\; \forall t\)</li>
+    </ul>
+  </section>
+</section>
+
+<!-- ============================================================ -->
+<!-- Section 4: Episodic vs Continuing Tasks                      -->
+<!-- ============================================================ -->
+<section class="section-divider"><h1>Episodic vs Continuing Tasks</h1></section>
+
+<!-- Episodic Tasks -->
+<section>
+  <div class="frame-title">Episodic Tasks</div>
+  <ul>
+    <li>Agent–environment interaction breaks naturally into <strong>episodes</strong>
+      <ul>
+        <li>Plays of a game, trips through a maze, repeated attempts</li>
+      </ul>
+    </li>
+    <li>Each episode ends at a <strong>terminal state</strong>, then resets</li>
+    <li>Terminal time \(T\) is a random variable that varies per episode</li>
+    <li>Return is the <strong>finite sum</strong>:
+      \[ G_t \doteq R_{t+1} + R_{t+2} + \cdots + R_T \]
+    </li>
+    <li>State set extended: \(\mathcal{S}^+\) includes all non-terminal states plus the terminal state</li>
+  </ul>
+</section>
+
+<!-- Continuing Tasks -->
+<section>
+  <div class="frame-title">Continuing Tasks</div>
+  <ul>
+    <li>Interaction goes on <strong>continually without limit</strong> — no natural terminal state
+      <ul>
+        <li>On-going process control, long-running robot tasks</li>
+      </ul>
+    </li>
+    <li>The finite-horizon return is <strong>problematic</strong> when \(T = \infty\):
+      \[ G_t = R_{t+1} + R_{t+2} + \cdots \quad \to \quad \text{can diverge} \]
+    </li>
+    <li>Solution: use the <strong>discounted return</strong> with \(\gamma < 1\):
+      \[ G_t \doteq \sum_{k=0}^{\infty} \gamma^k R_{t+k+1} \]
+    </li>
+    <li>If \(\gamma < 1\) and rewards are bounded, the sum is always finite</li>
+  </ul>
+</section>
+
+<!-- Why the distinction matters -->
+<section>
+  <div class="frame-title">Why the Distinction Matters</div>
+  <div class="two-col">
+    <div style="text-align:left">
+      <p><strong>Episodic</strong></p>
+      <ul>
+        <li>Finite \(T\), can use \(\gamma = 1\)</li>
+        <li>Return sums over one episode</li>
+        <li>Each episode is independent</li>
+        <li>Example: game of chess, maze run</li>
+      </ul>
+    </div>
+    <div style="text-align:left">
+      <p><strong>Continuing</strong></p>
+      <ul>
+        <li>\(T = \infty\), requires \(\gamma < 1\)</li>
+        <li>Return must be discounted to converge</li>
+        <li>No episode resets</li>
+        <li>Example: robot life-span, process control</li>
+      </ul>
+    </div>
+  </div>
+  <p style="margin-top:1em">The return formula must match the task type — the choice of \(\gamma\) and \(T\) are linked.</p>
+</section>
+
+<!-- Unified Notation -->
+<section>
+  <div class="frame-title">Unified Notation</div>
+  <p>We can unify both cases with a single formula using an <strong>absorbing terminal state</strong>:</p>
+  <ul style="margin-top:0.6em">
+    <li>Terminal state transitions only to itself with zero reward</li>
+    <li>Episodic return extends to an infinite sum without changing the value</li>
+  </ul>
+  <div class="callout" style="margin-top:0.8em">
+    \[ G_t \doteq \sum_{k=t+1}^{T} \gamma^{k-t-1} R_k \]
+    allowing \(T = \infty\) or \(\gamma = 1\) — but <strong>not both simultaneously</strong>
+  </div>
+  <p class="small" style="margin-top:0.6em">This single expression covers episodic and continuing tasks throughout the course.</p>
+</section>
+
+<!-- Pole-Balancing Example -->
+<section>
+  <div class="frame-title">Example: Pole-Balancing</div>
+  <div class="two-col w64">
+    <div style="text-align:left">
+      <p><strong>Task</strong>: Keep a pole balanced on a moving cart. Failure = pole falls or cart runs off track.</p>
+      <p style="margin-top:0.8em"><strong>Episodic framing:</strong></p>
+      <ul>
+        <li>Episode ends on failure; pole reset to vertical</li>
+        <li>Reward: \(+1\) every non-failure step</li>
+        <li>Return = steps until failure (can use \(\gamma = 1\))</li>
+      </ul>
+      <p style="margin-top:0.8em"><strong>Continuing framing:</strong></p>
+      <ul>
+        <li>No resets; task runs indefinitely</li>
+        <li>Reward: \(-1\) on failure, \(0\) otherwise</li>
+        <li>Requires \(\gamma < 1\) to ensure finite return</li>
+      </ul>
+    </div>
+    <div>
+      <p style="font-size:0.8em; color:#555">Both framings lead to the same optimal behaviour: balance the pole for as long as possible.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Summary -->
+<section>
+  <div class="frame-title">Summary</div>
+  <ul>
+    <li><strong>Markov Processes</strong>: memoryless random processes \(\langle \mathcal{S}, \mathcal{P} \rangle\) — the future depends only on the present state</li>
+    <li><strong>Markov Reward Processes</strong>: Markov chains with rewards \(\langle \mathcal{S}, \mathcal{P}, \mathcal{R}, \gamma \rangle\) — defines returns and the value function \(v(s)\)</li>
+    <li><strong>Markov Decision Processes</strong>: MRPs with actions \(\langle \mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{R}, \gamma \rangle\) — the agent selects actions via a policy \(\pi\)</li>
+    <li><strong>Episodic tasks</strong> have finite \(T\); <strong>continuing tasks</strong> require discounting (\(\gamma < 1\)) for convergence; unified via the absorbing-state convention</li>
+  </ul>
+  <p style="margin-top:1em"><em>Next lecture</em>: value functions \(v_\pi\) and \(q_\pi\), and Bellman expectation equations</p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/math/math.js"></script>
+<script>
+  Reveal.initialize({
+    width: 1280, height: 720, margin: 0.04,
+    hash: true, slideNumber: 'c/t',
+    plugins: [ RevealMath.MathJax3 ],
+    mathjax3: { mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js' }
+  });
+</script>
+</body>
+</html>

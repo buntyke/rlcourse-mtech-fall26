@@ -4,7 +4,9 @@ date: 2026-05-14T09:00:00+05:30
 title: "Policy Evaluation & Policy Improvement"
 tldr: "Iterative policy evaluation (prediction problem) and the policy improvement theorem."
 hide_from_announcments: true
-links: []
+links:
+- url: /lectures/08_policy_eval_improvement/lecture9.html
+  name: Slides
 ---
 **Unit II — Markov Decision Processes & Dynamic Programming**
 

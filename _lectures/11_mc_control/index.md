@@ -4,7 +4,9 @@ date: 2026-05-25T09:00:00+05:30
 title: "Monte Carlo Control & Online MC Implementation"
 tldr: "MC control with exploring starts, MC control without exploring starts (on-policy and off-policy variants), and online implementation of MC policy evaluation."
 hide_from_announcments: true
-links: []
+links:
+- url: /lectures/11_mc_control/lecture12.html
+  name: Slides
 ---
 **Unit III — Monte Carlo & TD Prediction**
 

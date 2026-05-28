@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RL Lecture 10 — Policy Iteration &amp; Value Iteration</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css" id="theme">
+<style>
+  :root { --rl-red: #213c8b; --soft:#eef2fb; --amber:#d99a26; }
+  .reveal { font-family: "Lato", "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 30px; }
+  .reveal h1, .reveal h2, .reveal h3, .reveal h4 { color: var(--rl-red); font-weight: 700; text-transform: none; }
+  .reveal .slides > section, .reveal .slides > section > section {
+    top: 0 !important; height: 100%; display: flex !important; flex-direction: column;
+    justify-content: center; align-items: center; padding: 70px 30px 60px 30px !important; box-sizing: border-box;
+  }
+  .reveal .frame-title { position: absolute; top: 18px; left: 30px; right: 30px; color: var(--rl-red); font-size: 1.2em; font-weight: 700; border-bottom: 2px solid var(--rl-red); padding-bottom: .2em; margin: 0; text-align: left; }
+  .reveal section img { background: none; border: none; box-shadow: none; margin: .3em auto; }
+  .reveal .title-slide { background: #fff; color: var(--rl-red); padding: 2em; text-align: center !important; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%; }
+  .reveal .title-slide h1, .reveal .title-slide h2, .reveal .title-slide p { color: var(--rl-red); text-align: center !important; width: 100%; }
+  .reveal .section-divider { display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; text-align: center !important; }
+  .reveal .section-divider h1 { color: var(--rl-red); font-size: 1.8em; text-align: center !important; width: 100%; margin: 0 auto; }
+  .two-col { display: flex; gap: 1em; align-items: center; justify-content: center; width: 100%; }
+  .two-col > div { flex: 1; text-align: center; }
+  .two-col.w64 > div:first-child { flex: 0 0 58%; }
+  .two-col.w64 > div:last-child  { flex: 0 0 38%; }
+  .two-col.w46 > div:first-child { flex: 0 0 38%; }
+  .two-col.w46 > div:last-child  { flex: 0 0 58%; }
+  .reveal ul { display: inline-block; text-align: left; margin: 0 auto; font-size: .88em; }
+  .reveal ul > li { margin-bottom: .55em; }
+  .reveal ul > li:last-child { margin-bottom: 0; }
+  .reveal ul ul > li { margin-bottom: 0; font-size: .92em; }
+  .reveal p { font-size: .92em; }
+  .reveal section { text-align: center; }
+  .reveal .small { font-size: .7em; }
+  .reveal .has-footnote img { max-height: 470px; max-width: 85%; height: auto; }
+  .reveal .full-img { width: 100%; text-align: center; }
+  .reveal .full-img img { height: 530px; width: auto; max-width: 95%; }
+  .reveal .has-footnote.full-slide .full-img img { height: 490px; }
+  .reveal section.full-slide { padding-top: 55px !important; padding-bottom: 25px !important; }
+  .reveal .footnote { position: absolute; left: 30px; right: 30px; bottom: 10px; font-size: .5em; font-style: italic; color: #555; border-top: 1px solid #888; padding-top: 4px; text-align: left; margin: 0; }
+  .reveal .center { text-align: center; }
+  .reveal a { color: var(--rl-red); }
+  .reveal .boardwork { background: #f6f1e7; border-left: 4px solid var(--rl-red); padding: .45em .9em; font-size: .78em; text-align: left; max-width: 88%; margin: .7em auto; }
+  .reveal .mathline { margin: .4em auto; font-size: .95em; text-align: center; }
+  .reveal pre code { font-size: .95em; line-height: 1.3; text-align: left; }
+  .reveal .definition { background: #eef2fb; border-left: 4px solid var(--rl-red); padding: .6em 1em; font-size: .86em; text-align: left; max-width: 92%; margin: .4em auto; }
+  .reveal .question { border-left: 4px solid var(--rl-red); background: var(--soft); padding: .6em .9em; text-align: left; width: 90%; font-size: .80em; }
+  .reveal .question p { font-size: 1em; margin: .3em 0; }
+  .reveal .question ol { margin: .35em 0 0 1.2em; }
+  .reveal .question li { margin-bottom: .2em; }
+  .reveal table.env { border-collapse: collapse; margin: .3em auto; font-size: .72em; width: 90%; }
+  .reveal table.env th, .reveal table.env td { border: 1px solid #999; padding: .32em .55em; text-align: left; }
+  .reveal table.env th { background: #eef2fb; color: var(--rl-red); font-weight: 700; }
+  .reveal table.env tr:nth-child(even) td { background: #f8f9fd; }
+  .reveal .accent { color: var(--rl-red); font-weight: 700; }
+  .reveal .eq-chain { font-size: .80em; text-align: left; max-width: 92%; margin: 0 auto; line-height: 1.75; }
+  .reveal .mcq-q { font-size: .92em; text-align: left; width: 90%; margin: 0 auto .55em auto; font-weight: 600; }
+  .reveal .mcq-opts { display: grid; grid-template-columns: 1fr 1fr; gap: .45em .9em; width: 90%; margin: 0 auto; }
+  .reveal .mcq-opt { background: #f8f9fd; border: 1px solid #c5cce8; border-radius: 5px; padding: .38em .7em; font-size: .82em; text-align: left; }
+  .reveal .mcq-opt strong { color: var(--rl-red); }
+  .reveal .mcq-ans { background: #eef2fb; border-left: 4px solid var(--rl-red); padding: .35em .75em; font-size: .74em; width: 90%; margin: .55em auto 0 auto; text-align: left; }
+</style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- ═══════════ FILLER SLIDES ═══════════ -->
+
+<section class="title-slide">
+  <h1 style="margin-bottom:.15em; font-size:2.4em">Reinforcement Learning</h1>
+  <h2 style="margin-top:0; font-size:1.6em">Lecture 10 — Policy Iteration &amp; Value Iteration</h2>
+  <p style="margin-top:1.8em; font-size:1.4em">Nishanth Koganti</p>
+  <p style="font-size:1em">VNR VJIET — M.Tech AI &amp; DS</p>
+</section>
+
+<section>
+  <div class="frame-title">Today's Journey</div>
+  <ul>
+    <li>Part A — Recap: how to find a policy's value (policy evaluation)</li>
+    <li>Part B — Policy iteration: keep improving until optimal</li>
+    <li>Part C — Value iteration: a faster single-sweep method</li>
+    <li>Part D — Asynchronous DP: update states in any order</li>
+    <li>Part E — Generalized policy iteration: the big picture</li>
+  </ul>
+  <p class="center" style="margin-top:1.4em"><strong>Course page:</strong>
+    <a href="https://buntyke.github.io/rlcourse-mtech-fall26">buntyke.github.io/rlcourse-mtech-fall26</a></p>
+</section>
+
+<section>
+  <div class="frame-title">Acknowledgements</div>
+  <p>This lecture is based on:</p>
+  <ul>
+    <li>Chapter 4 of <strong>Reinforcement Learning: An Introduction</strong> (2nd ed.) by <em>Sutton &amp; Barto</em></li>
+  </ul>
+  <p class="center" style="margin-top:1.4em"><strong>Course page:</strong>
+    <a href="https://buntyke.github.io/rlcourse-mtech-fall26">buntyke.github.io/rlcourse-mtech-fall26</a></p>
+</section>
+
+<!-- ═══════════ PART A ═══════════ -->
+<section class="section-divider"><h1>Part A — Policy Evaluation &amp; Improvement</h1></section>
+
+<!-- Slide 1 -->
+<section class="has-footnote">
+  <div class="frame-title">Recap: Iterative Policy Evaluation</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li>Given policy \(\pi\), find its value function \(v_\pi\) using the Bellman equation as a repeated update</li>
+        <li>Sweep all states, replace each \(V(s)\) with a one-step Bellman backup</li>
+        <li>Stop when the largest change in any state is less than \(\theta\)</li>
+      </ul>
+      <p class="mathline" style="margin-top:.8em">\[ V(s) \leftarrow \sum_a \pi(a|s)\sum_{s',r}p(s',r|s,a)\bigl[r+\gamma V(s')\bigr] \]</p>
+    </div>
+    <div><img src="images/_page_98_Figure_2.jpeg" style="max-width:100%; max-height:410px"></div>
+  </div>
+  <div class="footnote">Sutton &amp; Barto, <em>RL: An Introduction</em>, Ch. 4, Fig. 4.1.</div>
+</section>
+
+<!-- Slide 2 -->
+<section>
+  <div class="frame-title">The Policy Improvement Theorem</div>
+  <div class="two-col w64" style="align-items:flex-start; gap:1.4em">
+    <div>
+      <div class="definition">
+        <strong>Theorem:</strong> If for all states \(s\):
+        \[ q_\pi(s,\pi'(s)) \ge v_\pi(s) \]
+        then \(\pi'\) is at least as good as \(\pi\):
+        \[ v_{\pi'}(s) \ge v_\pi(s) \quad \forall\,s \]
+      </div>
+      <ul style="margin-top:.7em">
+        <li>Intuition: "Do \(\pi'\) for one step, then follow \(\pi\). If that is no worse than following \(\pi\) always, then \(\pi'\) is the better policy."</li>
+      </ul>
+    </div>
+    <div><img src="images/image_01_policy_improvement_intuition.png" style="max-width:100%; max-height:400px"></div>
+  </div>
+</section>
+
+<!-- Slide 3: Proof sub-slides -->
+<section>
+  <section>
+    <div class="frame-title">Proof: Unrolling the Inequality (Part 1)</div>
+    <div class="eq-chain">
+      <p>\(v_\pi(s) \;\le\; q_\pi(s,\pi'(s))\) &emsp; <em>from the assumption</em></p>
+      <p>\(= \mathbb{E}_{\pi'}\bigl[R_{t+1}+\gamma v_\pi(S_{t+1}) \mid S_t=s\bigr]\)</p>
+      <p>\(\le \mathbb{E}_{\pi'}\bigl[R_{t+1}+\gamma q_\pi(S_{t+1},\pi'(S_{t+1})) \mid S_t=s\bigr]\) &emsp; <em>apply the assumption at \(S_{t+1}\)</em></p>
+    </div>
+    <div class="boardwork" style="margin-top:.9em">🖊️ <strong>Board:</strong> Draw the one-step tree: take \(\pi'\) at \(s\), then follow \(\pi\) from \(S_{t+1}\) onward.</div>
+  </section>
+  <section>
+    <div class="frame-title">Proof: Unrolling the Inequality (Part 2)</div>
+    <div class="eq-chain">
+      <p>\(= \mathbb{E}_{\pi'}\bigl[R_{t+1}+\gamma R_{t+2}+\gamma^2 v_\pi(S_{t+2}) \mid S_t=s\bigr]\)</p>
+      <p>\(\le \;\cdots\;</p>
+      <p>\(\le \mathbb{E}_{\pi'}\bigl[R_{t+1}+\gamma R_{t+2}+\gamma^2 R_{t+3}+\cdots \mid S_t=s\bigr]\)</p>
+      <p>\(= v_{\pi'}(s)\) &emsp; <span class="accent">∎</span></p>
+    </div>
+    <p style="margin-top:.8em; font-size:.88em">Each step applies the assumption one time step further. The chain telescopes all the way to \(v_{\pi'}(s)\).</p>
+  </section>
+</section>
+
+<!-- Slide 4 -->
+<section class="has-footnote">
+  <div class="frame-title">Greedy Policy Improvement</div>
+  <div class="two-col w64">
+    <div>
+      <p class="mathline">\[ \pi'(s) = \underset{a}{\operatorname{argmax}}\sum_{s',r}p(s',r|s,a)\bigl[r+\gamma V(s')\bigr] \]</p>
+      <ul style="margin-top:.5em">
+        <li>At every state, pick the action that gives the highest value in one step</li>
+        <li>This always satisfies the theorem's condition, so it is always at least as good as \(\pi\)</li>
+        <li>If greedy policy equals the old policy, the old policy is already <span class="accent">optimal</span></li>
+      </ul>
+    </div>
+    <div><img src="images/_page_98_Figure_2.jpeg" style="max-width:100%; max-height:400px"></div>
+  </div>
+  <div class="footnote">Sutton &amp; Barto, <em>RL: An Introduction</em>, Ch. 4, Fig. 4.1 (right column: greedy policy sequence).</div>
+</section>
+
+<!-- Slide 5 -->
+<section class="has-footnote">
+  <div class="frame-title">4×4 Gridworld</div>
+  <div class="two-col w46">
+    <div><img src="images/_page_97_Figure_3.jpeg" style="max-width:100%; max-height:430px"></div>
+    <div style="text-align:left">
+      <ul>
+        <li>14 non-terminal states; actions: up, down, left, right</li>
+        <li>Reward: −1 per step until reaching a corner (terminal); no discount</li>
+        <li>Random policy gives the value shown on the left</li>
+        <li><span class="accent">Key finding:</span> the greedy policy is optimal after just 3 evaluation sweeps — not after full convergence</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footnote">Sutton &amp; Barto, <em>RL: An Introduction</em>, Ch. 4, Example 4.1.</div>
+</section>
+
+<!-- Q1 -->
+<section>
+  <section>
+    <div class="frame-title">Question — Policy Improvement Theorem</div>
+    <p class="mcq-q">In the gridworld, "down" from state 11 leads to the terminal state (value = 0). The reward on every step is −1. What is \(q_\pi(11,\text{down})\)?</p>
+    <div class="mcq-opts">
+      <div class="mcq-opt"><strong>(A)</strong> &nbsp; \(-14\)</div>
+      <div class="mcq-opt"><strong>(B)</strong> &nbsp; \(-1\)</div>
+      <div class="mcq-opt"><strong>(C)</strong> &nbsp; \(\;0\)</div>
+      <div class="mcq-opt"><strong>(D)</strong> &nbsp; \(-15\)</div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Question — Policy Improvement Theorem (Answer)</div>
+    <p class="mcq-q">In the gridworld, "down" from state 11 leads to the terminal state (value = 0). The reward on every step is −1. What is \(q_\pi(11,\text{down})\)?</p>
+    <div class="mcq-opts">
+      <div class="mcq-opt"><strong>(A)</strong> &nbsp; \(-14\)</div>
+      <div class="mcq-opt" style="background:#d4edda; border-color:#5cb85c"><strong>(B)</strong> &nbsp; \(-1\) ✅</div>
+      <div class="mcq-opt"><strong>(C)</strong> &nbsp; \(\;0\)</div>
+      <div class="mcq-opt"><strong>(D)</strong> &nbsp; \(-15\)</div>
+    </div>
+    <div class="mcq-ans">✅ <strong>Answer: (B)</strong> &nbsp; \(q_\pi(11,\text{down}) = -1 + v_\pi(\text{terminal}) = -1 + 0 = -1\). &nbsp; Bonus: "down" from state 7 lands in state 11, so \(q_\pi(7,\text{down}) = -1 + v_\pi(11) \approx -1 + (-14) = -15\) → option (D).</div>
+  </section>
+</section>
+
+<!-- ═══════════ PART B ═══════════ -->
+<section class="section-divider"><h1>Part B — Policy Iteration</h1></section>
+
+<!-- Slide 7 -->
+<section>
+  <div class="frame-title">Policy Iteration: Evaluate → Improve → Repeat</div>
+  <div class="two-col w64">
+    <div>
+      <p class="mathline" style="font-size:.82em">\[\pi_0\xrightarrow{E}v_{\pi_0}\xrightarrow{I}\pi_1\xrightarrow{E}v_{\pi_1}\xrightarrow{I}\pi_2\xrightarrow{E}\cdots\xrightarrow{I}\pi_*\xrightarrow{E}v_*\]</p>
+      <ul style="margin-top:.6em">
+        <li>\(\xrightarrow{E}\) evaluate the current policy fully; \(\xrightarrow{I}\) improve greedily</li>
+        <li>Each new policy is strictly better (unless already optimal)</li>
+        <li>Finite MDP has finitely many policies → <span class="accent">always finishes in finite steps</span></li>
+      </ul>
+    </div>
+    <div><img src="images/image_02_policy_iteration_cycle.png" style="max-width:100%; max-height:400px"></div>
+  </div>
+</section>
+
+<!-- Slide 8 -->
+<section>
+  <div class="frame-title">Policy Iteration — Pseudocode</div>
+  <pre style="width:90%; margin:.3em auto; background:#f8f9fd; border:1px solid #c5cce8; border-radius:4px"><code class="nohighlight">Policy Iteration  (find π ≈ π*)
+
+1. Initialization
+   V(s) ← any value  for all s;    V(terminal) ← 0
+   π(s) ← any action for all s
+
+2. Policy Evaluation (repeat until V stops changing)
+   For each s:
+     v ← V(s)
+     V(s) ← Σ_{s',r} p(s',r | s, π(s)) [r + γ V(s')]
+     Δ ← max(Δ, |v − V(s)|)
+   Stop when Δ < θ
+
+3. Policy Improvement
+   stable ← true
+   For each s:
+     old ← π(s)
+     π(s) ← argmax_a Σ_{s',r} p(s',r | s, a) [r + γ V(s')]
+     If old ≠ π(s): stable ← false
+   If stable → done (return V, π).  Else → go to step 2</code></pre>
+  <p class="small" style="margin-top:.35em; text-align:center">Sutton &amp; Barto, <em>RL: An Introduction</em>, Ch. 4.3.</p>
+</section>
+
+<!-- Slide 9 -->
+<section class="has-footnote">
+  <div class="frame-title">Jack's Car Rental</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li><strong>State:</strong> \((n_1,n_2)\) — number of cars at each location (max 20)</li>
+        <li><strong>Action:</strong> move up to 5 cars overnight between locations; cost \$2/car moved</li>
+        <li><strong>Revenue:</strong> \$10 per car rented; customer arrivals follow a Poisson distribution</li>
+        <li>Policy iteration finds the best strategy in just <span class="accent">5 iterations</span></li>
+      </ul>
+    </div>
+    <div><img src="images/_page_102_Figure_3.jpeg" style="max-width:100%; max-height:430px"></div>
+  </div>
+  <div class="footnote">Sutton &amp; Barto, <em>RL: An Introduction</em>, Ch. 4, Fig. 4.2.</div>
+</section>
+
+<!-- Slide 10 -->
+<section>
+  <div class="frame-title">Why Policy Iteration Converges Quickly</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li>There are \(|\mathcal{A}|^{|\mathcal{S}|\!}\) possible policies (a huge number), but policy iteration only visits a small improving chain</li>
+        <li>Each step gives a strictly better policy, so the same policy is never visited twice</li>
+        <li>In practice, <span class="accent">5–20 outer steps</span> are enough even for large problems</li>
+        <li>Each evaluation starts from the previous value function, so it converges fast</li>
+      </ul>
+    </div>
+    <div><img src="images/image_03_policy_count_vs_iteration.png" style="max-width:100%; max-height:400px"></div>
+  </div>
+</section>
+
+<!-- Slide 11 -->
+<section>
+  <div class="frame-title">Policy Iteration: Convergence Proof Sketch</div>
+  <div class="definition" style="max-width:86%">
+    <strong>Result:</strong> On a finite MDP with \(\gamma &lt; 1\), policy iteration always reaches \(\pi_*\) and \(v_*\) in a finite number of steps.
+  </div>
+  <ul style="margin-top:.8em">
+    <li><strong>Step 1.</strong> Each iteration gives \(v_{\pi_{k+1}} \ge v_{\pi_k}\) — policy improvement theorem</li>
+    <li><strong>Step 2.</strong> A finite MDP has only finitely many deterministic policies</li>
+    <li><strong>Step 3.</strong> A sequence that strictly improves cannot repeat → must stop</li>
+    <li><strong>Step 4.</strong> The only stopping point is \(\pi=\pi_*\), where Bellman optimality holds</li>
+  </ul>
+</section>
+
+<!-- Slide 12 -->
+<section>
+  <div class="frame-title">Policy Iteration in Practice</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li><strong>In-place updates</strong> (Gauss–Seidel style) are faster than using two separate arrays</li>
+        <li><strong>Stop evaluation early</strong> at \(\Delta &lt; \theta\); exact convergence is never needed</li>
+        <li><strong>Ties in improvement:</strong> if two actions are equally good, pick either one — the guarantee still holds</li>
+        <li><strong>Bug to avoid:</strong> stop when the <em>value function</em> is stable, not just when the policy action does not change</li>
+      </ul>
+    </div>
+    <div><img src="images/image_04_two_array_vs_inplace.png" style="max-width:100%; max-height:400px"></div>
+  </div>
+</section>
+
+<!-- Q2 -->
+<section>
+  <section>
+    <div class="frame-title">Question — Action-Value Policy Iteration</div>
+    <p class="mcq-q">In policy iteration using \(Q(s,a)\) instead of \(V(s)\), what is the key advantage in the <em>policy improvement</em> step?</p>
+    <div class="mcq-opts">
+      <div class="mcq-opt"><strong>(A)</strong> &nbsp; The algorithm always converges in fewer outer steps</div>
+      <div class="mcq-opt"><strong>(B)</strong> &nbsp; No need to know the model \(p(s',r|s,a)\) when selecting the best action</div>
+      <div class="mcq-opt"><strong>(C)</strong> &nbsp; The \(Q\)-table always uses less memory than \(V\)</div>
+      <div class="mcq-opt"><strong>(D)</strong> &nbsp; It finds a better policy than using \(V(s)\)</div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Question — Action-Value Policy Iteration (Answer)</div>
+    <p class="mcq-q">In policy iteration using \(Q(s,a)\) instead of \(V(s)\), what is the key advantage in the <em>policy improvement</em> step?</p>
+    <div class="mcq-opts">
+      <div class="mcq-opt"><strong>(A)</strong> &nbsp; The algorithm always converges in fewer outer steps</div>
+      <div class="mcq-opt" style="background:#d4edda; border-color:#5cb85c"><strong>(B)</strong> &nbsp; No need to know the model \(p(s',r|s,a)\) when selecting the best action ✅</div>
+      <div class="mcq-opt"><strong>(C)</strong> &nbsp; The \(Q\)-table always uses less memory than \(V\)</div>
+      <div class="mcq-opt"><strong>(D)</strong> &nbsp; It finds a better policy than using \(V(s)\)</div>
+    </div>
+    <div class="mcq-ans">✅ <strong>Answer: (B)</strong> &nbsp; Best action = \(\operatorname{argmax}_a Q(s,a)\) — no model needed at decision time. With \(V(s)\), improvement requires computing \(\sum_{s',r}p(\cdot)\,[r+\gamma V(s')]\), which needs the model.</div>
+  </section>
+</section>
+
+<!-- ═══════════ PART C ═══════════ -->
+<section class="section-divider"><h1>Part C — Value Iteration</h1></section>
+
+<!-- Slide 14 -->
+<section>
+  <div class="frame-title">Do We Need Full Evaluation Before Improving?</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li>In the gridworld, the best policy was found after only <span class="accent">3 evaluation sweeps</span> — not full convergence</li>
+        <li>We can stop evaluation at any point and still improve the policy</li>
+        <li>Most extreme case: stop after <strong>1 sweep</strong>, then improve → this is <span class="accent">Value Iteration</span></li>
+        <li>A full family of algorithms exists between "1 sweep" and "full convergence"</li>
+      </ul>
+    </div>
+    <div><img src="images/image_05_truncation_motivation.png" style="max-width:100%; max-height:400px"></div>
+  </div>
+</section>
+
+<!-- Slide 15 -->
+<section>
+  <div class="frame-title">Value Iteration Update Rule</div>
+  <p class="mathline">\[ V(s) \leftarrow \max_a \sum_{s',r} p(s',r|s,a)\bigl[r+\gamma V(s')\bigr] \]</p>
+  <table class="env" style="margin-top:.7em; width:78%">
+    <tr><th>Algorithm</th><th>Update at each state</th><th>Fixed point</th></tr>
+    <tr><td>Policy Evaluation</td><td>\(\sum_a \pi(a|s)\,(\cdots)\) — weighted average</td><td>\(v_\pi\)</td></tr>
+    <tr><td>Value Iteration</td><td>\(\max_a\,(\cdots)\) — take the best action</td><td>\(v_*\)</td></tr>
+  </table>
+  <ul style="margin-top:.6em">
+    <li>Directly applies the <span class="accent">Bellman optimality equation</span> as an update</li>
+    <li>Converges to \(v_*\) — same conditions as the existence of \(v_*\)</li>
+  </ul>
+</section>
+
+<!-- Slide 16 -->
+<section>
+  <div class="frame-title">Why Value Iteration Converges: Contraction</div>
+  <div class="two-col w64">
+    <div>
+      <div class="definition">
+        The update \(V \leftarrow \mathcal{T}^* V\) shrinks the error by factor \(\gamma\) each sweep:
+        \[\|V_{k+1} - v_*\|_\infty \;\le\; \gamma\,\|V_k - v_*\|_\infty\]
+      </div>
+      <ul style="margin-top:.7em">
+        <li>The error is multiplied by \(\gamma &lt; 1\) each time → error goes to zero</li>
+        <li>There is exactly one fixed point: \(v_*\)</li>
+        <li>Smaller \(\gamma\) → faster convergence</li>
+      </ul>
+    </div>
+    <div><img src="images/image_06_bellman_contraction.png" style="max-width:100%; max-height:380px"></div>
+  </div>
+</section>
+
+<!-- Slide 17 -->
+<section>
+  <div class="frame-title">Value Iteration — Pseudocode</div>
+  <pre style="width:88%; margin:.3em auto; background:#f8f9fd; border:1px solid #c5cce8; border-radius:4px"><code class="nohighlight">Value Iteration  (find π ≈ π*)
+
+Initialize V(s) to any value;  V(terminal) ← 0
+
+Loop:
+  Δ ← 0
+  For each s:
+    v ← V(s)
+    V(s) ← max_a  Σ_{s',r} p(s',r | s, a) [r + γ V(s')]
+    Δ ← max(Δ, |v − V(s)|)
+Until Δ < θ
+
+Output policy:  π(s) = argmax_a Σ_{s',r} p(s',r | s, a) [r + γ V(s')]</code></pre>
+  <p class="small" style="margin-top:.35em; text-align:center">Sutton &amp; Barto, <em>RL: An Introduction</em>, Ch. 4.4.</p>
+</section>
+
+<!-- Slide 18 -->
+<section class="has-footnote">
+  <div class="frame-title">Gambler's Problem</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li><strong>State:</strong> capital \(s \in \{1,\ldots,99\}\) dollars</li>
+        <li><strong>Action:</strong> bet \(a\) dollars; heads → win \$a, tails → lose \$a</li>
+        <li><strong>Goal:</strong> reach \$100 (reward +1); running out is a loss (reward 0)</li>
+        <li>\(p_h = 0.4\): coin is unfair → value function sweeps converge to \(v_*\) as shown</li>
+      </ul>
+    </div>
+    <div><img src="images/_page_105_Figure_5.jpeg" style="max-width:100%; max-height:420px"></div>
+  </div>
+  <div class="footnote">Sutton &amp; Barto, <em>RL: An Introduction</em>, Ch. 4, Fig. 4.3 (upper: value function sweeps).</div>
+</section>
+
+<!-- Slide 19 -->
+<section class="full-slide has-footnote">
+  <div class="frame-title">Gambler's Optimal Policy</div>
+  <div class="full-img"><img src="images/_page_105_Figure_6.jpeg"></div>
+  <div class="footnote">Sutton &amp; Barto, <em>RL: An Introduction</em>, Ch. 4, Fig. 4.3 (lower). At \$50: bet everything in one flip. Spiky shape: many tied optimal actions exist. For unfair coin (\(p_h &lt; 0.5\)): bet big to reach \$100 before going broke.</div>
+</section>
+
+<!-- Q3 -->
+<section>
+  <section>
+    <div class="frame-title">Question — Value Iteration for Action Values</div>
+    <p class="mcq-q">The value iteration update for action values is \(q_{k+1}(s,a) = \sum_{s',r}p(s',r|s,a)\bigl[r + \gamma \cdot \underline{\quad}\bigr]\). What fills the blank?</p>
+    <div class="mcq-opts">
+      <div class="mcq-opt"><strong>(A)</strong> &nbsp; \(V_k(s')\)</div>
+      <div class="mcq-opt"><strong>(B)</strong> &nbsp; \(q_k(s,a)\)</div>
+      <div class="mcq-opt"><strong>(C)</strong> &nbsp; \(\max_{a'} q_k(s',a')\)</div>
+      <div class="mcq-opt"><strong>(D)</strong> &nbsp; \(\sum_{a'}\pi(a'|s')\,q_k(s',a')\)</div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Question — Value Iteration for Action Values (Answer)</div>
+    <p class="mcq-q">The value iteration update for action values is \(q_{k+1}(s,a) = \sum_{s',r}p(s',r|s,a)\bigl[r + \gamma \cdot \underline{\quad}\bigr]\). What fills the blank?</p>
+    <div class="mcq-opts">
+      <div class="mcq-opt"><strong>(A)</strong> &nbsp; \(V_k(s')\)</div>
+      <div class="mcq-opt"><strong>(B)</strong> &nbsp; \(q_k(s,a)\)</div>
+      <div class="mcq-opt" style="background:#d4edda; border-color:#5cb85c"><strong>(C)</strong> &nbsp; \(\max_{a'} q_k(s',a')\) ✅</div>
+      <div class="mcq-opt"><strong>(D)</strong> &nbsp; \(\sum_{a'}\pi(a'|s')\,q_k(s',a')\)</div>
+    </div>
+    <div class="mcq-ans">✅ <strong>Answer: (C)</strong> &nbsp; \(q_{k+1}(s,a) = \sum_{s',r}p(s',r|s,a)\bigl[r+\gamma\max_{a'}q_k(s',a')\bigr]\). Take the best future action — same idea as the \(\max\) in the state-value update. Option (D) would give policy evaluation, not value iteration.</div>
+  </section>
+</section>
+
+<!-- ═══════════ PART D ═══════════ -->
+<section class="section-divider"><h1>Part D — Asynchronous Dynamic Programming</h1></section>
+
+<!-- Slide 21 -->
+<section>
+  <div class="frame-title">The Curse of Dimensionality</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li>Synchronous DP must update <em>every</em> state in each sweep — very expensive for large problems</li>
+        <li>Backgammon: more than \(10^{20}\) states → one sweep takes thousands of years at 1M updates/sec</li>
+        <li>DP is still efficient <em>relative to other methods</em> — it runs in time that grows as a polynomial in \(|\mathcal{S}|\), not exponentially</li>
+        <li>For very large state spaces we need <span class="accent">asynchronous</span> methods</li>
+      </ul>
+    </div>
+    <div><img src="images/image_07_curse_dimensionality.png" style="max-width:100%; max-height:400px"></div>
+  </div>
+</section>
+
+<!-- Slide 22 -->
+<section>
+  <div class="frame-title">Asynchronous DP: Update States in Any Order</div>
+  <div class="two-col w64">
+    <div>
+      <div class="definition">
+        <strong>Asynchronous DP:</strong> update the value of any state at any time, in any order, using the latest available values of other states.
+      </div>
+      <ul style="margin-top:.65em">
+        <li>One state can be updated many times while another is not updated yet</li>
+        <li><strong>Convergence rule:</strong> every state must be updated <em>infinitely often</em> — no state can be permanently skipped</li>
+        <li>Can focus updates on states the agent actually visits in real time</li>
+      </ul>
+    </div>
+    <div><img src="images/image_08_async_dp.png" style="max-width:100%; max-height:380px"></div>
+  </div>
+</section>
+
+<!-- Slide 23 -->
+<section>
+  <div class="frame-title">Asynchronous Value Iteration &amp; Real-Time DP</div>
+  <ul>
+    <li><strong>Asynchronous VI:</strong> at each step, pick any one state \(s_k\) and apply the value iteration update to it only; repeat for all states eventually → converges to \(v_*\)</li>
+    <li><strong>Real-time DP:</strong> run the agent in the environment; after each transition from state \(s\), update \(V(s)\) immediately — focuses computation on states the agent visits</li>
+    <li><strong>Key point:</strong> skipping sweeps does not reduce total work — it <em>redirects</em> work to the most useful states first</li>
+  </ul>
+</section>
+
+<!-- Q4 -->
+<section>
+  <section>
+    <div class="frame-title">Question — Asynchronous DP</div>
+    <p class="mcq-q">Which condition must hold for asynchronous value iteration to be guaranteed to converge to \(v_*\)?</p>
+    <div class="mcq-opts">
+      <div class="mcq-opt"><strong>(A)</strong> &nbsp; States are always updated in the same fixed order (e.g., state 1, 2, 3, …)</div>
+      <div class="mcq-opt"><strong>(B)</strong> &nbsp; Only the states the agent visits need to be updated</div>
+      <div class="mcq-opt"><strong>(C)</strong> &nbsp; Every state must be updated at least once per full sweep</div>
+      <div class="mcq-opt"><strong>(D)</strong> &nbsp; Every state must be updated infinitely often over the course of the algorithm</div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Question — Asynchronous DP (Answer)</div>
+    <p class="mcq-q">Which condition must hold for asynchronous value iteration to be guaranteed to converge to \(v_*\)?</p>
+    <div class="mcq-opts">
+      <div class="mcq-opt"><strong>(A)</strong> &nbsp; States are always updated in the same fixed order (e.g., state 1, 2, 3, …)</div>
+      <div class="mcq-opt"><strong>(B)</strong> &nbsp; Only the states the agent visits need to be updated</div>
+      <div class="mcq-opt"><strong>(C)</strong> &nbsp; Every state must be updated at least once per full sweep</div>
+      <div class="mcq-opt" style="background:#d4edda; border-color:#5cb85c"><strong>(D)</strong> &nbsp; Every state must be updated infinitely often over the course of the algorithm ✅</div>
+    </div>
+    <div class="mcq-ans">✅ <strong>Answer: (D)</strong> &nbsp; Asynchronous DP allows any update order, but no state can be permanently skipped. If a state is never updated again after some point, its value may stay wrong. The order and frequency are flexible — the only rule is that every state gets updated infinitely often.</div>
+  </section>
+</section>
+
+<!-- ═══════════ PART E ═══════════ -->
+<section class="section-divider"><h1>Part E — Generalized Policy Iteration</h1></section>
+
+<!-- Slide 25 -->
+<section class="has-footnote">
+  <div class="frame-title">Generalized Policy Iteration (GPI)</div>
+  <div class="two-col w64">
+    <div>
+      <div class="definition">
+        <strong>GPI:</strong> any method that alternates between a policy evaluation step (making \(V\) consistent with \(\pi\)) and a policy improvement step (making \(\pi\) greedy w.r.t. \(V\)).
+      </div>
+      <ul style="margin-top:.65em">
+        <li>Policy iteration: full evaluation, then full improvement</li>
+        <li>Value iteration: 1-sweep evaluation + implicit improvement</li>
+        <li>Async DP: both steps happen one state at a time</li>
+        <li><span class="accent">Almost all RL algorithms are GPI instances</span></li>
+      </ul>
+    </div>
+    <div><img src="images/_page_107_Figure_6.jpeg" style="max-width:100%; max-height:380px"></div>
+  </div>
+  <div class="footnote">Sutton &amp; Barto, <em>RL: An Introduction</em>, Ch. 4, GPI diagram.</div>
+</section>
+
+<!-- Slide 26 -->
+<section>
+  <div class="frame-title">GPI: Competition and Cooperation</div>
+  <ul>
+    <li><strong>They compete:</strong> improving the policy makes the value function wrong for the new policy; fixing the value function may make the policy non-greedy again</li>
+    <li><strong>They cooperate:</strong> together they always move toward the one point where both are satisfied — the optimal policy and value function</li>
+    <li><strong>The fixed point:</strong> \(\pi\) is greedy w.r.t. \(V\) <em>and</em> \(V\) is consistent with \(\pi\) → this means \(V = v_*\) and \(\pi = \pi_*\)</li>
+    <li><strong>Big picture:</strong> even though neither step tries to find the optimal solution directly, together they always reach it</li>
+  </ul>
+</section>
+
+<!-- Slide 27 -->
+<section class="has-footnote">
+  <div class="frame-title">GPI: Geometry of Convergence</div>
+  <div class="two-col w46">
+    <div><img src="images/_page_108_Figure_3.jpeg" style="max-width:100%; max-height:430px"></div>
+    <div style="text-align:left">
+      <ul>
+        <li>Think of two lines: Line 1 = "V consistent with π"; Line 2 = "π greedy w.r.t. V"</li>
+        <li>Evaluation moves toward Line 1; improvement moves toward Line 2</li>
+        <li>Alternating between the two lines leads to the intersection = optimal \((\pi_*, v_*)\)</li>
+        <li>Real geometry is more complex, but the zigzag pattern is the same idea</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footnote">Sutton &amp; Barto, <em>RL: An Introduction</em>, Ch. 4, GPI geometry.</div>
+</section>
+
+<!-- Slide 28 -->
+<section>
+  <div class="frame-title">How Efficient Is Dynamic Programming?</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li>DP finds the best policy in time that grows as a <span class="accent">polynomial</span> in \(|\mathcal{S}|\) and \(|\mathcal{A}|\)</li>
+        <li>Checking all policies would take time that grows <em>exponentially</em> (\(|\mathcal{A}|^{|\mathcal{S}|}\)) — DP is much faster</li>
+        <li>In practice, PI and VI both converge much faster than their worst-case bounds</li>
+        <li>For very large state spaces, <span class="accent">asynchronous DP</span> is preferred over full sweeps</li>
+      </ul>
+    </div>
+    <div><img src="images/image_09_dp_complexity.png" style="max-width:100%; max-height:390px"></div>
+  </div>
+</section>
+
+<!-- Q5 -->
+<section>
+  <section>
+    <div class="frame-title">Question — GPI Fixed Point</div>
+    <p class="mcq-q">In Generalized Policy Iteration (GPI), what is true when <em>both</em> the evaluation and improvement steps have fully stabilised?</p>
+    <div class="mcq-opts">
+      <div class="mcq-opt"><strong>(A)</strong> &nbsp; The policy is random and the value function equals zero</div>
+      <div class="mcq-opt"><strong>(B)</strong> &nbsp; \(V = v_\pi\) for some arbitrary policy \(\pi\), but \(\pi\) may still improve</div>
+      <div class="mcq-opt"><strong>(C)</strong> &nbsp; \(\pi\) is greedy w.r.t. \(V\), and \(V = v_*\) (Bellman optimality holds)</div>
+      <div class="mcq-opt"><strong>(D)</strong> &nbsp; Only the evaluation step has stabilised; improvement keeps running</div>
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Question — GPI Fixed Point (Answer)</div>
+    <p class="mcq-q">In Generalized Policy Iteration (GPI), what is true when <em>both</em> the evaluation and improvement steps have fully stabilised?</p>
+    <div class="mcq-opts">
+      <div class="mcq-opt"><strong>(A)</strong> &nbsp; The policy is random and the value function equals zero</div>
+      <div class="mcq-opt"><strong>(B)</strong> &nbsp; \(V = v_\pi\) for some arbitrary policy \(\pi\), but \(\pi\) may still improve</div>
+      <div class="mcq-opt" style="background:#d4edda; border-color:#5cb85c"><strong>(C)</strong> &nbsp; \(\pi\) is greedy w.r.t. \(V\), and \(V = v_*\) (Bellman optimality holds) ✅</div>
+      <div class="mcq-opt"><strong>(D)</strong> &nbsp; Only the evaluation step has stabilised; improvement keeps running</div>
+    </div>
+    <div class="mcq-ans">✅ <strong>Answer: (C)</strong> &nbsp; When both stabilise: \(V = v_\pi\) (evaluation done) <em>and</em> \(\pi\) is greedy w.r.t. \(V\) (improvement done). Together these mean \(V\) satisfies the Bellman optimality equation → \(V = v_*\) and \(\pi = \pi_*\).</div>
+  </section>
+</section>
+
+<!-- Slide 30 -->
+<section class="full-slide">
+  <div class="frame-title">Where DP Fits in the RL Landscape</div>
+  <div class="full-img"><img src="images/image_10_rl_landscape_2x2.png"></div>
+</section>
+
+<!-- Slide 31 -->
+<section>
+  <div class="frame-title">Summary: DP Algorithms at a Glance</div>
+  <table class="env" style="margin-top:.3em">
+    <tr>
+      <th>Algorithm</th>
+      <th>Evaluation step</th>
+      <th>Improvement step</th>
+      <th>Sweeps per outer loop</th>
+    </tr>
+    <tr><td>Policy Iteration</td><td>Full (until \(\Delta &lt; \theta\))</td><td>Greedy once</td><td>Many</td></tr>
+    <tr><td>Value Iteration</td><td>1 Bellman sweep</td><td>Implicit (\(\max\))</td><td>One</td></tr>
+    <tr><td>Async DP</td><td>One state at a time</td><td>Greedy</td><td>Any order</td></tr>
+    <tr><td>GPI (general)</td><td>Any amount</td><td>Any degree</td><td>Flexible</td></tr>
+  </table>
+  <ul style="margin-top:.65em">
+    <li><strong>All DP methods</strong> need a complete model \(p(s',r|s,a)\) — this is their main limitation</li>
+    <li><strong>GPI</strong> is the common framework — every RL method has an evaluation step and an improvement step</li>
+  </ul>
+</section>
+
+<!-- Slide 32 -->
+<section>
+  <div class="frame-title">Bridge to Model-Free Methods</div>
+  <div class="two-col w64">
+    <div>
+      <ul>
+        <li><strong>DP needs a model</strong>: we must know \(p(s',r|s,a)\) for all transitions — often not available in real problems</li>
+        <li><strong>Monte Carlo:</strong> no model needed; estimate \(v_\pi\) by running full episodes and averaging the returns</li>
+        <li><strong>TD Methods:</strong> no model needed; update \(V\) after each single step using the current estimate — faster than MC</li>
+        <li>The <span class="accent">GPI idea stays the same</span> — only the evaluation method changes</li>
+      </ul>
+    </div>
+    <div><img src="images/image_11_bridge_to_model_free.png" style="max-width:100%; max-height:380px"></div>
+  </div>
+</section>
+
+<!-- Slide 33 -->
+<section>
+  <div class="frame-title">Exit Check</div>
+  <ul>
+    <li><span class="accent">Policy improvement theorem:</span> using a greedy update gives a policy that is at least as good</li>
+    <li><span class="accent">Policy iteration:</span> repeat evaluate → improve until no change — always finds \(\pi_*\) for finite MDPs</li>
+    <li><span class="accent">Value iteration:</span> combine evaluate + improve into one Bellman optimality sweep; error shrinks by \(\gamma\) each step</li>
+    <li><span class="accent">GPI:</span> the universal framework for RL — evaluation and improvement together find \((\pi_*, v_*)\)</li>
+  </ul>
+  <p style="margin-top:.9em"><strong>Next lecture:</strong> Monte Carlo prediction — estimate value functions from sampled episodes, no model needed.</p>
+</section>
+
+<!-- ═══════════ BONUS QUESTIONS ═══════════ -->
+
+<section>
+  <div class="frame-title">Bonus Question — Gambler's Problem</div>
+  <p class="mcq-q">In the Gambler's Problem with an unfair coin (\(p_h = 0.4\)), what is the best action when the gambler has exactly \$50?</p>
+  <div class="mcq-opts">
+    <div class="mcq-opt"><strong>(A)</strong> &nbsp; Bet \$1 — small bets avoid going broke quickly</div>
+    <div class="mcq-opt"><strong>(B)</strong> &nbsp; Bet \$25 — bet exactly half your capital each time</div>
+    <div class="mcq-opt"><strong>(C)</strong> &nbsp; Bet \$50 — one flip can reach \$100 directly</div>
+    <div class="mcq-opt"><strong>(D)</strong> &nbsp; Any bet — no strategy can help with an unfair coin</div>
+  </div>
+  <div class="mcq-ans">✅ <strong>Answer: (C)</strong> &nbsp; With an unfair coin, winning slowly is unlikely. The best strategy is to reach \$100 in as few flips as possible. Betting \$50 at \$50 gives a single-flip path to the goal. <em>Programming exercise:</em> implement value iteration for \(p_h = 0.25\) and \(p_h = 0.55\) and plot the results (Tutorial 5).</div>
+</section>
+
+<section>
+  <div class="frame-title">Bonus Question — Policy Iteration vs Value Iteration</div>
+  <p class="mcq-q">Compared to Policy Iteration, Value Iteration ___.</p>
+  <div class="mcq-opts">
+    <div class="mcq-opt"><strong>(A)</strong> &nbsp; Does more work per outer step AND needs more outer steps</div>
+    <div class="mcq-opt"><strong>(B)</strong> &nbsp; Does less work per outer step AND needs fewer outer steps</div>
+    <div class="mcq-opt"><strong>(C)</strong> &nbsp; Does less work per outer step BUT needs more outer steps</div>
+    <div class="mcq-opt"><strong>(D)</strong> &nbsp; Always finds the optimal policy faster in practice</div>
+  </div>
+  <div class="mcq-ans">✅ <strong>Answer: (C)</strong> &nbsp; Value iteration does just one Bellman sweep per outer loop (cheap), but needs more outer iterations. Policy iteration runs full evaluation (many inner sweeps) before each improvement (expensive per step), but converges in very few outer steps (5–20 typical). Total computation is often similar for both.</div>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/math/math.js"></script>
+<script>
+  Reveal.initialize({
+    width: 1280, height: 720, margin: 0.04,
+    hash: true, slideNumber: 'c/t',
+    plugins: [ RevealMath.MathJax3 ],
+    mathjax3: { mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js' }
+  });
+</script>
+</body>
+</html>

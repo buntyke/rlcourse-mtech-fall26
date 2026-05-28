@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RL Lecture 8 — Policies, Value Functions &amp; Bellman Equations</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css" id="theme">
+<style>
+  :root { --rl-red: #213c8b; --rl-white: rgb(235,235,235); }
+  .reveal { font-family: "Lato", "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 30px; }
+  .reveal h1, .reveal h2, .reveal h3, .reveal h4 { color: var(--rl-red); font-weight: 700; text-transform: none; }
+  .reveal .slides > section, .reveal .slides > section > section {
+    top: 0 !important;
+    height: 100%;
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 70px 30px 60px 30px !important;
+    box-sizing: border-box;
+  }
+  .reveal .frame-title { position: absolute; top: 18px; left: 30px; right: 30px; color: var(--rl-red); font-size: 1.2em; font-weight: 700; border-bottom: 2px solid var(--rl-red); padding-bottom: .2em; margin: 0; text-align: left; }
+  .reveal section img { background: none; border: none; box-shadow: none; margin: .3em auto; }
+  .reveal .title-slide { background: #fff; color: var(--rl-red); padding: 2em; text-align: center !important; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%; }
+  .reveal .title-slide h1, .reveal .title-slide h2, .reveal .title-slide p { color: var(--rl-red); text-align: center !important; width: 100%; }
+  .reveal .section-divider { display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; text-align: center !important; }
+  .reveal .section-divider h1 { color: var(--rl-red); font-size: 1.8em; text-align: center !important; width: 100%; margin: 0 auto; }
+  .two-col { display: flex; gap: 1em; align-items: center; justify-content: center; }
+  .two-col > div { flex: 1; text-align: center; }
+  .two-col.w64 > div:first-child { flex: 0 0 60%; }
+  .two-col.w64 > div:last-child  { flex: 0 0 36%; }
+  .reveal ul { display: inline-block; text-align: left; margin: 0 auto; font-size: .90em; }
+  .reveal ul > li { margin-bottom: .6em; }
+  .reveal ul > li:last-child { margin-bottom: 0; }
+  .reveal ul ul > li { margin-bottom: 0; }
+  .reveal p { font-size: .95em; }
+  .reveal section { text-align: center; }
+  .reveal .small { font-size: .7em; }
+  .reveal .has-footnote img { max-height: 540px; max-width: 90%; height: auto; }
+  .reveal .full-img { width: 100%; text-align: center; }
+  .reveal .full-img img { height: 576px; width: auto; max-width: 95%; }
+  .reveal .has-footnote.full-slide .full-img img { height: 540px; }
+  .reveal section.full-slide { padding-top: 55px !important; padding-bottom: 25px !important; }
+  .reveal .footnote { position: absolute; left: 30px; right: 30px; bottom: 10px; font-size: .5em; font-style: italic; color: #555; border-top: 1px solid #888; padding-top: 4px; text-align: left; margin: 0; }
+  .img-stack { position: relative; display: inline-block; }
+  .img-stack img { position: absolute; top: 0; left: 0; }
+  .img-stack img:first-child { position: relative; }
+  .center { text-align: center; }
+  .reveal a { color: var(--rl-red); }
+  .callout { margin: 0.8em auto; padding: 0.7em 1.4em; border: 2px solid var(--rl-red); border-radius: 6px; background: #f0f4ff; max-width: 88%; text-align: center; }
+  .reveal .boardwork { background: #f6f1e7; border-left: 4px solid var(--rl-red); padding: .5em .9em; font-size: .8em; text-align: left; max-width: 85%; margin: .8em auto; }
+  /* Gridworld table styles */
+  .gw-table { border-collapse: collapse; font-size: 0.75em; margin: 0 auto; }
+  .gw-table td { width: 52px; height: 36px; text-align: center; vertical-align: middle; border: 1px solid #aaa; font-weight: 600; }
+  .gw-table td.special { background: #dbeafe; color: var(--rl-red); }
+</style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- ============================================================ -->
+<!-- Title                                                        -->
+<!-- ============================================================ -->
+<section class="title-slide">
+  <h1 style="margin-bottom:.15em; font-size:2.4em">Reinforcement Learning</h1>
+  <h2 style="margin-top:0; font-size:1.4em">Lecture 8 — Policies, Value Functions &amp; Bellman Equations</h2>
+  <p style="margin-top:1.8em; font-size:1.4em">Nishanth Koganti</p>
+  <p style="font-size:1em">VNR VJIET — M.Tech AI &amp; DS</p>
+</section>
+
+<!-- TOC -->
+<section>
+  <div class="frame-title">Table of Contents</div>
+  <ul>
+    <li>Policies and Value Functions</li>
+    <li>Bellman Expectation Equations</li>
+    <li>Optimal Value Functions &amp; Policies</li>
+    <li>Bellman Optimality Equations</li>
+  </ul>
+  <p class="center" style="margin-top:1.5em"><strong>Lecture material:</strong>
+    <a href="https://buntyke.github.io/rlcourse-mtech-fall26">buntyke.github.io/rlcourse-mtech-fall26</a></p>
+</section>
+
+<!-- Acknowledgements -->
+<section>
+  <div class="frame-title">Acknowledgements</div>
+  <p>The slides of this lecture are based on:</p>
+  <ul>
+    <li>Lecture 2 of <strong>Google DeepMind's 2015</strong> lectures by <em>David Silver</em></li>
+    <li>Ch. 3.5–3.6 of <strong>Reinforcement Learning: An Introduction</strong> by <em>Sutton &amp; Barto</em></li>
+  </ul>
+  <p class="center" style="margin-top:1.5em"><strong>Lecture material:</strong>
+    <a href="https://buntyke.github.io/rlcourse-mtech-fall26">buntyke.github.io/rlcourse-mtech-fall26</a></p>
+</section>
+
+<!-- ============================================================ -->
+<!-- Section 1: Policies and Value Functions                      -->
+<!-- ============================================================ -->
+<section class="section-divider"><h1>Policies and Value Functions</h1></section>
+
+<!-- MDP Policy -->
+<section>
+  <div class="frame-title">MDP Policy</div>
+  <div class="callout" style="margin-bottom:0.8em">
+    <strong>Definition</strong><br>
+    A policy \(\pi\) is a distribution over actions given states,
+    \[ \pi(a \mid s) = \mathbb{P}[A_t = a \mid S_t = s] \]
+  </div>
+  <ul>
+    <li>A policy <strong>fully defines</strong> the behaviour of an agent</li>
+    <li>MDP policies depend only on the <strong>current state</strong> (not the history)</li>
+    <li>Policies are <strong>stationary</strong> (time-independent):
+      \(A_t \sim \pi(\cdot \mid S_t),\ \forall\, t > 0\)</li>
+  </ul>
+</section>
+
+<!-- Policy Induces an MRP (progressive) -->
+<section>
+  <section>
+    <div class="frame-title">Policy Induces a Markov Reward Process</div>
+    <p>Given an MDP \(\mathcal{M} = \langle \mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{R}, \gamma \rangle\) and a policy \(\pi\):</p>
+    <ul style="margin-top:0.8em">
+      <li>The state sequence \(S_1, S_2, \ldots\) is a <strong>Markov process</strong>
+        \(\langle \mathcal{S}, \mathcal{P}^\pi \rangle\)</li>
+      <li>The state and reward sequence \(S_1, R_2, S_2, \ldots\) is a <strong>Markov reward process</strong>
+        \(\langle \mathcal{S}, \mathcal{P}^\pi, \mathcal{R}^\pi, \gamma \rangle\)</li>
+    </ul>
+  </section>
+  <section>
+    <div class="frame-title">Policy Induces a Markov Reward Process</div>
+    <p>Given an MDP \(\mathcal{M} = \langle \mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{R}, \gamma \rangle\) and a policy \(\pi\):</p>
+    <ul style="margin-top:0.6em">
+      <li>The state sequence \(S_1, S_2, \ldots\) is a <strong>Markov process</strong>
+        \(\langle \mathcal{S}, \mathcal{P}^\pi \rangle\)</li>
+      <li>The state and reward sequence \(S_1, R_2, S_2, \ldots\) is a <strong>Markov reward process</strong>
+        \(\langle \mathcal{S}, \mathcal{P}^\pi, \mathcal{R}^\pi, \gamma \rangle\)</li>
+    </ul>
+    <p style="margin-top:0.8em">Where the induced transition and reward functions are:</p>
+    \[
+      \mathcal{P}^\pi_{ss'} = \sum_{a \in \mathcal{A}} \pi(a \mid s)\, \mathcal{P}^a_{ss'}
+      \qquad
+      \mathcal{R}^\pi_s = \sum_{a \in \mathcal{A}} \pi(a \mid s)\, \mathcal{R}^a_s
+    \]
+  </section>
+</section>
+
+<!-- State-Value and Action-Value Functions -->
+<section>
+  <div class="frame-title">State-Value and Action-Value Functions</div>
+  <div class="callout" style="margin-bottom:0.5em; padding:0.5em 1.2em">
+    <strong>State-value function</strong> \(v_\pi(s)\) — expected return from state \(s\), following \(\pi\):
+    \[ v_\pi(s) = \mathbb{E}_\pi[G_t \mid S_t = s]
+       = \mathbb{E}_\pi\!\left[\sum_{k=0}^{\infty} \gamma^k R_{t+k+1} \;\middle|\; S_t = s\right] \]
+  </div>
+  <div class="callout" style="padding:0.5em 1.2em">
+    <strong>Action-value function</strong> \(q_\pi(s,a)\) — expected return from \(s\), taking action \(a\), then following \(\pi\):
+    \[ q_\pi(s,a) = \mathbb{E}_\pi[G_t \mid S_t = s, A_t = a]
+       = \mathbb{E}_\pi\!\left[\sum_{k=0}^{\infty} \gamma^k R_{t+k+1} \;\middle|\; S_t = s, A_t = a\right] \]
+  </div>
+</section>
+
+<!-- Example: Student MDP -->
+<section class="full-slide">
+  <div class="frame-title">Example: Student MDP</div>
+  <div class="full-img"><img src="images/student-mdp.png"></div>
+</section>
+
+<!-- Example: State-Value Function for Student MDP -->
+<section class="full-slide">
+  <div class="frame-title">Example: State-Value Function for Student MDP</div>
+  <div class="full-img"><img src="images/student-mdp-value.png"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- Section 2: Bellman Expectation Equations                     -->
+<!-- ============================================================ -->
+<section class="section-divider"><h1>Bellman Expectation Equations</h1></section>
+
+<!-- Bellman Equation Derivation (progressive, 4 sub-slides) -->
+<section>
+  <section>
+    <div class="frame-title">Bellman Expectation Equation — Derivation</div>
+    <p>Start from the definition of the state-value function:</p>
+    \[ v_\pi(s) \doteq \mathbb{E}_\pi[G_t \mid S_t = s] \]
+  </section>
+  <section>
+    <div class="frame-title">Bellman Expectation Equation — Derivation</div>
+    <p>Apply the recursive return \(G_t = R_{t+1} + \gamma G_{t+1}\):</p>
+    \[
+    \begin{aligned}
+      v_\pi(s) &= \mathbb{E}_\pi[G_t \mid S_t = s] \\[0.4em]
+               &= \mathbb{E}_\pi[R_{t+1} + \gamma G_{t+1} \mid S_t = s]
+    \end{aligned}
+    \]
+  </section>
+  <section>
+    <div class="frame-title">Bellman Expectation Equation — Derivation</div>
+    <p>Expand the expectation over actions, next states, and rewards:</p>
+    \[
+    \begin{aligned}
+      v_\pi(s) &= \mathbb{E}_\pi[R_{t+1} + \gamma G_{t+1} \mid S_t = s] \\[0.4em]
+               &= \sum_{a} \pi(a|s) \sum_{s'} \sum_{r} p(s',r \mid s,a)
+                  \bigl[r + \gamma\, \mathbb{E}_\pi[G_{t+1} \mid S_{t+1} = s']\bigr]
+    \end{aligned}
+    \]
+  </section>
+  <section>
+    <div class="frame-title">Bellman Expectation Equation — Derivation</div>
+    <p>Recognise the inner expectation as \(v_\pi(s')\):</p>
+    \[
+    \begin{aligned}
+      v_\pi(s) &= \sum_{a} \pi(a|s) \sum_{s'} \sum_{r} p(s',r \mid s,a)
+                  \bigl[r + \gamma\, v_\pi(s')\bigr]
+    \end{aligned}
+    \]
+    <div class="callout" style="margin-top:0.6em">
+      \[ v_\pi(s) = \sum_{a} \pi(a|s) \sum_{s',r} p(s',r \mid s,a)\,\bigl[r + \gamma\, v_\pi(s')\bigr]
+         \qquad \textbf{(Eq. 3.14)} \]
+    </div>
+    <p class="small" style="margin-top:0.4em">The Bellman equation for \(v_\pi\): value of a state = immediate reward + discounted successor value.</p>
+  </section>
+</section>
+
+<!-- Backup Diagrams -->
+<section>
+  <div class="frame-title">Backup Diagrams</div>
+  <p style="margin-bottom:0.5em">
+    <strong>Backup diagrams</strong> graphically summarise update operations —
+    they show how value information is transferred <em>back</em> from successor states to the current state.
+  </p>
+  <div class="two-col" style="align-items:flex-start; margin-top:0.5em">
+    <div>
+      <p style="margin-bottom:0.3em"><strong>Backup diagram for \(v_\pi\)</strong></p>
+      <p class="small" style="line-height:1.6; font-family:monospace; text-align:center">
+        ○ &nbsp;<em>s</em><br>
+        ╱&nbsp;│&nbsp;╲ &nbsp;&nbsp;<em>actions (weighted by π)</em><br>
+        ●&nbsp;&nbsp;●&nbsp;&nbsp;● &nbsp;<em>(s,a) pairs</em><br>
+        ╱╲&nbsp;╱╲&nbsp;╱╲ &nbsp;<em>next states (weighted by p)</em><br>
+        ○&nbsp;○&nbsp;○&nbsp;○&nbsp;○ &nbsp;<em>s'</em>
+      </p>
+      <p class="small" style="margin-top:0.4em">Open ○ = state &nbsp;|&nbsp; Solid ● = state–action pair</p>
+    </div>
+    <div>
+      <p style="margin-bottom:0.3em"><strong>Backup diagram for \(q_\pi\)</strong></p>
+      <p class="small" style="line-height:1.6; font-family:monospace; text-align:center">
+        ● &nbsp;<em>(s,a)</em><br>
+        ╱╲ &nbsp;&nbsp;<em>next states (weighted by p)</em><br>
+        ○&nbsp;&nbsp;○ &nbsp;<em>s'</em><br>
+        ╱╲&nbsp;╱╲ &nbsp;<em>next actions (weighted by π)</em><br>
+        ●&nbsp;●&nbsp;●&nbsp;● &nbsp;<em>(s',a')</em>
+      </p>
+      <p class="small" style="margin-top:0.4em">Root at a state–action pair; branches to successor states then actions.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Bellman Expectation Eq for v_π -->
+<section>
+  <div class="frame-title">Bellman Expectation Equation for \(v_\pi\)</div>
+  <div class="two-col">
+    <div><img src="images/vpi-state-diagram.png" style="max-height:260px"></div>
+    <div style="text-align:left">
+      <p>The state value is the <strong>average over actions</strong>, weighted by the policy:</p>
+      \[ v_\pi(s) = \sum_{a \in \mathcal{A}} \pi(a|s)\, q_\pi(s,a) \]
+    </div>
+  </div>
+</section>
+
+<!-- Bellman Expectation Eq for q_π -->
+<section>
+  <div class="frame-title">Bellman Expectation Equation for \(q_\pi\)</div>
+  <div class="two-col">
+    <div><img src="images/qpi-state-diagram.png" style="max-height:260px"></div>
+    <div style="text-align:left">
+      <p>The action value is the <strong>immediate reward plus discounted successor value</strong>:</p>
+      \[ q_\pi(s,a) = \mathcal{R}^a_s + \gamma \sum_{s' \in \mathcal{S}} \mathcal{P}^a_{ss'}\, v_\pi(s') \]
+    </div>
+  </div>
+</section>
+
+<!-- Bellman Expectation Eq for v_π (expanded) -->
+<section>
+  <div class="frame-title">Bellman Expectation Equation for \(v_\pi\) — Expanded</div>
+  <div class="two-col">
+    <div><img src="images/vpi-full-diagram.png" style="max-height:340px"></div>
+    <div style="text-align:left">
+      <p>Substituting \(q_\pi\) into \(v_\pi\):</p>
+      \[ v_\pi(s) = \sum_{a \in \mathcal{A}} \pi(a|s) \left( \mathcal{R}^a_s + \gamma \sum_{s' \in \mathcal{S}} \mathcal{P}^a_{ss'}\, v_\pi(s') \right) \]
+    </div>
+  </div>
+</section>
+
+<!-- Bellman Expectation Eq for q_π (expanded) -->
+<section>
+  <div class="frame-title">Bellman Expectation Equation for \(q_\pi\) — Expanded</div>
+  <div class="two-col">
+    <div><img src="images/qpi-full-diagram.png" style="max-height:340px"></div>
+    <div style="text-align:left">
+      <p>Substituting \(v_\pi\) into \(q_\pi\):</p>
+      \[ q_\pi(s,a) = \mathcal{R}^a_s + \gamma \sum_{s' \in \mathcal{S}} \mathcal{P}^a_{ss'} \sum_{a' \in \mathcal{A}} \pi(a'|s')\, q_\pi(s',a') \]
+    </div>
+  </div>
+</section>
+
+<!-- Example: Bellman Equation in Student MDP -->
+<section class="full-slide">
+  <div class="frame-title">Example: Bellman Expectation Equation in Student MDP</div>
+  <div class="full-img"><img src="images/student-mdp-bellman.png"></div>
+</section>
+
+<!-- Bellman Expectation Equation: Matrix Form -->
+<section>
+  <div class="frame-title">Bellman Expectation Equation: Matrix Form</div>
+  <p>The Bellman expectation equation can be expressed concisely using the induced MRP:</p>
+  \[ \mathbf{v}_\pi = \mathcal{R}^\pi + \gamma\, \mathcal{P}^\pi \mathbf{v}_\pi \]
+  <p style="margin-top:0.6em">This is a linear system with a <strong>direct solution</strong>:</p>
+  \[ \mathbf{v}_\pi = (I - \gamma\, \mathcal{P}^\pi)^{-1} \mathcal{R}^\pi \]
+  <p class="small" style="margin-top:0.6em">Direct solution is \(\mathcal{O}(n^3)\) for \(n\) states — feasible only for small MDPs.<br>
+  For large MDPs, iterative methods are needed (covered next lecture).</p>
+</section>
+
+<!-- Example: Gridworld (S&B Example 3.5) -->
+<section class="has-footnote">
+  <div class="frame-title">Example: Gridworld — \(v_\pi\) for Equiprobable Random Policy</div>
+  <div class="two-col w64" style="align-items:flex-start; gap:2em">
+    <div style="text-align:left">
+      <p><strong>5×5 Gridworld MDP:</strong></p>
+      <ul>
+        <li>Actions: N, S, E, W (deterministic)</li>
+        <li>Hit edge → reward \(-1\), stay in place</li>
+        <li>From <strong>A</strong>: reward \(+10\), go to A′</li>
+        <li>From <strong>B</strong>: reward \(+5\), go to B′</li>
+        <li>All other moves: reward \(0\)</li>
+      </ul>
+      <p style="margin-top:0.7em">Policy \(\pi\): all four actions equally likely.<br>Discount \(\gamma = 0.9\).</p>
+    </div>
+    <div>
+      <p style="margin-bottom:0.4em"><strong>\(v_\pi\) (random policy, \(\gamma=0.9\)):</strong></p>
+      <table class="gw-table">
+        <tr>
+          <td class="special">3.3</td><td class="special">8.8</td><td>4.4</td><td>5.3</td><td>1.5</td>
+        </tr>
+        <tr>
+          <td>1.5</td><td>3.0</td><td>2.3</td><td>1.9</td><td>0.5</td>
+        </tr>
+        <tr>
+          <td>0.1</td><td>0.7</td><td>0.7</td><td>0.4</td><td style="color:#c00">−0.4</td>
+        </tr>
+        <tr>
+          <td style="color:#c00">−1.0</td><td style="color:#c00">−0.4</td><td style="color:#c00">−0.4</td><td style="color:#c00">−0.6</td><td style="color:#c00">−1.2</td>
+        </tr>
+        <tr>
+          <td style="color:#c00">−1.9</td><td style="color:#c00">−1.3</td><td style="color:#c00">−1.2</td><td style="color:#c00">−1.4</td><td style="color:#c00">−2.0</td>
+        </tr>
+      </table>
+      <p class="small" style="margin-top:0.4em">Negative values near edges reflect high probability of hitting the boundary.</p>
+    </div>
+  </div>
+  <div class="footnote">Sutton &amp; Barto, <em>RL: An Introduction</em>, Fig. 3.2</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- Section 3: Optimal Value Functions & Policies               -->
+<!-- ============================================================ -->
+<section class="section-divider"><h1>Optimal Value Functions &amp; Policies</h1></section>
+
+<!-- Optimal Value Functions -->
+<section>
+  <section>
+    <div class="frame-title">Optimal Value Functions</div>
+    <div class="callout" style="margin-bottom:0.6em">
+      The <strong>optimal state-value function</strong> \(v_*(s)\) is the maximum value function over all policies:
+      \[ v_*(s) \doteq \max_{\pi}\, v_\pi(s), \quad \forall\, s \in \mathcal{S} \]
+    </div>
+    <div class="callout">
+      The <strong>optimal action-value function</strong> \(q_*(s,a)\) is the maximum action-value over all policies:
+      \[ q_*(s,a) \doteq \max_{\pi}\, q_\pi(s,a), \quad \forall\, s \in \mathcal{S},\ a \in \mathcal{A}(s) \]
+    </div>
+  </section>
+  <section>
+    <div class="frame-title">Optimal Value Functions</div>
+    <div class="callout">
+      \(q_*\) links directly to \(v_*\) <strong>(Eq. 3.17)</strong>:
+      \[ q_*(s,a) = \mathbb{E}\bigl[R_{t+1} + \gamma\, v_*(S_{t+1}) \mid S_t = s,\, A_t = a\bigr] \]
+    </div>
+  </section>
+</section>
+
+<!-- Example: Optimal Value Function for Student MDP -->
+<section class="full-slide">
+  <div class="frame-title">Example: Optimal State-Value Function for Student MDP</div>
+  <div class="full-img"><img src="images/student-mdp-optimal-vvalue.png"></div>
+</section>
+
+<!-- Example: Optimal Action-Value Function for Student MDP -->
+<section class="full-slide">
+  <div class="frame-title">Example: Optimal Action-Value Function for Student MDP</div>
+  <div class="full-img"><img src="images/student-mdp-optimal-qvalue.png"></div>
+</section>
+
+<!-- Optimal Policy: Existence Theorem -->
+<section>
+  <div class="frame-title">Optimal Policy</div>
+  <p>Define a <strong>partial ordering</strong> over policies:</p>
+  \[ \pi \geq \pi' \quad \text{if}\quad v_\pi(s) \geq v_{\pi'}(s),\ \forall\, s \]
+  <div class="callout" style="margin-top:0.8em">
+    <strong>Theorem</strong> — For any Markov Decision Process:
+    <ul style="margin-top:0.5em; text-align:left; display:inline-block">
+      <li>There exists an <strong>optimal policy</strong> \(\pi^*\) better than or equal to all other policies</li>
+      <li>All optimal policies achieve the <strong>optimal state-value function</strong>: \(v_{\pi^*}(s) = v_*(s)\)</li>
+      <li>All optimal policies achieve the <strong>optimal action-value function</strong>: \(q_{\pi^*}(s,a) = q_*(s,a)\)</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Finding an Optimal Policy -->
+<section>
+  <div class="frame-title">Finding an Optimal Policy</div>
+  <p>An optimal policy can be found by maximising over \(q_*(s,a)\):</p>
+  \[
+    \pi_*(a \mid s) =
+    \begin{cases}
+      1 & \text{if } a = \arg\max_{a' \in \mathcal{A}}\, q_*(s,a') \\
+      0 & \text{otherwise}
+    \end{cases}
+  \]
+  <ul style="margin-top:0.9em">
+    <li>There is <strong>always a deterministic optimal policy</strong> for any MDP</li>
+    <li>If we know \(q_*(s,a)\), we <strong>immediately</strong> have the optimal policy — no lookahead needed</li>
+    <li>\(q_*\) effectively caches the results of all one-step-ahead searches</li>
+  </ul>
+</section>
+
+<!-- Example: Optimal Policy for Student MDP -->
+<section class="full-slide">
+  <div class="frame-title">Example: Optimal Policy for Student MDP</div>
+  <div class="full-img"><img src="images/student-mdp-optimal-policy.png"></div>
+</section>
+
+<!-- Example: Gridworld Optimal Solution (S&B Example 3.8) -->
+<section class="has-footnote">
+  <div class="frame-title">Example: Gridworld — Optimal Value Function \(v_*\)</div>
+  <div class="two-col w64" style="align-items:flex-start; gap:2em">
+    <div style="text-align:left">
+      <p><strong>Solving the Bellman optimality equation</strong> for the same gridworld (A→A′: +10, B→B′: +5, \(\gamma=0.9\)):</p>
+      <ul style="margin-top:0.5em">
+        <li>Negative-value states near edges are now avoided</li>
+        <li>Optimal policy \(\pi_*\) is <strong>greedy w.r.t. \(v_*\)</strong></li>
+        <li>Multiple arrows in a cell = multiple optimal actions</li>
+      </ul>
+    </div>
+    <div>
+      <p style="margin-bottom:0.4em"><strong>\(v_*\) (optimal, \(\gamma=0.9\)):</strong></p>
+      <table class="gw-table">
+        <tr>
+          <td>22.0</td><td class="special">24.4</td><td>22.0</td><td>19.4</td><td>17.5</td>
+        </tr>
+        <tr>
+          <td>19.8</td><td>22.0</td><td>19.8</td><td>17.8</td><td>16.0</td>
+        </tr>
+        <tr>
+          <td>17.8</td><td>19.8</td><td>17.8</td><td>16.0</td><td>14.4</td>
+        </tr>
+        <tr>
+          <td>16.0</td><td>17.8</td><td>16.0</td><td>14.4</td><td>13.0</td>
+        </tr>
+        <tr>
+          <td>14.4</td><td>16.0</td><td>14.4</td><td>13.0</td><td>11.7</td>
+        </tr>
+      </table>
+      <p class="small" style="margin-top:0.4em">All values are now positive — optimal policy avoids edge penalties.</p>
+    </div>
+  </div>
+  <div class="footnote">Sutton &amp; Barto, <em>RL: An Introduction</em>, Fig. 3.5</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- Section 4: Bellman Optimality Equations                      -->
+<!-- ============================================================ -->
+<section class="section-divider"><h1>Bellman Optimality Equations</h1></section>
+
+<!-- Bellman Optimality Equation for v* -->
+<section>
+  <div class="frame-title">Bellman Optimality Equation for \(v_*\)</div>
+  <div class="two-col">
+    <div><img src="images/vstar-state-diagram.png" style="max-height:240px"></div>
+    <div style="text-align:left">
+      <p>The value of a state under an optimal policy equals the expected return for the <strong>best action</strong>:</p>
+      \[ v_*(s) = \max_{a}\, q_*(s,a) \]
+      <p style="margin-top:0.6em">The arc at the agent's choice node represents taking the <em>maximum</em> rather than an average over policy.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Bellman Optimality Equation for q* -->
+<section>
+  <div class="frame-title">Bellman Optimality Equation for \(q_*\)</div>
+  <div class="two-col">
+    <div><img src="images/qstar-state-diagram.png" style="max-height:240px"></div>
+    <div style="text-align:left">
+      <p>The optimal action value is the immediate reward plus the discounted <strong>optimal</strong> successor value:</p>
+      \[ q_*(s,a) = \mathcal{R}^a_s + \gamma \sum_{s' \in \mathcal{S}} \mathcal{P}^a_{ss'}\, v_*(s') \]
+    </div>
+  </div>
+</section>
+
+<!-- Bellman Optimality Equation for v* (expanded) -->
+<section>
+  <div class="frame-title">Bellman Optimality Equation for \(v_*\) — Expanded</div>
+  <div class="two-col">
+    <div><img src="images/vstar-full-diagram.png" style="max-height:340px"></div>
+    <div style="text-align:left">
+      <p>Substituting \(q_*\) into \(v_*\):</p>
+      \[ v_*(s) = \max_{a}\left[ \mathcal{R}^a_s + \gamma \sum_{s' \in \mathcal{S}} \mathcal{P}^a_{ss'}\, v_*(s') \right] \]
+    </div>
+  </div>
+</section>
+
+<!-- Bellman Optimality Equation for q* (expanded) -->
+<section>
+  <div class="frame-title">Bellman Optimality Equation for \(q_*\) — Expanded</div>
+  <div class="two-col">
+    <div><img src="images/qstar-full-diagram.png" style="max-height:340px"></div>
+    <div style="text-align:left">
+      <p>Substituting \(v_*\) into \(q_*\):</p>
+      \[ q_*(s,a) = \mathcal{R}^a_s + \gamma \sum_{s' \in \mathcal{S}} \mathcal{P}^a_{ss'} \max_{a' \in \mathcal{A}}\, q_*(s',a') \]
+    </div>
+  </div>
+</section>
+
+<!-- Example: Bellman Optimality in Student MDP -->
+<section class="full-slide">
+  <div class="frame-title">Example: Bellman Optimality Equation in Student MDP</div>
+  <div class="full-img"><img src="images/student-mdp-optimal-value.png"></div>
+</section>
+
+<!-- Solving the Bellman Optimality Equation (progressive) -->
+<section>
+  <section>
+    <div class="frame-title">Solving the Bellman Optimality Equation</div>
+    <p>The BOE is <strong>non-linear</strong> — no closed-form solution in general.</p>
+    <p style="margin-top:0.7em">Direct solution relies on three assumptions <strong>rarely true in practice</strong>:</p>
+    <ul style="margin-top:0.5em">
+      <li>The dynamics \(p(s',r \mid s,a)\) are <strong>known exactly</strong></li>
+      <li>Sufficient <strong>computational resources</strong> to complete the calculation
+        <ul><li>Backgammon has \(\sim 10^{20}\) states — thousands of years on today's hardware</li></ul>
+      </li>
+      <li>States satisfy the <strong>Markov property</strong></li>
+    </ul>
+  </section>
+  <section>
+    <div class="frame-title">Solving the Bellman Optimality Equation</div>
+    <p>The BOE is <strong>non-linear</strong> — no closed-form solution in general.</p>
+    <p style="margin-top:0.6em">In practice, we rely on <strong>iterative solution methods</strong>:</p>
+    <ul style="margin-top:0.4em">
+      <li><strong>Value Iteration</strong> — directly iterate on \(v_*\)</li>
+      <li><strong>Policy Iteration</strong> — alternate policy evaluation and improvement</li>
+      <li><strong>Q-learning</strong> — model-free approximation of \(q_*\)</li>
+      <li><strong>SARSA</strong> — on-policy TD control</li>
+    </ul>
+    <div class="boardwork" style="margin-top:0.8em">
+      🖊️ <strong>Key insight:</strong> Many RL methods can be understood as <em>approximately solving the BOE</em>
+      using experienced transitions in place of known dynamics \(p(s',r \mid s,a)\).
+    </div>
+  </section>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/math/math.js"></script>
+<script>
+  Reveal.initialize({
+    width: 1280, height: 720, margin: 0.04,
+    hash: true, slideNumber: 'c/t',
+    plugins: [ RevealMath.MathJax3 ],
+    mathjax3: { mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js' }
+  });
+</script>
+</body>
+</html>

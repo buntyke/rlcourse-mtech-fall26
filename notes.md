@@ -3,4 +3,4 @@ layout: notes
 title: Notes
 permalink: /notes/
 ---
-Lecture notes for each unit of the course. Each page includes worked examples, LaTeX-rendered equations, and practice questions for JNTU sessional exam preparation.
+Typeset PDF notes for each unit of the course. Notes are released as each unit is completed in class.

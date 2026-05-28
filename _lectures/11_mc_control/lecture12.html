@@ -1,0 +1,850 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RL Lecture 12 — Monte Carlo Control &amp; Online MC Implementation</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css" id="theme">
+<style>
+  :root { --rl-red: #213c8b; }
+  .reveal { font-family: "Lato", "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 30px; }
+  .reveal h1, .reveal h2, .reveal h3, .reveal h4 { color: var(--rl-red); font-weight: 700; text-transform: none; }
+  .reveal .slides > section,
+  .reveal .slides > section > section {
+    top: 0 !important; height: 100%;
+    display: flex !important; flex-direction: column;
+    justify-content: center; align-items: center;
+    padding: 80px 40px 60px 40px !important;
+    box-sizing: border-box;
+  }
+  .reveal .frame-title {
+    position: absolute; top: 16px; left: 30px; right: 30px;
+    color: var(--rl-red); font-size: 1.15em; font-weight: 700;
+    border-bottom: 2px solid var(--rl-red); padding-bottom: .2em;
+    margin: 0; text-align: left;
+  }
+  .reveal section img { background: none; border: none; box-shadow: none; margin: .3em auto; }
+  .reveal .title-slide {
+    background: #fff; text-align: center !important;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; height: 100%; width: 100%;
+    padding: 2em !important;
+  }
+  .reveal .title-slide h1,
+  .reveal .title-slide h2,
+  .reveal .title-slide p { color: var(--rl-red); text-align: center !important; width: 100%; }
+  .reveal .section-divider {
+    display: flex; align-items: center; justify-content: center;
+    height: 100%; width: 100%; text-align: center !important;
+  }
+  .reveal .section-divider h1 { color: var(--rl-red); font-size: 1.8em; text-align: center !important; width: 100%; }
+  .two-col { display: flex; gap: 1.2em; align-items: center; justify-content: center; width: 100%; }
+  .two-col > div { flex: 1; text-align: center; }
+  .two-col.w60 > div:first-child { flex: 0 0 57%; }
+  .two-col.w60 > div:last-child  { flex: 0 0 39%; }
+  .reveal ul { display: inline-block; text-align: left; margin: 0 auto; font-size: .88em; }
+  .reveal ul > li { margin-bottom: .55em; }
+  .reveal ul > li:last-child { margin-bottom: 0; }
+  .reveal ul ul > li { margin-bottom: 0; font-size: .9em; }
+  .reveal p { font-size: .92em; }
+  .reveal section { text-align: center; }
+  .reveal .small { font-size: .68em; }
+  .reveal .full-img { width: 100%; text-align: center; }
+  .reveal .full-img img { height: 560px; width: auto; max-width: 95%; }
+  .reveal .has-footnote .full-img img { height: 520px; }
+  .reveal section.full-slide { padding-top: 55px !important; padding-bottom: 28px !important; }
+  .reveal .footnote {
+    position: absolute; left: 30px; right: 30px; bottom: 8px;
+    font-size: .48em; font-style: italic; color: #555;
+    border-top: 1px solid #aaa; padding-top: 3px; text-align: left; margin: 0;
+  }
+  .callout {
+    margin: 0.5em auto; padding: 0.55em 1.1em;
+    border: 2px solid var(--rl-red); border-radius: 6px;
+    background: #f0f4ff; max-width: 92%; text-align: center;
+  }
+  .pseudocode {
+    background: #f8f9ff; border-left: 4px solid var(--rl-red);
+    padding: 0.5em 1em; font-family: 'Courier New', monospace;
+    font-size: 0.60em; text-align: left; max-width: 90%;
+    margin: 0.4em auto; line-height: 1.55; white-space: pre;
+  }
+  .reveal .boardwork {
+    background: #f6f1e7; border-left: 4px solid var(--rl-red);
+    padding: .45em .9em; font-size: .75em; text-align: left;
+    max-width: 85%; margin: .6em auto;
+  }
+  .reveal a { color: var(--rl-red); }
+  .center { text-align: center; }
+  .q-box {
+    background: #e8f0fe; border: 2px solid var(--rl-red); border-radius: 8px;
+    padding: .8em 1.2em; max-width: 88%; margin: .5em auto;
+    text-align: left; font-size: .82em;
+  }
+  .q-box .qlabel { color: var(--rl-red); font-weight: 700; margin-bottom: .3em; }
+  .ans {
+    background: #f5f5f5; border-left: 4px solid #aaa;
+    padding: .35em .8em; font-size: .72em; text-align: left;
+    max-width: 85%; margin: .4em auto; color: #333;
+  }
+</style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- ===================== TITLE ===================== -->
+<section class="title-slide">
+  <h1 style="font-size:2.3em; margin-bottom:.1em">Reinforcement Learning</h1>
+  <h2 style="font-size:1.2em; margin-top:0">Lecture 12 — Monte Carlo Control &amp; Online MC Implementation</h2>
+  <p style="font-size:1.3em; margin-top:1.6em">Nishanth Koganti</p>
+  <p style="font-size:.95em">VNR VJIET — M.Tech AI &amp; DS</p>
+</section>
+
+<!-- ===================== TOC ===================== -->
+<section>
+  <div class="frame-title">Today's Lecture</div>
+  <ul>
+    <li>Part A — From MC Prediction to MC Control</li>
+    <li>Part B — Monte Carlo Control with Exploring Starts</li>
+    <li>Part C — On-Policy Control without Exploring Starts (ε-greedy)</li>
+    <li>Part D — Off-Policy Methods: A Brief Look</li>
+    <li>Part E — Incremental &amp; Online Implementation</li>
+  </ul>
+  <p class="center" style="margin-top:1.2em; font-size:.85em">
+    <a href="https://buntyke.github.io/rlcourse-mtech-fall26">buntyke.github.io/rlcourse-mtech-fall26</a>
+  </p>
+</section>
+
+<!-- ===================== ACKNOWLEDGEMENTS ===================== -->
+<section>
+  <div class="frame-title">Acknowledgements</div>
+  <p>These slides are based on:</p>
+  <ul>
+    <li>Sutton &amp; Barto — <em>Reinforcement Learning: An Introduction</em> (2nd ed.), Ch. 5.3–5.4, 5.6 (with §§5.5, 5.7 in brief)</li>
+    <li>Figures 5.2 and 5.3, and the GPI diagram, reproduced from the textbook</li>
+  </ul>
+  <p class="center" style="margin-top:1.2em; font-size:.85em">
+    <a href="https://buntyke.github.io/rlcourse-mtech-fall26">buntyke.github.io/rlcourse-mtech-fall26</a>
+  </p>
+</section>
+
+<!-- ===================== PART A ===================== -->
+<section class="section-divider"><h1>Part A — From MC Prediction to MC Control</h1></section>
+
+<!-- Slide 1 -->
+<section>
+  <div class="frame-title">Recap: What Monte Carlo Prediction Gave Us</div>
+  <div class="two-col w60">
+    <div>
+      <ul>
+        <li>Estimate \(v_\pi\) or \(q_\pi\) by <strong>averaging sample returns</strong> — no model, no bootstrapping</li>
+        <li>First-visit and every-visit MC both converge (law of large numbers)</li>
+        <li>Without a model, <strong>action values</strong> \(q_\pi(s,a)\) are what we need</li>
+        <li><strong>The open snag:</strong> a deterministic policy never tries other actions → most \(q(s,a)\) are never seen</li>
+        <li><strong>Today:</strong> turn evaluation into optimisation — find \(\pi_*\)</li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/mc_prediction_recap.png" style="max-width:100%; max-height:330px;">
+    </div>
+  </div>
+</section>
+
+<!-- Slide 2 -->
+<section>
+  <div class="frame-title">Prediction vs Control in the Model-Free Setting</div>
+  <div class="two-col w60">
+    <div>
+      <ul>
+        <li><strong>Prediction:</strong> evaluate a fixed \(\pi\). <strong>Control:</strong> find the optimal \(\pi_*\)</li>
+        <li>With a model, \(v_\pi\) suffices — one-step lookahead picks the best action</li>
+        <li>Without a model, we cannot compute \(\arg\max_a \sum_{s',r} p(s',r|s,a)[\cdot]\)</li>
+        <li>So estimate \(q_\pi(s,a)\) directly; then improve greedily: \(\pi'(s) = \arg\max_a q(s,a)\) — <strong>no model needed</strong></li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/action_value_no_model.png" style="max-width:100%; max-height:330px;">
+    </div>
+  </div>
+</section>
+
+<!-- Slide 3 -->
+<section>
+  <div class="frame-title">Generalised Policy Iteration (GPI) Recap</div>
+  <div class="two-col w60">
+    <div>
+      <ul>
+        <li>Two interacting processes: <strong>evaluation</strong> (make \(Q\) consistent with \(\pi\)) and <strong>improvement</strong> (make \(\pi\) greedy w.r.t. \(Q\))</li>
+        <li>They pull against each other, yet together converge to \(\pi_*\) and \(q_*\)</li>
+        <li>DP did evaluation with the Bellman equations (needs the model)</li>
+        <li><strong>MC keeps the schema but swaps evaluation for averaging returns</strong> — the only change</li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/_page_118_Picture_7.jpeg" style="max-width:100%; max-height:300px;">
+      <p class="small" style="color:#555; margin-top:.2em">GPI: Evaluate ↔ Improve</p>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 4 -->
+<section class="full-slide has-footnote">
+  <div class="frame-title">Monte Carlo Policy Iteration: The Idealised Scheme</div>
+  <div class="full-img"><img src="images/mc_policy_iteration_chain.png"></div>
+  <div class="footnote">
+    \(\pi_0 \xrightarrow{\text{E}} q_{\pi_0} \xrightarrow{\text{I}} \pi_1 \xrightarrow{\text{E}} q_{\pi_1} \xrightarrow{\text{I}} \cdots \xrightarrow{\text{I}} \pi_* \xrightarrow{\text{E}} q_*\).
+    E = average returns over many episodes; I = greedy on \(q\). Two idealised assumptions: (1) infinite episodes per evaluation; (2) exploring starts.
+  </div>
+</section>
+
+<!-- Slide 5 -->
+<section>
+  <div class="frame-title">Policy Improvement with Action Values</div>
+  <ul>
+    <li>Greedy policy from any \(q\): \(\pi(s) \doteq \arg\max_a q(s,a)\) — model-free</li>
+    <li>The <strong>policy improvement theorem</strong> certifies the new policy is no worse:</li>
+  </ul>
+  <div class="callout">
+    \[ q_{\pi_k}\!\big(s,\pi_{k+1}(s)\big) = \max_a q_{\pi_k}(s,a) \;\ge\; q_{\pi_k}\!\big(s,\pi_k(s)\big) \;\ge\; v_{\pi_k}(s) \]
+  </div>
+  <ul>
+    <li>Equality only when both are optimal → the chain drives \(\pi \to \pi_*\)</li>
+    <li>This is <strong>why</strong> MC control works: greedy-on-\(Q\) is a guaranteed (weak) improvement</li>
+  </ul>
+</section>
+
+<!-- ===================== PART B ===================== -->
+<section class="section-divider"><h1>Part B — Monte Carlo Control with Exploring Starts</h1></section>
+
+<!-- Slide 6 -->
+<section>
+  <div class="frame-title">Removing the Two Assumptions: A Roadmap</div>
+  <div class="two-col w60">
+    <div>
+      <ul>
+        <li>We cannot run infinitely many episodes, nor usually choose where episodes start</li>
+        <li><strong>Step 1:</strong> give up exact evaluation — interleave evaluation &amp; improvement <em>episode by episode</em></li>
+        <li><strong>Step 2:</strong> keep exploring starts for now → <strong>Monte Carlo ES</strong></li>
+        <li><strong>Step 3 (Part C):</strong> remove exploring starts using soft (ε-greedy) policies</li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/two_assumptions.png" style="max-width:100%; max-height:340px;">
+    </div>
+  </div>
+</section>
+
+<!-- Slide 7 -->
+<section>
+  <div class="frame-title">Giving Up Infinite Evaluation</div>
+  <div class="two-col w60">
+    <div>
+      <ul>
+        <li>Even DP's policy evaluation only converges asymptotically — yet GPI still works</li>
+        <li>We need not get exact \(q_{\pi_k}\); only <strong>move \(Q\) toward</strong> it before improving</li>
+        <li>Extreme analogue: <strong>value iteration</strong> does one sweep per improvement</li>
+        <li><strong>For MC:</strong> alternate after <em>each episode</em> — update \(Q\) from its returns, then improve \(\pi\) at the visited states</li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/episode_by_episode_gpi.png" style="max-width:100%; max-height:330px;">
+    </div>
+  </div>
+</section>
+
+<!-- Slide 8 -->
+<section>
+  <div class="frame-title">Monte Carlo ES — Algorithm</div>
+  <div class="pseudocode">Monte Carlo ES (Exploring Starts), for estimating π ≈ π*
+
+Initialize:  π(s) ∈ 𝒜(s) arbitrarily;  Q(s,a) ∈ ℝ arbitrarily
+             Returns(s,a) ← empty list,  for all s, a
+
+Loop forever (for each episode):
+  Choose S₀ ∈ 𝒮, A₀ ∈ 𝒜(S₀) randomly, all pairs probability > 0
+  Generate an episode from S₀,A₀ following π: S₀,A₀,R₁,…,S_{T-1},A_{T-1},R_T
+  G ← 0
+  For t = T-1, T-2, …, 0:
+    G ← γG + R_{t+1}
+    Unless the pair S_t,A_t appears in S₀,A₀,…,S_{t-1},A_{t-1}:
+      Append G to Returns(S_t,A_t)
+      Q(S_t,A_t) ← average(Returns(S_t,A_t))
+      π(S_t) ← argmax_a Q(S_t,a)</div>
+</section>
+
+<!-- Slide 9 -->
+<section>
+  <div class="frame-title">Monte Carlo ES — Walking Through One Iteration</div>
+  <div class="two-col w60">
+    <div>
+      <ul>
+        <li><strong>Pick</strong> a random start pair \((S_0,A_0)\) — every pair has nonzero probability (exploring start)</li>
+        <li><strong>Roll out</strong> the episode following the current greedy \(\pi\)</li>
+        <li><strong>Sweep backward:</strong> \(G \leftarrow \gamma G + R_{t+1}\)</li>
+        <li>On a first visit to \((s,a)\): append \(G\), set \(Q(s,a)\) = average, make \(\pi(s)\) greedy</li>
+        <li>Evaluation and improvement are <strong>fused</strong> in one backward pass</li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/mc_es_loop.png" style="max-width:100%; max-height:360px;">
+    </div>
+  </div>
+</section>
+
+<!-- Slide 10 -->
+<section>
+  <div class="frame-title">Why Exploring Starts Are Needed</div>
+  <div class="two-col w60">
+    <div>
+      <ul>
+        <li>A deterministic \(\pi\) visits only <strong>one action per state</strong> — other \(Q(s,a)\) never improve</li>
+        <li><strong>Exploring starts:</strong> every \((s,a)\) has nonzero probability of <em>beginning</em> an episode</li>
+        <li>Guarantees every pair is visited infinitely often → all \(Q(s,a)\) can be estimated</li>
+        <li>Practical only for <strong>simulated</strong> episodes where we control the start</li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/exploring_starts_coverage.png" style="max-width:100%; max-height:330px;">
+    </div>
+  </div>
+</section>
+
+<!-- Slide 11 -->
+<section>
+  <div class="frame-title">Convergence of Monte Carlo ES</div>
+  <div class="two-col w60">
+    <div>
+      <ul>
+        <li>All returns for each \((s,a)\) are averaged, <strong>regardless of the policy in force</strong> when observed</li>
+        <li>MC ES <strong>cannot</strong> settle on a suboptimal policy: that would force the policy to keep changing</li>
+        <li>Stability is reached only when both \(Q\) and \(\pi\) are optimal</li>
+        <li>A formal proof remains <strong>a fundamental open question</strong> in RL (partial result: Tsitsiklis, 2002)</li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/mc_es_convergence.png" style="max-width:100%; max-height:330px;">
+    </div>
+  </div>
+</section>
+
+<!-- Slide 12 -->
+<section class="full-slide has-footnote">
+  <div class="frame-title">Case Study: Solving Blackjack with MC ES</div>
+  <div class="full-img"><img src="images/_page_121_Figure_2.jpeg"></div>
+  <div class="footnote">
+    Figure 5.2 (Sutton &amp; Barto). Exploring starts are trivial in simulation: pick player sum, dealer card, usable-ace, and first action at random.
+    MC ES recovers essentially Thorp's basic strategy — <strong>optimal control learned from sample games alone</strong>, no transition model.
+  </div>
+</section>
+
+<!-- ===================== PART C ===================== -->
+<section class="section-divider"><h1>Part C — On-Policy Control without Exploring Starts</h1></section>
+
+<!-- Slide 13 -->
+<section>
+  <div class="frame-title">The Trouble with Exploring Starts</div>
+  <div class="two-col w60">
+    <div>
+      <ul>
+        <li>We rarely control the starting pair when learning from <strong>real interaction</strong></li>
+        <li>The only general way to keep seeing all actions: have the <strong>agent itself keep selecting them</strong></li>
+        <li>Two families of solutions: <strong>on-policy</strong> and <strong>off-policy</strong></li>
+        <li>This part: an <strong>on-policy</strong> method that needs no exploring starts</li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/on_vs_off_overview.png" style="max-width:100%; max-height:330px;">
+    </div>
+  </div>
+</section>
+
+<!-- Slide 14 -->
+<section>
+  <div class="frame-title">On-Policy vs Off-Policy: The Key Distinction</div>
+  <div class="two-col w60">
+    <div>
+      <ul>
+        <li><strong>On-policy:</strong> evaluate and improve <em>the same policy</em> used to generate behaviour</li>
+        <li><strong>Off-policy:</strong> the <em>behaviour</em> policy that acts differs from the <em>target</em> policy being learned</li>
+        <li>MC ES is on-policy (the policy improves, but it is the one acting)</li>
+        <li>On-policy is simpler; off-policy is more general but higher-variance (Part D)</li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/on_off_policy_table.png" style="max-width:100%; max-height:340px;">
+    </div>
+  </div>
+</section>
+
+<!-- Slide 15 -->
+<section>
+  <div class="frame-title">Soft and ε-Soft Policies</div>
+  <ul>
+    <li><strong>Soft policy:</strong> \(\pi(a|s) > 0\) for <em>all</em> \(s, a\) — every action keeps some probability</li>
+    <li>The policy is gradually shifted <strong>closer and closer to deterministic optimal</strong>, but never fully</li>
+  </ul>
+  <div class="callout">
+    <strong>ε-soft policy:</strong> \(\displaystyle \pi(a|s) \;\ge\; \frac{\varepsilon}{|\mathcal{A}(s)|}\quad\text{for all } s, a,\ \text{some } \varepsilon > 0 \)
+  </div>
+  <ul>
+    <li>Guarantees continual exploration <strong>without any special starting conditions</strong></li>
+    <li>The "never zero" property is exactly what fixes the missing-\(Q\)-values problem</li>
+  </ul>
+</section>
+
+<!-- Slide 16 -->
+<section>
+  <div class="frame-title">ε-Greedy Policies</div>
+  <div class="two-col w60">
+    <div>
+      <ul>
+        <li><strong>ε-greedy:</strong> with prob. \(1-\varepsilon\) act greedily; with prob. \(\varepsilon\) pick uniformly at random</li>
+        <li>\(\pi(a|s) = \begin{cases} 1 - \varepsilon + \frac{\varepsilon}{|\mathcal{A}(s)|} & a = a^* \\[2pt] \frac{\varepsilon}{|\mathcal{A}(s)|} & a \ne a^* \end{cases}\)</li>
+        <li>Among all ε-soft policies, ε-greedy is the one <strong>closest to greedy</strong></li>
+        <li>Familiar from bandits — now guaranteeing exploration across the whole MDP</li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/epsilon_greedy_pie.png" style="max-width:100%; max-height:330px;">
+    </div>
+  </div>
+</section>
+
+<!-- Slide 17 -->
+<section>
+  <div class="frame-title">On-Policy First-Visit MC Control — Algorithm</div>
+  <div class="pseudocode">On-policy first-visit MC control (for ε-soft policies), estimates π ≈ π*
+Algorithm parameter: small ε > 0
+
+Initialize:  π ← an arbitrary ε-soft policy
+             Q(s,a) ∈ ℝ arbitrarily;  Returns(s,a) ← empty list
+
+Repeat forever (for each episode):
+  Generate an episode following π: S₀,A₀,R₁,…,S_{T-1},A_{T-1},R_T
+  G ← 0
+  For t = T-1, …, 0:
+    G ← γG + R_{t+1}
+    Unless the pair S_t,A_t appears earlier in the episode:
+      Append G to Returns(S_t,A_t);  Q(S_t,A_t) ← average(Returns(S_t,A_t))
+      A* ← argmax_a Q(S_t,a)
+      For all a ∈ 𝒜(S_t):
+        π(a|S_t) ← 1 - ε + ε/|𝒜(S_t)|   if a = A*
+        π(a|S_t) ← ε/|𝒜(S_t)|           if a ≠ A*</div>
+</section>
+
+<!-- Slide 18 -->
+<section>
+  <div class="frame-title">Why Move Only to ε-Greedy?</div>
+  <div class="two-col w60">
+    <div>
+      <ul>
+        <li>Full greedy would set unvisited actions to probability 0 → exploration dies, \(Q\) gaps return</li>
+        <li>GPI <strong>does not require</strong> going all the way to greedy — only <em>toward</em> it</li>
+        <li>Moving to the <strong>ε-greedy</strong> policy w.r.t. \(q_\pi\) is enough to guarantee improvement</li>
+        <li>We trade a little optimality for <strong>permanent exploration</strong></li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/gpi_epsilon_greedy.png" style="max-width:100%; max-height:330px;">
+    </div>
+  </div>
+</section>
+
+<!-- Slide 19 -->
+<section>
+  <div class="frame-title">Policy Improvement for ε-Soft Policies</div>
+  <ul>
+    <li>Let \(\pi'\) be ε-greedy w.r.t. \(q_\pi\). The policy improvement theorem applies because:</li>
+  </ul>
+  <div class="callout">
+    \[ q_\pi(s,\pi'(s)) = \frac{\varepsilon}{|\mathcal{A}(s)|}\sum_a q_\pi(s,a) + (1-\varepsilon)\max_a q_\pi(s,a) \;\ge\; v_\pi(s) \]
+  </div>
+  <ul>
+    <li>The inequality holds because a <strong>max ≥ any weighted average</strong></li>
+    <li>Therefore \(v_{\pi'}(s) \ge v_\pi(s)\) for all \(s\) — improvement on every step</li>
+    <li>Equality only when \(\pi\) is <strong>optimal among ε-soft policies</strong></li>
+  </ul>
+</section>
+
+<!-- Slide 20 -->
+<section>
+  <div class="frame-title">What On-Policy ε-Soft Control Achieves</div>
+  <div class="two-col w60">
+    <div>
+      <ul>
+        <li>Converges to the <strong>best policy among ε-soft policies</strong> — not necessarily the true \(\pi_*\)</li>
+        <li>The price of permanent exploration: a small, fixed amount of randomness remains</li>
+        <li>But we have <strong>eliminated exploring starts</strong> — practical for real experience</li>
+        <li>Shrinking \(\varepsilon\) over time can recover near-optimality (common heuristic)</li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/best_epsilon_soft.png" style="max-width:100%; max-height:330px;">
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PART D ===================== -->
+<section class="section-divider"><h1>Part D — Off-Policy Methods: A Brief Look</h1></section>
+
+<!-- Slide 21 -->
+<section>
+  <div class="frame-title">The Learning Dilemma</div>
+  <div class="two-col w60">
+    <div>
+      <ul>
+        <li>We want to learn the value of acting <strong>optimally</strong>, yet must act <strong>non-optimally</strong> to explore</li>
+        <li>On-policy's answer is a <strong>compromise</strong>: learn a near-optimal policy that still explores</li>
+        <li>Off-policy's answer: use <strong>two</strong> policies — one to act (explore), one to learn (the optimum)</li>
+        <li>Cleanly separates "how we behave" from "what we learn"</li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/learning_dilemma.png" style="max-width:100%; max-height:330px;">
+    </div>
+  </div>
+</section>
+
+<!-- Slide 22 -->
+<section>
+  <div class="frame-title">Target and Behaviour Policies</div>
+  <div class="two-col w60">
+    <div>
+      <ul>
+        <li><strong>Target policy</strong> \(\pi\): the one we learn about — may be <em>deterministic / greedy</em></li>
+        <li><strong>Behaviour policy</strong> \(b\): generates the data — must be <em>soft / exploratory</em></li>
+        <li><strong>Coverage:</strong> \(\pi(a|s) > 0 \Rightarrow b(a|s) > 0\) — \(b\) can take any action \(\pi\) might</li>
+        <li>On-policy is the special case \(\pi = b\)</li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/target_behavior_policy.png" style="max-width:100%; max-height:330px;">
+    </div>
+  </div>
+</section>
+
+<!-- Slide 23 -->
+<section>
+  <div class="frame-title">Importance Sampling: The Core Idea</div>
+  <div class="two-col w60">
+    <div>
+      <ul>
+        <li>Returns from \(b\) have the <strong>wrong expectation</strong>: \(\mathbb{E}[G_t|S_t=s] = v_b(s)\), not \(v_\pi(s)\)</li>
+        <li>Reweight each return by the <strong>importance-sampling ratio</strong>:
+          \(\rho_{t:T-1} = \prod_{k=t}^{T-1}\frac{\pi(A_k|S_k)}{b(A_k|S_k)}\)</li>
+        <li>The unknown MDP dynamics <strong>cancel</strong> — the ratio depends only on the policies</li>
+        <li>After reweighting: \(\mathbb{E}[\rho_{t:T-1}\,G_t \mid S_t=s] = v_\pi(s)\)</li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/importance_sampling_concept.png" style="max-width:100%; max-height:330px;">
+    </div>
+  </div>
+</section>
+
+<!-- Slide 24 -->
+<section class="full-slide has-footnote">
+  <div class="frame-title">Ordinary vs Weighted Importance Sampling</div>
+  <div class="full-img"><img src="images/_page_127_Figure_3.jpeg"></div>
+  <div class="footnote">
+    <strong>Ordinary IS</strong> \(V(s)=\frac{\sum_t \rho_{t:T(t)-1} G_t}{|\mathfrak{T}(s)|}\): unbiased, but variance can be huge (even infinite).
+    <strong>Weighted IS</strong> \(V(s)=\frac{\sum_t \rho_{t:T(t)-1} G_t}{\sum_t \rho_{t:T(t)-1}}\): biased (bias → 0), far lower variance — <strong>strongly preferred</strong>.
+    Figure 5.3: weighted IS has much lower error early on.
+  </div>
+</section>
+
+<!-- ===================== PART E ===================== -->
+<section class="section-divider"><h1>Part E — Incremental &amp; Online Implementation</h1></section>
+
+<!-- Slide 25 -->
+<section>
+  <div class="frame-title">Why Incremental Implementation?</div>
+  <div class="two-col w60">
+    <div>
+      <ul>
+        <li>Storing every return costs \(O(n)\) memory per pair and recomputes the mean each time</li>
+        <li>Keep just a <strong>running mean and a count</strong>, updated once per new return</li>
+        <li>Same trick as the bandit sample-average update (Ch. 2) — now averaging <strong>returns</strong></li>
+        <li>Updates happen <strong>episode by episode</strong></li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/incremental_vs_list.png" style="max-width:100%; max-height:330px;">
+    </div>
+  </div>
+</section>
+
+<!-- Slide 26 -->
+<section>
+  <div class="frame-title">Incremental MC: Sample-Average Update</div>
+  <div class="callout">
+    \[ Q_{n+1}(s,a) = Q_n(s,a) + \frac{1}{n}\big[\,\underbrace{G_n}_{\text{target}} - \underbrace{Q_n(s,a)}_{\text{estimate}}\,\big] \]
+  </div>
+  <ul>
+    <li>The bracket \([G_n - Q_n]\) is an <strong>error</strong>; \(\tfrac{1}{n}\) is the step size</li>
+    <li>For <strong>non-stationary</strong> problems (a changing policy), use a fixed step size \(\alpha\):
+      \(Q(s,a) \leftarrow Q(s,a) + \alpha[G - Q(s,a)]\)</li>
+    <li>Same "target − estimate" pattern as bandits — and it reappears in TD next lecture</li>
+  </ul>
+</section>
+
+<!-- Slide 27 -->
+<section class="full-slide has-footnote">
+  <div class="frame-title">"Online" MC Policy Evaluation: What It Can and Cannot Do</div>
+  <div class="full-img"><img src="images/mc_online_timing.png"></div>
+  <div class="footnote">
+    MC is incremental <strong>across episodes</strong>, but <strong>not</strong> step-by-step: the return \(G_t\) is unknown until the episode <em>terminates</em>, so we must wait for the terminal state.
+    Contrast with <strong>TD</strong> (next lecture), which updates <em>every step</em> using a bootstrapped estimate.
+  </div>
+</section>
+
+<!-- Slide 28 -->
+<section>
+  <div class="frame-title">Incremental Weighted Importance Sampling</div>
+  <ul>
+    <li>Weighted averages need a different rule: track the <strong>cumulative weight</strong> \(C\)</li>
+  </ul>
+  <div class="callout">
+    \[ V_{n+1} = V_n + \frac{W_n}{C_n}\big[G_n - V_n\big], \qquad C_{n+1} = C_n + W_{n+1}, \quad C_0 = 0 \]
+  </div>
+  <ul>
+    <li>Setting \(W \equiv 1\) recovers the ordinary sample-average update (the on-policy case)</li>
+    <li>One unified update covers both <strong>on-policy and off-policy</strong> evaluation</li>
+    <li>\(W_n/C_n\) acts as an <strong>effective step size</strong></li>
+  </ul>
+</section>
+
+<!-- Slide 29 -->
+<section>
+  <div class="frame-title">Off-Policy MC Prediction — Incremental Algorithm</div>
+  <div class="pseudocode">Off-policy MC prediction (policy evaluation), estimating Q ≈ q_π
+Input: target policy π
+
+Initialize, for all s, a:  Q(s,a) ∈ ℝ arbitrarily;  C(s,a) ← 0
+
+Loop forever (for each episode):
+  b ← any policy with coverage of π
+  Generate an episode following b: S₀,A₀,R₁,…,S_{T-1},A_{T-1},R_T
+  G ← 0;  W ← 1
+  For t = T-1, …, 0, while W ≠ 0:
+    G ← γG + R_{t+1}
+    C(S_t,A_t) ← C(S_t,A_t) + W
+    Q(S_t,A_t) ← Q(S_t,A_t) + (W / C(S_t,A_t)) [G - Q(S_t,A_t)]
+    W ← W · π(A_t|S_t) / b(A_t|S_t)</div>
+  <ul style="margin-top:.4em; font-size:.8em">
+    <li>Same box doubles as on-policy evaluation when \(\pi = b\) (then \(W = 1\))</li>
+  </ul>
+</section>
+
+<!-- Slide 30 -->
+<section class="full-slide has-footnote">
+  <div class="frame-title">Summary &amp; Bridge to TD Learning</div>
+  <div class="full-img"><img src="images/mc_to_td_roadmap.png"></div>
+  <div class="footnote">
+    MC control = GPI with returns-averaging evaluation. Exploration via exploring starts (MC ES), ε-soft on-policy, or an off-policy behaviour policy.
+    Implemented incrementally, episode by episode — but must <strong>wait for the episode to end</strong>.
+    <strong>Next lecture (TD):</strong> learn from partial returns, bootstrap like DP, update every step.
+  </div>
+</section>
+
+<!-- ===================== PRACTICE QUESTIONS ===================== -->
+<section class="section-divider"><h1>Practice Questions</h1></section>
+
+<!-- Q1 -->
+<section>
+  <section>
+    <div class="frame-title">Q1 — ε-Greedy Probabilities</div>
+    <div class="q-box">
+      <div class="qlabel">Question</div>
+      A state has \(|\mathcal{A}(s)| = 4\) actions and we use an ε-greedy policy with \(\varepsilon = 0.2\).
+      What probability does the greedy action \(a^*\) receive?
+      <div style="margin-top:.6em;">
+        <strong>A.</strong> 0.85 &nbsp;&nbsp; <strong>B.</strong> 0.80 &nbsp;&nbsp; <strong>C.</strong> 0.95 &nbsp;&nbsp; <strong>D.</strong> 0.05
+      </div>
+    </div>
+    <p style="font-size:.65em; color:#888; margin-top:.8em;">↓ Press down for answer</p>
+  </section>
+  <section>
+    <div class="frame-title">Q1 — ε-Greedy Probabilities</div>
+    <div class="q-box">
+      <div class="qlabel">Question</div>
+      A state has \(|\mathcal{A}(s)| = 4\) actions and we use an ε-greedy policy with \(\varepsilon = 0.2\).
+      What probability does the greedy action \(a^*\) receive?
+      <div style="margin-top:.6em;">
+        <strong>A.</strong> 0.85 &nbsp;&nbsp; <strong>B.</strong> 0.80 &nbsp;&nbsp; <strong>C.</strong> 0.95 &nbsp;&nbsp; <strong>D.</strong> 0.05
+      </div>
+    </div>
+    <div class="ans">
+      <strong>Answer: A — 0.85</strong><br>
+      \(\pi(a^*|s) = 1 - \varepsilon + \varepsilon/|\mathcal{A}| = 0.8 + 0.05 = 0.85\). Each other action: \(\varepsilon/|\mathcal{A}| = 0.05\).
+      Check: \(0.85 + 3(0.05) = 1.0\). ✓
+    </div>
+  </section>
+</section>
+
+<!-- Q2 -->
+<section>
+  <section>
+    <div class="frame-title">Q2 — MC ES vs On-Policy ε-Greedy</div>
+    <div class="q-box">
+      <div class="qlabel">Question</div>
+      On-policy first-visit MC control (ε-soft) converges to which policy?
+      <div style="margin-top:.6em;">
+        <strong>A.</strong> The true optimal \(\pi_*\)<br>
+        <strong>B.</strong> The best policy <em>among ε-soft policies</em><br>
+        <strong>C.</strong> A uniformly random policy<br>
+        <strong>D.</strong> It does not converge
+      </div>
+    </div>
+    <p style="font-size:.65em; color:#888; margin-top:.8em;">↓ Press down for answer</p>
+  </section>
+  <section>
+    <div class="frame-title">Q2 — MC ES vs On-Policy ε-Greedy</div>
+    <div class="q-box">
+      <div class="qlabel">Question</div>
+      On-policy first-visit MC control (ε-soft) converges to which policy?
+      <div style="margin-top:.6em;">
+        <strong>A.</strong> The true optimal \(\pi_*\)<br>
+        <strong>B.</strong> The best policy <em>among ε-soft policies</em><br>
+        <strong>C.</strong> A uniformly random policy<br>
+        <strong>D.</strong> It does not converge
+      </div>
+    </div>
+    <div class="ans">
+      <strong>Answer: B</strong><br>
+      Permanent exploration keeps a fixed randomness, so it reaches the best ε-soft policy. MC ES, by contrast, gets coverage from <em>exploring starts</em>, so it can go fully greedy and (empirically) reach the true \(\pi_*\).
+    </div>
+  </section>
+</section>
+
+<!-- Q3 -->
+<section>
+  <section>
+    <div class="frame-title">Q3 — Importance-Sampling Ratio</div>
+    <div class="q-box">
+      <div class="qlabel">Question</div>
+      A 2-step trajectory from behaviour \(b\): \(b(A_0|S_0)=0.5,\ b(A_1|S_1)=0.25\).
+      Target \(\pi\) is deterministic greedy with \(\pi(A_0|S_0)=\pi(A_1|S_1)=1\). Compute \(\rho_{0:1}\).
+      <div style="margin-top:.6em;">
+        <strong>A.</strong> 8 &nbsp;&nbsp; <strong>B.</strong> 0.125 &nbsp;&nbsp; <strong>C.</strong> 2 &nbsp;&nbsp; <strong>D.</strong> 1
+      </div>
+    </div>
+    <p style="font-size:.65em; color:#888; margin-top:.8em;">↓ Press down for answer</p>
+  </section>
+  <section>
+    <div class="frame-title">Q3 — Importance-Sampling Ratio</div>
+    <div class="q-box">
+      <div class="qlabel">Question</div>
+      A 2-step trajectory from behaviour \(b\): \(b(A_0|S_0)=0.5,\ b(A_1|S_1)=0.25\).
+      Target \(\pi\) is deterministic greedy with \(\pi(A_0|S_0)=\pi(A_1|S_1)=1\). Compute \(\rho_{0:1}\).
+      <div style="margin-top:.6em;">
+        <strong>A.</strong> 8 &nbsp;&nbsp; <strong>B.</strong> 0.125 &nbsp;&nbsp; <strong>C.</strong> 2 &nbsp;&nbsp; <strong>D.</strong> 1
+      </div>
+    </div>
+    <div class="ans">
+      <strong>Answer: A — 8</strong><br>
+      \(\rho_{0:1} = \frac{1}{0.5}\cdot\frac{1}{0.25} = 2 \times 4 = 8\). If instead \(\pi(A_1|S_1)=0\), then \(\rho = 0\) — the trajectory is inconsistent with \(\pi\) and contributes nothing.
+    </div>
+  </section>
+</section>
+
+<!-- Q4 -->
+<section>
+  <section>
+    <div class="frame-title">Q4 — Ordinary vs Weighted IS</div>
+    <div class="q-box">
+      <div class="qlabel">Question</div>
+      Which statement about importance-sampling estimators is correct?
+      <div style="margin-top:.6em;">
+        <strong>A.</strong> Ordinary IS is biased; weighted IS is unbiased<br>
+        <strong>B.</strong> Ordinary IS is unbiased but high-variance; weighted IS is biased but lower-variance (preferred)<br>
+        <strong>C.</strong> Both are unbiased with equal variance<br>
+        <strong>D.</strong> Weighted IS has unbounded variance
+      </div>
+    </div>
+    <p style="font-size:.65em; color:#888; margin-top:.8em;">↓ Press down for answer</p>
+  </section>
+  <section>
+    <div class="frame-title">Q4 — Ordinary vs Weighted IS</div>
+    <div class="q-box">
+      <div class="qlabel">Question</div>
+      Which statement about importance-sampling estimators is correct?
+      <div style="margin-top:.6em;">
+        <strong>A.</strong> Ordinary IS is biased; weighted IS is unbiased<br>
+        <strong>B.</strong> Ordinary IS is unbiased but high-variance; weighted IS is biased but lower-variance (preferred)<br>
+        <strong>C.</strong> Both are unbiased with equal variance<br>
+        <strong>D.</strong> Weighted IS has unbounded variance
+      </div>
+    </div>
+    <div class="ans">
+      <strong>Answer: B</strong><br>
+      Ordinary IS is unbiased but its variance can be huge (even infinite). Weighted IS has small (vanishing) bias and dramatically lower, always-finite variance — preferred in practice.
+    </div>
+  </section>
+</section>
+
+<!-- Q5 -->
+<section>
+  <section>
+    <div class="frame-title">Q5 — Why MC Cannot Update Mid-Episode</div>
+    <div class="q-box">
+      <div class="qlabel">Question</div>
+      Using incremental MC on a 100-step episode, when can the first value update be made?
+      <div style="margin-top:.6em;">
+        <strong>A.</strong> After the first step<br>
+        <strong>B.</strong> After every step<br>
+        <strong>C.</strong> Only after the episode terminates (needs the full return \(G\))<br>
+        <strong>D.</strong> Never
+      </div>
+    </div>
+    <p style="font-size:.65em; color:#888; margin-top:.8em;">↓ Press down for answer</p>
+  </section>
+  <section>
+    <div class="frame-title">Q5 — Why MC Cannot Update Mid-Episode</div>
+    <div class="q-box">
+      <div class="qlabel">Question</div>
+      Using incremental MC on a 100-step episode, when can the first value update be made?
+      <div style="margin-top:.6em;">
+        <strong>A.</strong> After the first step<br>
+        <strong>B.</strong> After every step<br>
+        <strong>C.</strong> Only after the episode terminates (needs the full return \(G\))<br>
+        <strong>D.</strong> Never
+      </div>
+    </div>
+    <div class="ans">
+      <strong>Answer: C</strong><br>
+      \(G_t\) needs all rewards up to termination. For a <em>continuing</em> task with no episode end, MC cannot form a target at all. TD removes this limit by <strong>bootstrapping</strong> — using \(V(S_{t+1})\) to update every step.
+    </div>
+  </section>
+</section>
+
+<!-- ===================== REFERENCES ===================== -->
+<section>
+  <div class="frame-title">References</div>
+  <ul>
+    <li>Sutton &amp; Barto (2018). <em>Reinforcement Learning: An Introduction</em>, 2nd ed., Ch. 5.3–5.4, 5.6.</li>
+    <li>Tsitsiklis (2002). On the convergence of optimistic policy iteration. <em>JMLR</em> 3.</li>
+    <li>Precup, Sutton &amp; Dasgupta (2001). Off-policy temporal-difference learning with function approximation.</li>
+    <li>Thorp (1966). <em>Beat the Dealer</em> — the basic blackjack strategy.</li>
+  </ul>
+  <p class="center" style="margin-top:1.2em; font-size:.85em">
+    <a href="https://buntyke.github.io/rlcourse-mtech-fall26">buntyke.github.io/rlcourse-mtech-fall26</a>
+  </p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/math/math.js"></script>
+<script>
+  Reveal.initialize({
+    width: 1280, height: 720, margin: 0.04,
+    hash: true, slideNumber: 'c/t',
+    plugins: [ RevealMath.MathJax3 ],
+    mathjax3: { mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js' }
+  });
+</script>
+</body>
+</html>

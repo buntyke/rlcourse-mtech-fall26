@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RL Lecture 9 — Policy Evaluation &amp; Policy Improvement</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css" id="theme">
+<style>
+  :root { --rl-red: #213c8b; --rl-white: rgb(235,235,235); }
+  .reveal { font-family: "Lato", "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 30px; }
+  .reveal h1, .reveal h2, .reveal h3, .reveal h4 { color: var(--rl-red); font-weight: 700; text-transform: none; }
+  .reveal .slides > section, .reveal .slides > section > section {
+    top: 0 !important;
+    height: 100%;
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 70px 30px 60px 30px !important;
+    box-sizing: border-box;
+  }
+  .reveal .frame-title { position: absolute; top: 18px; left: 30px; right: 30px; color: var(--rl-red); font-size: 1.2em; font-weight: 700; border-bottom: 2px solid var(--rl-red); padding-bottom: .2em; margin: 0; text-align: left; }
+  .reveal section img { background: none; border: none; box-shadow: none; margin: .3em auto; }
+  .reveal .title-slide { background: #fff; color: var(--rl-red); padding: 2em; text-align: center !important; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%; }
+  .reveal .title-slide h1, .reveal .title-slide h2, .reveal .title-slide p { color: var(--rl-red); text-align: center !important; width: 100%; }
+  .reveal .section-divider { display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; text-align: center !important; }
+  .reveal .section-divider h1 { color: var(--rl-red); font-size: 1.8em; text-align: center !important; width: 100%; margin: 0 auto; }
+  .two-col { display: flex; gap: 1em; align-items: center; justify-content: center; }
+  .two-col > div { flex: 1; text-align: center; }
+  .two-col.w64 > div:first-child { flex: 0 0 60%; }
+  .two-col.w64 > div:last-child  { flex: 0 0 36%; }
+  .reveal ul { display: inline-block; text-align: left; margin: 0 auto; font-size: .90em; }
+  .reveal ul > li { margin-bottom: .6em; }
+  .reveal ul > li:last-child { margin-bottom: 0; }
+  .reveal ul ul > li { margin-bottom: 0; }
+  .reveal p { font-size: .95em; }
+  .reveal section { text-align: center; }
+  .reveal .small { font-size: .7em; }
+  .reveal .has-footnote img { max-height: 540px; max-width: 90%; height: auto; }
+  .reveal .full-img { width: 100%; text-align: center; }
+  .reveal .full-img img { height: 576px; width: auto; max-width: 95%; }
+  .reveal .has-footnote.full-slide .full-img img { height: 520px; }
+  .reveal section.full-slide { padding-top: 55px !important; padding-bottom: 25px !important; }
+  .reveal .footnote { position: absolute; left: 30px; right: 30px; bottom: 10px; font-size: .5em; font-style: italic; color: #555; border-top: 1px solid #888; padding-top: 4px; text-align: left; margin: 0; }
+  .reveal .boardwork { background: #f6f1e7; border-left: 4px solid var(--rl-red); padding: .5em .9em; font-size: .75em; text-align: left; max-width: 88%; margin: .6em auto; }
+  .mcq { list-style: none; display: inline-block; text-align: left; padding: 0; margin: 0.5em auto 0; width: 90%; font-size: 0.88em; }
+  .mcq li { padding: 0.35em 0.8em; margin: 0.28em 0; border-radius: 5px; background: #f4f6ff; border: 1px solid #c8d0ef; }
+  .mcq li .opt { display: inline-block; width: 1.7em; font-weight: 700; color: var(--rl-red); }
+  .reveal .ans { background: #eef6ee; border-left: 4px solid #2d8a4e; padding: 0.4em 1em; font-size: 0.72em; text-align: left; max-width: 90%; margin: 0.65em auto 0; }
+  .reveal a { color: var(--rl-red); }
+  .callout { margin: 0.8em auto; padding: 0.65em 1.3em; border: 2px solid var(--rl-red); border-radius: 6px; background: #f0f4ff; max-width: 90%; text-align: center; word-wrap: break-word; overflow-wrap: break-word; }
+  .qbox { margin: 0.5em auto; padding: 0.8em 1.4em; border: 2px solid var(--rl-red); border-radius: 8px; background: #f8f9ff; max-width: 94%; text-align: left; font-size: 0.82em; }
+  .qbox p { font-size: 1em; margin: 0.3em 0; }
+  /* Gridworld table */
+  .gw-table { border-collapse: collapse; font-size: 0.78em; margin: 0 auto; }
+  .gw-table td { width: 80px; height: 52px; text-align: center; vertical-align: middle; border: 2px solid #aaa; font-weight: 600; }
+  .gw-table td.terminal { background: #dbeafe; color: var(--rl-red); font-size: 1.1em; }
+  /* Pseudocode */
+  .pseudo { background: #f8f8f8; border: 1px solid #ccc; border-left: 4px solid var(--rl-red); border-radius: 4px; padding: .6em 1.1em; font-family: "Courier New", monospace; font-size: .70em; text-align: left; max-width: 90%; margin: .5em auto; line-height: 1.55; }
+</style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- ============================================================ -->
+<!-- TITLE                                                        -->
+<!-- ============================================================ -->
+<section class="title-slide">
+  <h1 style="margin-bottom:.15em; font-size:2.4em">Reinforcement Learning</h1>
+  <h2 style="margin-top:0; font-size:1.4em">Lecture 9 — Policy Evaluation &amp; Policy Improvement</h2>
+  <p style="margin-top:1.8em; font-size:1.4em">Nishanth Koganti</p>
+  <p style="font-size:1em">VNR VJIET — M.Tech AI &amp; DS</p>
+</section>
+
+<!-- TOC -->
+<section>
+  <div class="frame-title">Table of Contents</div>
+  <ul>
+    <li>Part A — Dynamic Programming: Foundations</li>
+    <li>Part B — The Prediction Problem: Policy Evaluation</li>
+    <li>Part C — Iterative Policy Evaluation: Algorithm &amp; Examples</li>
+    <li>Part D — Policy Improvement</li>
+    <li>Part E — Policy Iteration &amp; Generalized Policy Iteration</li>
+  </ul>
+  <p class="small" style="margin-top:1.5em">
+    <strong>Reading:</strong> Sutton &amp; Barto, <em>RL: An Introduction</em>, Ch. 4.1–4.3 &nbsp;|&nbsp;
+    <a href="https://buntyke.github.io/rlcourse-mtech-fall26">buntyke.github.io/rlcourse-mtech-fall26</a>
+  </p>
+</section>
+
+<!-- Acknowledgements -->
+<section>
+  <div class="frame-title">Acknowledgements</div>
+  <p>The slides of this lecture are based on:</p>
+  <ul>
+    <li>Chapter 4 of <strong>Reinforcement Learning: An Introduction</strong> (2nd ed.) by <em>Sutton &amp; Barto</em></li>
+    <li>Lecture 3 of <strong>Google DeepMind's 2015</strong> lectures by <em>David Silver</em></li>
+  </ul>
+  <p class="small" style="margin-top:1.5em">
+    <a href="https://buntyke.github.io/rlcourse-mtech-fall26">buntyke.github.io/rlcourse-mtech-fall26</a>
+  </p>
+</section>
+
+<!-- ============================================================ -->
+<!-- PART A — Dynamic Programming: Foundations                    -->
+<!-- ============================================================ -->
+<section class="section-divider"><h1>Part A — Dynamic Programming: Foundations</h1></section>
+
+<!-- Slide 1 — What is Dynamic Programming? -->
+<section>
+  <div class="frame-title">What is Dynamic Programming?</div>
+  <div class="callout">
+    <strong>Dynamic Programming (DP):</strong> a collection of algorithms that compute optimal policies given a <em>perfect model</em> of the environment as a Markov Decision Process.
+  </div>
+  <ul style="margin-top:.5em">
+    <li>Named by Richard <strong>Bellman</strong> (1957) — same Bellman as our Bellman equations</li>
+    <li>Requires <strong>complete knowledge</strong> of the environment model \(p(s', r \mid s, a)\)</li>
+    <li>Turns the Bellman equation into a step-by-step algorithm for finding the best policy</li>
+    <li>DP is the <strong>foundation</strong> — all other RL methods build on its ideas</li>
+  </ul>
+</section>
+
+<!-- Slide 2 — DP in RL landscape -->
+<section class="has-footnote">
+  <div class="frame-title">Where Does DP Fit in the RL Landscape?</div>
+  <div class="center"><img src="images/dp_positioning.png" style="height:390px; width:auto;"></div>
+  <div class="footnote">All RL methods can be seen as attempts to achieve the same effect as DP — with less computation and no perfect model. &nbsp;—&nbsp; S&amp;B, Ch. 4</div>
+</section>
+
+<!-- Slide 3 — Scope and Assumptions -->
+<section class="has-footnote">
+  <div class="frame-title">Scope: Finite MDPs &amp; DP Algorithms</div>
+  <div class="center"><img src="images/dp_assumptions.png" style="height:340px; width:auto;"></div>
+  <ul style="font-size:.82em; margin-top:.4em">
+    <li>Convergence requires \(\gamma &lt; 1\) <strong>or</strong> eventual termination from all states</li>
+    <li>Limitation: "curse of dimensionality" — \(|\mathcal{S}|\) grows exponentially with problem variables</li>
+  </ul>
+  <div class="footnote">S&amp;B, Ch. 4 intro &amp; §4.7</div>
+</section>
+
+<!-- Slide 4 — Bellman equations as update rules -->
+<section>
+  <div class="frame-title">Bellman Equations as Update Rules</div>
+  <div class="two-col" style="align-items:stretch; gap:1.5em;">
+    <div>
+      <img src="images/bellman_to_update.png" style="height:330px; width:auto;">
+    </div>
+    <div style="display:flex; flex-direction:column; justify-content:center; text-align:left;">
+      <ul style="font-size:.85em;">
+        <li>The Bellman equation is a <strong>fixed-point equation</strong>: \(v_\pi = \mathcal{T}^\pi v_\pi\)</li>
+        <li>DP turns it into an <strong>update rule</strong>: apply \(\mathcal{T}\) repeatedly until \(V\) stops changing</li>
+        <li>Policy evaluation uses \(\mathcal{T}^\pi\); Value iteration uses \(\mathcal{T}^*\)</li>
+        <li>Both operators are <strong>contractions</strong> — they always converge to the right answer</li>
+      </ul>
+      <div class="callout" style="margin-top:.8em; font-size:.8em;">
+        Fixed-point equation \(v = f(v)\) → update rule \(v \leftarrow f(v)\)
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Q1 — DP Foundations MCQ -->
+<section>
+  <section>
+    <div class="frame-title">Question 1 — DP Foundations</div>
+    <p style="font-size:.92em; max-width:90%; margin:0 auto .3em;">Which information does Dynamic Programming need that model-free RL methods do <strong>not</strong> use?</p>
+    <ul class="mcq">
+      <li><span class="opt">A.</span> A large set of sampled episodes from the environment</li>
+      <li><span class="opt">B.</span> A neural network to approximate the value function</li>
+      <li><span class="opt">C.</span> The complete transition model \(p(s', r \mid s, a)\) for all states and actions</li>
+      <li><span class="opt">D.</span> A replay buffer of past state–action pairs</li>
+    </ul>
+    <p class="small" style="margin-top:1em; color:#888;">↓ Press down to reveal the answer</p>
+  </section>
+  <section>
+    <div class="frame-title">Question 1 — DP Foundations (Answer)</div>
+    <p style="font-size:.92em; max-width:90%; margin:0 auto .3em;">Which information does Dynamic Programming need that model-free RL methods do <strong>not</strong> use?</p>
+    <ul class="mcq">
+      <li><span class="opt">A.</span> A large set of sampled episodes from the environment</li>
+      <li><span class="opt">B.</span> A neural network to approximate the value function</li>
+      <li><span class="opt">C.</span> The complete transition model \(p(s', r \mid s, a)\) for all states and actions</li>
+      <li><span class="opt">D.</span> A replay buffer of past state–action pairs</li>
+    </ul>
+    <div class="ans">✅ <strong>Answer: C</strong> — DP updates average over <em>all</em> possible next states using the model. Model-free methods (MC, TD) learn only from sampled experience — no model required.</div>
+  </section>
+</section>
+
+<!-- ============================================================ -->
+<!-- PART B — Policy Evaluation: The Prediction Problem           -->
+<!-- ============================================================ -->
+<section class="section-divider"><h1>Part B — The Prediction Problem: Policy Evaluation</h1></section>
+
+<!-- Slide 5 — The Prediction Problem -->
+<section>
+  <div class="frame-title">The Prediction Problem</div>
+  <div class="callout">
+    <strong>Policy Evaluation:</strong> given a policy \(\pi\), find how good it is — compute \(v_\pi(s)\) for every state \(s\).
+  </div>
+  <ul style="margin-top:.6em">
+    <li>Input: any policy \(\pi\) — it may be random, suboptimal, or arbitrary</li>
+    <li>Goal: find \(v_\pi(s) = \mathbb{E}_\pi[G_t \mid S_t = s]\) for every state \(s\)</li>
+    <li>This is the first step — we <strong>evaluate</strong> before we improve</li>
+    <li>Once we know \(v_\pi\), we can ask: "Is there a better action to take here?"</li>
+  </ul>
+  \[v_\pi(s) \doteq \mathbb{E}_\pi\!\left[\sum_{k=0}^{\infty} \gamma^k R_{t+k+1} \;\middle|\; S_t = s\right]\]
+</section>
+
+<!-- Slide 6 — Bellman Equation for v_pi -->
+<section>
+  <div class="frame-title">Bellman Expectation Equation for \(v_\pi\)</div>
+  \[v_\pi(s) = \sum_a \pi(a \mid s) \sum_{s',r} p(s',r \mid s,a)\Big[r + \gamma v_\pi(s')\Big]\]
+  <div class="two-col" style="margin-top:.5em; align-items:flex-start;">
+    <div>
+      <img src="images/policy_eval_linear_system.png" style="height:300px; width:auto;">
+    </div>
+    <div style="text-align:left;">
+      <ul style="font-size:.84em;">
+        <li>This gives a <strong>system of \(|\mathcal{S}|\) equations</strong> with \(|\mathcal{S}|\) unknowns</li>
+        <li>Can be solved directly — but too slow for large problems</li>
+        <li><strong>Iterative methods</strong> are much more practical</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 7 — Iterative Solution -->
+<section>
+  <div class="frame-title">Iterative Solution: Sequence of Approximations</div>
+  <img src="images/iterative_approx_sequence.png" style="height:270px; width:auto; margin-bottom:.3em;">
+  <p style="font-size:.85em;">The update rule:</p>
+  \[v_{k+1}(s) \doteq \sum_a \pi(a \mid s) \sum_{s',r} p(s',r \mid s,a)\Big[r + \gamma v_k(s')\Big]\]
+  <ul style="font-size:.82em; margin-top:.3em">
+    <li>The process always converges to the true \(v_\pi\) when \(\gamma &lt; 1\)</li>
+    <li>One pass through all states = one <strong>sweep</strong></li>
+  </ul>
+</section>
+
+<!-- Slide 8 — Expected Update: Backup Diagram -->
+<section>
+  <div class="frame-title">Expected Update: The Backup Diagram</div>
+  <div class="two-col" style="align-items:center; gap:2em;">
+    <div>
+      <img src="images/backup_diagram_vpi.png" style="height:400px; width:auto;">
+    </div>
+    <div style="text-align:left;">
+      <ul style="font-size:.84em;">
+        <li>New \(V(s)\) = immediate reward + discounted value of the next state</li>
+        <li><strong>Step 1:</strong> average over all actions using \(\pi(a \mid s)\)</li>
+        <li><strong>Step 2:</strong> average over all next states using \(p(s', r \mid s, a)\)</li>
+        <li>MC and TD only sample one next state — DP uses <strong>all</strong> of them</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 9 — Two-Array vs In-Place -->
+<section>
+  <div class="frame-title">Two-Array vs In-Place Implementation</div>
+  <img src="images/two_arrays_vs_inplace.png" style="height:340px; width:auto; margin-bottom:.4em;">
+  <div class="callout" style="font-size:.82em;">
+    In-place (Gauss–Seidel) converges faster — uses fresh data as soon as it's available. This is the <strong>standard</strong> implementation.
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PART C — Iterative Policy Evaluation: Algorithm & Examples  -->
+<!-- ============================================================ -->
+<section class="section-divider"><h1>Part C — Algorithm &amp; Examples</h1></section>
+
+<!-- Slide 10 — Pseudocode -->
+<section>
+  <div class="frame-title">Iterative Policy Evaluation: Full Algorithm</div>
+  <div class="pseudo">
+<strong>Iterative Policy Evaluation</strong> &nbsp;(estimating V ≈ v_π)<br>
+<br>
+Input:   π — policy to evaluate;   θ &gt; 0 — accuracy threshold<br>
+Init:    V(s) ← 0 for all s ∈ S;   V(terminal) ← 0<br>
+<br>
+Loop:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Δ ← 0<br>
+&nbsp;&nbsp;&nbsp;&nbsp;For each s ∈ S:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;v ← V(s)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;V(s) ← Σ_a π(a|s) Σ_{s′,r} p(s′,r|s,a) [r + γ V(s′)]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Δ ← max(Δ, |v − V(s)|)<br>
+Until Δ &lt; θ<br>
+<br>
+Output: V ≈ v_π
+  </div>
+  <ul style="font-size:.80em; margin-top:.4em">
+    <li>\(\Delta\): tracks the <strong>maximum change</strong> across all states in one sweep</li>
+    <li>Stop when max change \(&lt; \theta\) — policy evaluation is "good enough"</li>
+  </ul>
+</section>
+
+<!-- Slide 11 — Gridworld Setup -->
+<section class="has-footnote full-slide">
+  <div class="frame-title">Gridworld Example — Setup</div>
+  <p style="font-size:.9em; margin:.2em auto .5em;">4×4 grid, 14 non-terminal states and two shaded terminal corners; reward \(-1\) per step under a <strong>random</strong> policy (25% each way), \(\gamma = 1\), episodic task.</p>
+  <img src="images/gridworld_setup.jpeg" style="height:480px; width:auto; max-width:90%;">
+  <div class="footnote">S&amp;B, Example 4.1, Ch. 4.1</div>
+</section>
+
+<!-- Slide 12 — Gridworld Convergence -->
+<section class="has-footnote full-slide">
+  <div class="frame-title">Gridworld — Convergence of Policy Evaluation</div>
+  <div class="two-col" style="align-items:center;">
+    <div>
+      <img src="images/fig41_policy_eval_convergence.jpeg" style="height:480px; width:auto;">
+    </div>
+    <div style="text-align:left;">
+      <ul style="font-size:.80em;">
+        <li><strong>Left column:</strong> value estimate \(v_k\) at steps \(k = 0,1,2,3,10,\infty\)</li>
+        <li><strong>Right column:</strong> the greedy policy built from \(v_k\)</li>
+        <li>\(v_\infty(s)\) = negative of average steps to terminal under random \(\pi\)</li>
+        <li>By \(k = 3\), the greedy policy is <strong>already optimal</strong>!</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footnote">S&amp;B, Fig. 4.1, Ch. 4.1</div>
+</section>
+
+<!-- Slide 13 — Reading the Value Function (HTML table) -->
+<section>
+  <div class="frame-title">Gridworld — Reading the Value Function \(v_\infty\)</div>
+  <table class="gw-table" style="margin-bottom:.7em;">
+    <tr>
+      <td class="terminal">T</td><td>−14</td><td>−20</td><td>−22</td>
+    </tr>
+    <tr>
+      <td>−14</td><td>−18</td><td>−20</td><td>−20</td>
+    </tr>
+    <tr>
+      <td>−20</td><td>−20</td><td>−18</td><td>−14</td>
+    </tr>
+    <tr>
+      <td>−22</td><td>−20</td><td>−14</td><td class="terminal">T</td>
+    </tr>
+  </table>
+  <ul style="font-size:.83em;">
+    <li>Terminal states (T) have value 0</li>
+    <li>Values = <strong>negative expected steps</strong> to terminal under random policy</li>
+    <li>State adjacent to terminal: −14 &nbsp;|&nbsp; Far corner: −22 (hardest to escape)</li>
+    <li>After one policy improvement step: all greedy actions point toward shorter paths</li>
+  </ul>
+</section>
+
+<!-- Q2 — Policy Evaluation MCQ -->
+<section>
+  <section>
+    <div class="frame-title">Question 2 — Policy Evaluation</div>
+    <p style="font-size:.88em; max-width:90%; margin:0 auto .3em;">In the gridworld, state 11 is one step above the bottom-right terminal (terminal value = 0, \(\gamma = 1\), reward = −1 per step). What is \(q_\pi(11,\, \text{down})\)?</p>
+    <ul class="mcq">
+      <li><span class="opt">A.</span> \(0\) — the terminal state has value zero</li>
+      <li><span class="opt">B.</span> \(-14\) — the value of state 11 under the random policy</li>
+      <li><span class="opt">C.</span> \(-15\) — one step cost plus the value of state 11</li>
+      <li><span class="opt">D.</span> \(-1\) — one step cost, then reach terminal with value 0</li>
+    </ul>
+    <p class="small" style="margin-top:1em; color:#888;">↓ Press down to reveal the answer</p>
+  </section>
+  <section>
+    <div class="frame-title">Question 2 — Policy Evaluation (Answer)</div>
+    <p style="font-size:.88em; max-width:90%; margin:0 auto .3em;">In the gridworld, state 11 is one step above the bottom-right terminal (terminal value = 0, \(\gamma = 1\), reward = −1 per step). What is \(q_\pi(11,\, \text{down})\)?</p>
+    <ul class="mcq">
+      <li><span class="opt">A.</span> \(0\) — the terminal state has value zero</li>
+      <li><span class="opt">B.</span> \(-14\) — the value of state 11 under the random policy</li>
+      <li><span class="opt">C.</span> \(-15\) — one step cost plus the value of state 11</li>
+      <li><span class="opt">D.</span> \(-1\) — one step cost, then reach terminal with value 0</li>
+    </ul>
+    <div class="ans">✅ <strong>Answer: D</strong> — \(q_\pi(11,\text{down}) = -1 + \gamma \cdot v_\pi(\text{terminal}) = -1 + 1 \times 0 = -1\). The action "down" lands directly in the terminal.</div>
+  </section>
+</section>
+
+<!-- ============================================================ -->
+<!-- PART D — Policy Improvement                                  -->
+<!-- ============================================================ -->
+<section class="section-divider"><h1>Part D — Policy Improvement</h1></section>
+
+<!-- Slide 14 — Motivation -->
+<section>
+  <div class="frame-title">Motivation: Can We Do Better?</div>
+  <div class="two-col" style="align-items:center; gap:1.5em;">
+    <div>
+      <img src="images/policy_improvement_question.png" style="height:360px; width:auto;">
+    </div>
+    <div style="text-align:left;">
+      <ul style="font-size:.84em;">
+        <li>We know \(v_\pi\) — how good policy \(\pi\) is from every state</li>
+        <li>Question: should we change the action in state \(s\) to something else?</li>
+        <li>Try: take action \(a\) once, then follow \(\pi\) — this gives value \(q_\pi(s, a)\)</li>
+        <li>If \(q_\pi(s, a) &gt; v_\pi(s)\), action \(a\) is better — we should switch!</li>
+      </ul>
+      <div class="callout" style="margin-top:.8em; font-size:.82em;">
+        If \(q_\pi(s, a) &gt; v_\pi(s)\) for any \(a\), switching to \(a\) in state \(s\) is an improvement!
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 15 — Action-Value Function -->
+<section>
+  <div class="frame-title">The Action-Value Function \(q_\pi(s, a)\)</div>
+  \[\begin{aligned}
+    q_\pi(s, a) &\doteq \mathbb{E}\bigl[R_{t+1} + \gamma v_\pi(S_{t+1}) \mid S_t = s,\, A_t = a\bigr]\\[4pt]
+    &= \sum_{s',r} p(s',r \mid s,a)\Big[r + \gamma v_\pi(s')\Big]
+  \end{aligned}\]
+  <div class="two-col" style="margin-top:.5em; align-items:center; gap:1.5em;">
+    <div>
+      <img src="images/action_value_computation.png" style="height:300px; width:auto;">
+    </div>
+    <div style="text-align:left;">
+      <ul style="font-size:.84em;">
+        <li>Select action \(a\) in state \(s\) <strong>just once</strong>, then follow \(\pi\)</li>
+        <li>Computable directly from \(v_\pi\) and the model \(p\)</li>
+        <li><strong>Key question:</strong> is \(q_\pi(s, a) &gt; v_\pi(s)\)?</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 16 — Policy Improvement Theorem Statement -->
+<section>
+  <div class="frame-title">Policy Improvement Theorem</div>
+  <div class="callout" style="text-align:left; max-width:92%; font-size:.88em;">
+    <strong>Policy Improvement Theorem</strong> <em>(Bellman 1957, Howard 1960)</em><br><br>
+    Let \(\pi\) and \(\pi'\) be deterministic policies such that for <strong>all</strong> \(s \in \mathcal{S}\):
+    \[q_\pi(s, \pi'(s)) \geq v_\pi(s)\]
+    Then \(\pi'\) obtains at least as much expected return from every state:
+    \[v_{\pi'}(s) \geq v_\pi(s) \quad \text{for all } s \in \mathcal{S}\]
+    If strict inequality holds at any state, then \(v_{\pi'}(s) &gt; v_\pi(s)\) at that state.
+  </div>
+  <ul style="margin-top:.5em; font-size:.83em;">
+    <li>If \(\pi'\) beats \(\pi\) in <strong>one-step lookahead</strong> at every state…</li>
+    <li>…then \(\pi'\) is globally better — higher total reward from every starting state</li>
+  </ul>
+</section>
+
+<!-- Slides 17 + 18 — Proof (vertical stack) -->
+<section>
+  <section>
+    <div class="frame-title">Proof: Telescoping Inequality (Part 1 of 2)</div>
+    <div class="boardwork" style="font-size:.78em;">
+      Start from the assumption — expand \(q_\pi\) one step at a time and reapply the assumption at each new state:
+    </div>
+    \[\begin{aligned}
+    v_\pi(s) &\leq q_\pi(s, \pi'(s)) \quad\text{[assumption]}\\[4pt]
+    &= \mathbb{E}_{\pi'}[R_{t+1} + \gamma v_\pi(S_{t+1}) \mid S_t = s] \quad\text{[expand]}\\[4pt]
+    &\leq \mathbb{E}_{\pi'}[R_{t+1} + \gamma q_\pi(S_{t+1}, \pi'(S_{t+1})) \mid S_t = s] \quad\text{[reapply at }S_{t+1}]\\[4pt]
+    &= \mathbb{E}_{\pi'}[R_{t+1} + \gamma R_{t+2} + \gamma^2 v_\pi(S_{t+2}) \mid S_t = s] \quad\text{[expand again]}
+    \end{aligned}\]
+    <p class="small" style="margin-top:.4em; color:#555;">↓ Continue expanding... (press Down for conclusion)</p>
+  </section>
+  <section>
+    <div class="frame-title">Proof: Reaching \(v_{\pi'}(s)\) (Part 2 of 2)</div>
+    \[\begin{aligned}
+    &\leq \mathbb{E}_{\pi'}[R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \gamma^3 v_\pi(S_{t+3}) \mid S_t = s]\\[4pt]
+    &\;\;\vdots\\[4pt]
+    &\leq \mathbb{E}_{\pi'}[R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \cdots \mid S_t = s]\\[4pt]
+    &= v_{\pi'}(s) \qquad \square
+    \end{aligned}\]
+    <div class="callout" style="margin-top:.6em; font-size:.83em;">
+      Each step replaces \(v_\pi\) at the frontier with \(q_\pi\), then expands one step further. The discount \(\gamma^k\) makes \(v_\pi\) terms vanish as \(k \to \infty\).
+    </div>
+  </section>
+</section>
+
+<!-- Slide 19 — Greedy Policy Construction -->
+<section>
+  <div class="frame-title">Greedy Policy Construction</div>
+  \[\pi'(s) \doteq \arg\max_a\, q_\pi(s, a) = \arg\max_a \sum_{s',r} p(s',r \mid s,a)\Big[r + \gamma v_\pi(s')\Big]\]
+  <div class="two-col" style="margin-top:.4em; align-items:center; gap:1.5em;">
+    <div>
+      <img src="images/greedy_policy_construction.png" style="height:300px; width:auto;">
+    </div>
+    <div style="text-align:left;">
+      <ul style="font-size:.84em;">
+        <li>For every state, pick the action with the <strong>highest one-step lookahead value</strong></li>
+        <li>This updates all states at once — the whole policy changes in one pass</li>
+        <li>The new policy \(\pi'\) always satisfies the theorem condition — <strong>improvement is guaranteed</strong></li>
+        <li>If two actions tie, pick either one — both are equally good</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 20 — When Improvement Stops → Optimality -->
+<section>
+  <div class="frame-title">When Does Improvement Stop?</div>
+  <p style="font-size:.88em;">Suppose new greedy policy \(\pi'\) is as good as but <strong>not strictly better</strong> than \(\pi\): \(v_{\pi'} = v_\pi\). Then:</p>
+  \[v_{\pi'}(s) = \max_a \sum_{s',r} p(s',r \mid s,a)\Big[r + \gamma v_{\pi'}(s')\Big]\]
+  <div class="callout" style="margin-top:.5em;">
+    This is exactly the <strong>Bellman optimality equation</strong>!<br>
+    Therefore \(v_{\pi'} = v_*\) and \(\pi' = \pi_*\) — the policy is <strong>already optimal</strong>.
+  </div>
+  <ul style="margin-top:.6em; font-size:.85em;">
+    <li>Improvement stops <strong>only when</strong> the current policy is already optimal</li>
+    <li>A finite MDP has a limited number of policies — so convergence is always guaranteed</li>
+  </ul>
+</section>
+
+<!-- Slide 21 — Stochastic Policies -->
+<section class="has-footnote full-slide">
+  <div class="frame-title">Policy Improvement for Stochastic Policies</div>
+  <div class="two-col" style="align-items:center; gap:1.5em;">
+    <div>
+      <img src="images/fig41_policy_eval_convergence.jpeg" style="height:440px; width:auto;">
+    </div>
+    <div style="text-align:left;">
+      <ul style="font-size:.80em;">
+        <li>The improvement theorem works for <strong>stochastic policies</strong> too</li>
+        <li>Switching from random \(\pi\) to greedy \(\pi'\) is a huge jump in performance</li>
+        <li>Under random \(\pi\): values reach \(-22\); under greedy \(\pi'\): values reach \(-3\) or better</li>
+        <li>Multiple arrows at a cell = tied best actions (any one of them is fine)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footnote">S&amp;B, Fig. 4.1, Ch. 4.2</div>
+</section>
+
+<!-- Q3 — Action-Value MCQ -->
+<section>
+  <section>
+    <div class="frame-title">Question 3 — Action-Value Updates</div>
+    <p style="font-size:.88em; max-width:90%; margin:0 auto .3em;">In the iterative update for \(q_\pi\), which expression is used for the value at the <strong>next state</strong> \(s'\)?</p>
+    <ul class="mcq">
+      <li><span class="opt">A.</span> \(\max_{a'} Q(s', a')\) — take the best action in the next state</li>
+      <li><span class="opt">B.</span> \(V(s')\) — use the state-value directly, same as the \(v_\pi\) update</li>
+      <li><span class="opt">C.</span> \(\displaystyle\sum_{a'} \pi(a' \mid s')\, Q(s', a')\) — average over the policy's actions at \(s'\)</li>
+      <li><span class="opt">D.</span> \(Q(s', \pi(s'))\) — use only the action the policy would choose</li>
+    </ul>
+    <p class="small" style="margin-top:1em; color:#888;">↓ Press down to reveal the answer</p>
+  </section>
+  <section>
+    <div class="frame-title">Question 3 — Action-Value Updates (Answer)</div>
+    <p style="font-size:.88em; max-width:90%; margin:0 auto .3em;">In the iterative update for \(q_\pi\), which expression is used for the value at the <strong>next state</strong> \(s'\)?</p>
+    <ul class="mcq">
+      <li><span class="opt">A.</span> \(\max_{a'} Q(s', a')\) — take the best action in the next state</li>
+      <li><span class="opt">B.</span> \(V(s')\) — use the state-value directly, same as the \(v_\pi\) update</li>
+      <li><span class="opt">C.</span> \(\displaystyle\sum_{a'} \pi(a' \mid s')\, Q(s', a')\) — average over the policy's actions at \(s'\)</li>
+      <li><span class="opt">D.</span> \(Q(s', \pi(s'))\) — use only the action the policy would choose</li>
+    </ul>
+    <div class="ans">✅ <strong>Answer: C</strong> — Policy <em>evaluation</em> follows a fixed policy, so we average over all actions using \(\pi\). The max (option A) is used only in policy <em>improvement</em> / value iteration.</div>
+  </section>
+</section>
+
+<!-- ============================================================ -->
+<!-- PART E — Policy Iteration & GPI                              -->
+<!-- ============================================================ -->
+<section class="section-divider"><h1>Part E — Policy Iteration &amp; Generalized Policy Iteration</h1></section>
+
+<!-- Slide 22 — Combining Evaluation and Improvement -->
+<section>
+  <div class="frame-title">Combining Evaluation and Improvement</div>
+  <img src="images/policy_iteration_cycle.png" style="height:280px; width:auto; margin-bottom:.4em;">
+  <p style="font-size:.85em;">The monotone improvement sequence:</p>
+  \[\pi_0 \xrightarrow{\;E\;} v_{\pi_0} \xrightarrow{\;I\;} \pi_1 \xrightarrow{\;E\;} v_{\pi_1} \xrightarrow{\;I\;} \pi_2 \xrightarrow{\;E\;} \cdots \xrightarrow{\;I\;} \pi_* \xrightarrow{\;E\;} v_*\]
+  <ul style="font-size:.83em; margin-top:.3em">
+    <li>Each policy strictly better than previous (or already optimal)</li>
+    <li>Finite MDP: <strong>guaranteed convergence</strong> in finite steps</li>
+  </ul>
+</section>
+
+<!-- Slide 23 — Policy Iteration Pseudocode -->
+<section>
+  <div class="frame-title">Policy Iteration: Full Algorithm</div>
+  <div class="pseudo" style="line-height:1.24; padding:.5em 1.1em;">
+<strong>Policy Iteration</strong> &nbsp;(estimating π ≈ π*)<br>
+<br>
+1. Init: V(s) ← 0, π(s) ← arbitrary ∀s;  V(terminal) ← 0<br>
+<br>
+2. Policy Evaluation:<br>
+&nbsp;&nbsp;&nbsp;Loop:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Δ ← 0<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For each s ∈ S:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;v ← V(s)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;V(s) ← Σ_{s′,r} p(s′,r|s,π(s)) [r + γV(s′)]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Δ ← max(Δ, |v − V(s)|)<br>
+&nbsp;&nbsp;&nbsp;Until Δ &lt; θ<br>
+<br>
+3. Policy Improvement:<br>
+&nbsp;&nbsp;&nbsp;policy-stable ← true<br>
+&nbsp;&nbsp;&nbsp;For each s ∈ S:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;old-action ← π(s)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;π(s) ← argmax_a Σ_{s′,r} p(s′,r|s,a) [r + γV(s′)]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If old-action ≠ π(s): policy-stable ← false<br>
+&nbsp;&nbsp;&nbsp;If policy-stable → STOP;  else go to step 2
+  </div>
+</section>
+
+<!-- Slide 24 — Jack's Car Rental Setup -->
+<section>
+  <div class="frame-title">Jack's Car Rental — Problem Setup</div>
+  <div class="two-col" style="align-items:center; gap:1.5em;">
+    <div>
+      <img src="images/jacks_car_rental_setup.png" style="height:360px; width:auto;">
+    </div>
+    <div style="text-align:left;">
+      <ul style="font-size:.80em;">
+        <li><strong>State:</strong> (cars at loc 1, cars at loc 2) — up to 20 per location = 441 states</li>
+        <li><strong>Action:</strong> move up to 5 cars overnight; costs \$2 per car moved</li>
+        <li><strong>Reward:</strong> earn \$10 per car rented; rentals and returns follow Poisson distributions</li>
+        <li>Discount \(\gamma = 0.9\); this is a <strong>continuing task</strong> (no fixed end)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 25 — Jack's Car Rental Results -->
+<section class="has-footnote full-slide">
+  <div class="frame-title">Jack's Car Rental — Policy Iteration Results</div>
+  <div class="two-col" style="align-items:center;">
+    <div>
+      <img src="images/fig42_jacks_car_rental.jpeg" style="height:470px; width:auto;">
+    </div>
+    <div style="text-align:left;">
+      <ul style="font-size:.80em;">
+        <li>First 5 panels show policies \(\pi_0\) through \(\pi_4\) — each better than the last</li>
+        <li>Color in each cell = number of cars to move from location 1 to location 2</li>
+        <li>Last panel: the optimal value function \(v_*\) after convergence</li>
+        <li>The 441-state problem reaches the optimal policy in just <strong>4 iterations</strong>!</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footnote">S&amp;B, Fig. 4.2, Ch. 4.3</div>
+</section>
+
+<!-- Slide 26 — Value Iteration -->
+<section>
+  <div class="frame-title">Value Iteration</div>
+  <img src="images/value_iteration_intro.png" style="height:320px; width:auto; margin-bottom:.9em;">
+  <p style="font-size:.9em; margin-bottom:.6em;"><strong>Key insight:</strong> greedy policies from \(v_k\) for \(k \geq 3\) were <em>already optimal</em> — no need to fully converge!</p>
+  \[v_{k+1}(s) \doteq \max_a \sum_{s',r} p(s',r \mid s,a)\Big[r + \gamma v_k(s')\Big]\]
+</section>
+
+<!-- Slide 27 — GPI -->
+<section class="has-footnote">
+  <div class="frame-title">Generalized Policy Iteration (GPI)</div>
+  <div class="callout" style="font-size:.85em;">
+    <strong>GPI:</strong> the general idea of letting policy evaluation and policy improvement interact, independent of granularity.
+  </div>
+  <div class="two-col" style="margin-top:.5em; align-items:center; gap:1.5em;">
+    <div>
+      <img src="images/gpi_interaction.jpeg" style="height:280px; width:auto;">
+    </div>
+    <div style="text-align:left;">
+      <ul style="font-size:.82em;">
+        <li><strong>Policy iteration:</strong> fully evaluate, then fully improve</li>
+        <li><strong>Value iteration:</strong> evaluate just one sweep, then improve</li>
+        <li><strong>Async DP:</strong> evaluate and improve one state at a time</li>
+        <li><strong>Almost all RL methods</strong> are some form of GPI!</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footnote">S&amp;B, Ch. 4.6</div>
+</section>
+
+<!-- Slide 28 — GPI Geometry -->
+<section class="has-footnote full-slide">
+  <div class="frame-title">GPI: Two Competing, Cooperating Goals</div>
+  <div class="two-col" style="align-items:center; gap:1.5em;">
+    <div>
+      <img src="images/gpi_geometry.jpeg" style="height:420px; width:auto;">
+    </div>
+    <div style="text-align:left;">
+      <ul style="font-size:.80em;">
+        <li><strong>Evaluation line:</strong> \(V\) is consistent with the current policy \(\pi\)</li>
+        <li><strong>Improvement line:</strong> \(\pi\) is greedy with respect to the current \(V\)</li>
+        <li>Each step moves toward its own goal but disturbs the other</li>
+        <li>Together they converge to the point where both are satisfied: \(\pi_*, v_*\)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footnote">S&amp;B, Fig. 4.7, Ch. 4.6</div>
+</section>
+
+<!-- Slide 29 — Summary -->
+<section>
+  <div class="frame-title">Summary</div>
+  <ul style="font-size:.88em;">
+    <li><strong>Policy Evaluation:</strong> find \(v_\pi\) by repeatedly applying the Bellman update</li>
+    <li><strong>Policy Improvement:</strong> build greedy \(\pi'\) from \(v_\pi\) — always at least as good as \(\pi\)</li>
+    <li><strong>Policy / Value Iteration:</strong> alternating eval and improve; both reach \(\pi_*\) in finite steps</li>
+    <li><strong>GPI:</strong> the unifying idea — <em>all</em> RL methods combine evaluation and improvement</li>
+  </ul>
+  <div class="callout" style="margin-top:.8em; font-size:.85em;">
+    DP gives us the <strong>theoretical blueprint</strong>. MC and TD give us the <strong>practical tools</strong> to apply it without a perfect model.
+  </div>
+</section>
+
+<!-- Slide 30 — Bridge to Model-Free RL -->
+<section>
+  <div class="frame-title">Bridge to Model-Free RL</div>
+  <ul style="font-size:.88em;">
+    <li>DP requires a <strong>complete model</strong> \(p(s', r \mid s, a)\) — often not available in practice</li>
+    <li><strong>Next — Monte Carlo:</strong> estimate \(v_\pi\) from real episodes; no model needed</li>
+    <li><strong>Then — TD learning:</strong> update from each step taken; no model, no waiting for episode end</li>
+    <li>GPI still applies — these methods just do the evaluation step differently!</li>
+  </ul>
+  <div style="margin-top:1em; font-size:.85em;">
+    <table style="border-collapse:collapse; margin:0 auto; font-size:.9em;">
+      <tr style="border-bottom:2px solid var(--rl-red);">
+        <th style="padding:.3em .9em; text-align:left; color:var(--rl-red);">Method</th>
+        <th style="padding:.3em .9em; color:var(--rl-red);">Needs Model?</th>
+        <th style="padding:.3em .9em; color:var(--rl-red);">Bootstraps?</th>
+      </tr>
+      <tr>
+        <td style="padding:.3em .9em; text-align:left;">Dynamic Programming</td>
+        <td style="padding:.3em .9em;">Yes ✓</td><td style="padding:.3em .9em;">Yes</td>
+      </tr>
+      <tr style="background:#f0f4ff;">
+        <td style="padding:.3em .9em; text-align:left;">Monte Carlo</td>
+        <td style="padding:.3em .9em;">No</td><td style="padding:.3em .9em;">No</td>
+      </tr>
+      <tr>
+        <td style="padding:.3em .9em; text-align:left;">TD Learning</td>
+        <td style="padding:.3em .9em;">No</td><td style="padding:.3em .9em;">Yes</td>
+      </tr>
+    </table>
+  </div>
+</section>
+
+<!-- Q4 — Action-Value Advantage MCQ -->
+<section>
+  <section>
+    <div class="frame-title">Question 4 — Action Values vs State Values</div>
+    <p style="font-size:.88em; max-width:90%; margin:0 auto .3em;">When the transition model \(p(s', r \mid s, a)\) is <strong>not available</strong>, why is \(q_*\) more useful than \(v_*\) in practice?</p>
+    <ul class="mcq">
+      <li><span class="opt">A.</span> \(q_*\) always converges faster than \(v_*\)</li>
+      <li><span class="opt">B.</span> \(q_*\) requires less memory because it ignores some states</li>
+      <li><span class="opt">C.</span> The optimal policy can be read off directly: \(\pi_*(s) = \arg\max_a\, q_*(s, a)\) — no model needed</li>
+      <li><span class="opt">D.</span> \(q_*\) handles continuous action spaces better</li>
+    </ul>
+    <p class="small" style="margin-top:1em; color:#888;">↓ Press down to reveal the answer</p>
+  </section>
+  <section>
+    <div class="frame-title">Question 4 — Action Values vs State Values (Answer)</div>
+    <p style="font-size:.88em; max-width:90%; margin:0 auto .3em;">When the transition model \(p(s', r \mid s, a)\) is <strong>not available</strong>, why is \(q_*\) more useful than \(v_*\) in practice?</p>
+    <ul class="mcq">
+      <li><span class="opt">A.</span> \(q_*\) always converges faster than \(v_*\)</li>
+      <li><span class="opt">B.</span> \(q_*\) requires less memory because it ignores some states</li>
+      <li><span class="opt">C.</span> The optimal policy can be read off directly: \(\pi_*(s) = \arg\max_a\, q_*(s, a)\) — no model needed</li>
+      <li><span class="opt">D.</span> \(q_*\) handles continuous action spaces better</li>
+    </ul>
+    <div class="ans">✅ <strong>Answer: C</strong> — With \(v_*\), extracting the best action requires \(\arg\max_a \sum_{s',r} p(s',r|s,a)[r+\gamma v_*(s')]\), which needs the model. With \(q_*\), just pick \(\arg\max_a\, q_*(s,a)\) directly.</div>
+  </section>
+</section>
+
+<!-- Q5 — Exit MCQ -->
+<section>
+  <section>
+    <div class="frame-title">Question 5 — Exit Question</div>
+    <p style="font-size:.88em; max-width:90%; margin:0 auto .3em;">Value iteration has just converged (\(\Delta &lt; 0.001\)). What is the <strong>single step</strong> needed to get the optimal policy \(\pi_*\) from the converged \(V \approx v_*\)?</p>
+    <ul class="mcq">
+      <li><span class="opt">A.</span> Run one more full policy evaluation sweep to refine \(V\)</li>
+      <li><span class="opt">B.</span> For each state pick: \(\pi_*(s) = \arg\max_a \displaystyle\sum_{s',r} p(s',r \mid s,a)\bigl[r + \gamma V(s')\bigr]\)</li>
+      <li><span class="opt">C.</span> Average the last 10 value estimates to reduce noise before extracting the policy</li>
+      <li><span class="opt">D.</span> Start from the state with the highest value and follow greedy actions from there</li>
+    </ul>
+    <p class="small" style="margin-top:1em; color:#888;">↓ Press down to reveal the answer</p>
+  </section>
+  <section>
+    <div class="frame-title">Question 5 — Exit Question (Answer)</div>
+    <p style="font-size:.88em; max-width:90%; margin:0 auto .3em;">Value iteration has just converged (\(\Delta &lt; 0.001\)). What is the <strong>single step</strong> needed to get the optimal policy \(\pi_*\) from the converged \(V \approx v_*\)?</p>
+    <ul class="mcq">
+      <li><span class="opt">A.</span> Run one more full policy evaluation sweep to refine \(V\)</li>
+      <li><span class="opt">B.</span> For each state pick: \(\pi_*(s) = \arg\max_a \displaystyle\sum_{s',r} p(s',r \mid s,a)\bigl[r + \gamma V(s')\bigr]\)</li>
+      <li><span class="opt">C.</span> Average the last 10 value estimates to reduce noise before extracting the policy</li>
+      <li><span class="opt">D.</span> Start from the state with the highest value and follow greedy actions from there</li>
+    </ul>
+    <div class="ans">✅ <strong>Answer: B</strong> — One greedy sweep over all states using the converged \(V\) gives the optimal deterministic policy. No further iteration is needed.</div>
+  </section>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/math/math.js"></script>
+<script>
+  Reveal.initialize({
+    width: 1280, height: 720, margin: 0.04,
+    hash: true, slideNumber: 'c/t',
+    plugins: [ RevealMath.MathJax3 ],
+    mathjax3: { mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js' }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,786 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RL Lecture 11 — Prediction vs Control &amp; Monte Carlo Prediction</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css" id="theme">
+<style>
+  :root { --rl-red: #213c8b; }
+  .reveal { font-family: "Lato", "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 30px; }
+  .reveal h1, .reveal h2, .reveal h3, .reveal h4 { color: var(--rl-red); font-weight: 700; text-transform: none; }
+  .reveal .slides > section,
+  .reveal .slides > section > section {
+    top: 0 !important; height: 100%;
+    display: flex !important; flex-direction: column;
+    justify-content: center; align-items: center;
+    padding: 80px 40px 60px 40px !important;
+    box-sizing: border-box;
+  }
+  .reveal .frame-title {
+    position: absolute; top: 16px; left: 30px; right: 30px;
+    color: var(--rl-red); font-size: 1.15em; font-weight: 700;
+    border-bottom: 2px solid var(--rl-red); padding-bottom: .2em;
+    margin: 0; text-align: left;
+  }
+  .reveal section img { background: none; border: none; box-shadow: none; margin: .3em auto; }
+  .reveal .title-slide {
+    background: #fff; text-align: center !important;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; height: 100%; width: 100%;
+    padding: 2em !important;
+  }
+  .reveal .title-slide h1,
+  .reveal .title-slide h2,
+  .reveal .title-slide p { color: var(--rl-red); text-align: center !important; width: 100%; }
+  .reveal .section-divider {
+    display: flex; align-items: center; justify-content: center;
+    height: 100%; width: 100%; text-align: center !important;
+  }
+  .reveal .section-divider h1 { color: var(--rl-red); font-size: 1.8em; text-align: center !important; width: 100%; }
+  .two-col { display: flex; gap: 1.2em; align-items: center; justify-content: center; width: 100%; }
+  .two-col > div { flex: 1; text-align: center; }
+  .two-col.w60 > div:first-child { flex: 0 0 57%; }
+  .two-col.w60 > div:last-child  { flex: 0 0 39%; }
+  .reveal ul { display: inline-block; text-align: left; margin: 0 auto; font-size: .88em; }
+  .reveal ul > li { margin-bottom: .55em; }
+  .reveal ul > li:last-child { margin-bottom: 0; }
+  .reveal ul ul > li { margin-bottom: 0; font-size: .9em; }
+  .reveal p { font-size: .92em; }
+  .reveal section { text-align: center; }
+  .reveal .small { font-size: .68em; }
+  .reveal .full-img { width: 100%; text-align: center; }
+  .reveal .full-img img { height: 560px; width: auto; max-width: 95%; }
+  .reveal .has-footnote .full-img img { height: 520px; }
+  .reveal section.full-slide { padding-top: 55px !important; padding-bottom: 28px !important; }
+  .reveal .footnote {
+    position: absolute; left: 30px; right: 30px; bottom: 8px;
+    font-size: .48em; font-style: italic; color: #555;
+    border-top: 1px solid #aaa; padding-top: 3px; text-align: left; margin: 0;
+  }
+  .callout {
+    margin: 0.5em auto; padding: 0.55em 1.1em;
+    border: 2px solid var(--rl-red); border-radius: 6px;
+    background: #f0f4ff; max-width: 92%; text-align: center;
+  }
+  .pseudocode {
+    background: #f8f9ff; border-left: 4px solid var(--rl-red);
+    padding: 0.5em 1em; font-family: 'Courier New', monospace;
+    font-size: 0.60em; text-align: left; max-width: 90%;
+    margin: 0.4em auto; line-height: 1.55; white-space: pre;
+  }
+  .reveal .boardwork {
+    background: #f6f1e7; border-left: 4px solid var(--rl-red);
+    padding: .45em .9em; font-size: .75em; text-align: left;
+    max-width: 85%; margin: .6em auto;
+  }
+  .reveal a { color: var(--rl-red); }
+  .center { text-align: center; }
+  .q-box {
+    background: #e8f0fe; border: 2px solid var(--rl-red); border-radius: 8px;
+    padding: .8em 1.2em; max-width: 88%; margin: .5em auto;
+    text-align: left; font-size: .82em;
+  }
+  .q-box .qlabel { color: var(--rl-red); font-weight: 700; margin-bottom: .3em; }
+  .ans {
+    background: #f5f5f5; border-left: 4px solid #aaa;
+    padding: .35em .8em; font-size: .72em; text-align: left;
+    max-width: 85%; margin: .4em auto; color: #333;
+  }
+</style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- ===================== TITLE ===================== -->
+<section class="title-slide">
+  <h1 style="font-size:2.3em; margin-bottom:.1em">Reinforcement Learning</h1>
+  <h2 style="font-size:1.2em; margin-top:0">Lecture 11 — Prediction vs Control &amp; Monte Carlo Prediction</h2>
+  <p style="font-size:1.3em; margin-top:1.6em">Nishanth Koganti</p>
+  <p style="font-size:.95em">VNR VJIET — M.Tech AI &amp; DS</p>
+</section>
+
+<!-- ===================== TOC ===================== -->
+<section>
+  <div class="frame-title">Today's Lecture</div>
+  <ul>
+    <li>Part A — Why do we need Model-Free methods?</li>
+    <li>Part B — Monte Carlo Prediction: the core algorithm</li>
+    <li>Part C — Blackjack: a worked example</li>
+    <li>Part D — Properties of Monte Carlo methods</li>
+    <li>Part E — Estimating Action Values &amp; Exploration</li>
+  </ul>
+  <p class="center" style="margin-top:1.2em; font-size:.85em">
+    <a href="https://buntyke.github.io/rlcourse-mtech-fall26">buntyke.github.io/rlcourse-mtech-fall26</a>
+  </p>
+</section>
+
+<!-- ===================== ACKNOWLEDGEMENTS ===================== -->
+<section>
+  <div class="frame-title">Acknowledgements</div>
+  <p>These slides are based on:</p>
+  <ul>
+    <li>Sutton &amp; Barto — <em>Reinforcement Learning: An Introduction</em> (2nd ed.), Ch. 5.1–5.2</li>
+    <li>Singh &amp; Sutton (1996) — convergence results for every-visit MC</li>
+  </ul>
+  <p class="center" style="margin-top:1.2em; font-size:.85em">
+    <a href="https://buntyke.github.io/rlcourse-mtech-fall26">buntyke.github.io/rlcourse-mtech-fall26</a>
+  </p>
+</section>
+
+<!-- ===================== PART A ===================== -->
+<section class="section-divider"><h1>Part A — Why Do We Need Model-Free Methods?</h1></section>
+
+<!-- Slide 1 -->
+<section>
+  <div class="frame-title">Recap: The Problem with Dynamic Programming</div>
+  <div class="two-col w60">
+    <div>
+      <ul>
+        <li>In Unit II, DP found optimal policies using <strong>Bellman equations</strong></li>
+        <li>DP needs the full transition model \(p(s',r \mid s,a)\) — i.e. exact probabilities for every outcome</li>
+        <li>In most real problems, this model is <strong>unknown</strong> or too large to store</li>
+        <li><strong>Today:</strong> learn value functions from <em>experience</em>, without knowing the model</li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/dp_vs_mc_overview.png" style="max-width:100%; max-height:340px;">
+    </div>
+  </div>
+</section>
+
+<!-- Slide 2 -->
+<section>
+  <div class="frame-title">Monte Carlo: The Core Idea</div>
+  <div class="two-col w60">
+    <div>
+      <div class="callout" style="margin-bottom:.6em">
+        \[ V(s) \approx \text{average of returns } G_t \text{ observed from } s \]
+      </div>
+      <ul>
+        <li>Run many episodes; record the <strong>total reward</strong> (return) from each visit to state \(s\)</li>
+        <li>Average those returns → estimate of \(v_\pi(s)\)</li>
+        <li>No model needed — just experience</li>
+        <li>Only works for <strong>episodic tasks</strong> (must reach a terminal state)</li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/mc_averaging_concept.png" style="max-width:100%; max-height:330px;">
+    </div>
+  </div>
+</section>
+
+<!-- Slide 3 -->
+<section class="full-slide has-footnote">
+  <div class="frame-title">Episode Structure</div>
+  <div class="full-img"><img src="images/episode_timeline.png"></div>
+  <div class="footnote">
+    An episode: \(S_0, A_0, R_1, S_1, A_1, R_2, \ldots, S_T\) (terminal).
+    Return from step \(t\): \(G_t = R_{t+1} + \gamma R_{t+2} + \cdots + \gamma^{T-t-1}R_T\).
+    Computed backwards: \(G \leftarrow \gamma G + R_{t+1}\).
+  </div>
+</section>
+
+<!-- Slide 4 -->
+<section>
+  <div class="frame-title">Prediction vs Control</div>
+  <div class="two-col w60">
+    <div>
+      <ul>
+        <li><strong>Prediction:</strong> given a fixed policy \(\pi\), estimate how good each state is — find \(v_\pi(s)\)</li>
+        <li><strong>Control:</strong> find the best policy \(\pi^*\) that gives the most reward</li>
+        <li>Today we study <strong>prediction</strong> — how to evaluate a policy from samples</li>
+        <li>Control (using MC to improve a policy) is covered in the next lecture</li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/_page_118_Picture_7.jpeg" style="max-width:100%; max-height:320px;">
+      <p class="small" style="color:#555; margin-top:.2em">GPI: Evaluate ↔ Improve</p>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 5 -->
+<section class="full-slide has-footnote">
+  <div class="frame-title">Visits and Returns</div>
+  <div class="full-img"><img src="images/visits_returns_diagram.png"></div>
+  <div class="footnote">
+    A <strong>visit</strong> to state \(s\): any timestep \(t\) where \(S_t = s\).
+    A <strong>first visit</strong>: the first time \(s\) appears in an episode.
+    Returns are computed by working <em>backwards</em> from the terminal step.
+  </div>
+</section>
+
+<!-- ===================== PART B ===================== -->
+<section class="section-divider"><h1>Part B — Monte Carlo Prediction Algorithm</h1></section>
+
+<!-- Slide 6 -->
+<section>
+  <div class="frame-title">First-Visit MC Prediction — Algorithm</div>
+  <div class="pseudocode">Input: policy π
+Initialize: V(s) ← 0,  Returns(s) ← [ ]  for all states s
+
+Loop (for each episode):
+  Play episode following π → S₀,A₀,R₁, S₁,A₁,R₂, …, S_T
+  G ← 0
+  For t = T-1, T-2, …, 0:
+    G ← γG + R_{t+1}
+    If S_t appears for the FIRST TIME in this episode:
+      Append G to Returns(S_t)
+      V(S_t) ← mean( Returns(S_t) )</div>
+  <ul style="margin-top:.5em; font-size:.82em">
+    <li>Only the return from the <strong>first visit</strong> to each state is used per episode</li>
+    <li>More episodes → more accurate estimate of \(v_\pi(s)\)</li>
+  </ul>
+</section>
+
+<!-- Slide 7 -->
+<section>
+  <div class="frame-title">First-Visit vs Every-Visit MC</div>
+  <div class="two-col w60">
+    <div>
+      <ul>
+        <li><strong>First-visit MC:</strong> use only the return from the first visit to \(s\) in each episode</li>
+        <li><strong>Every-visit MC:</strong> use returns from <em>all</em> visits to \(s\) — remove the "first time" check</li>
+        <li>Both methods give correct estimates as episodes → ∞</li>
+        <li>Every-visit is simpler to code and works better with function approximation</li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/first_vs_every_visit_table.png" style="max-width:100%; max-height:330px;">
+    </div>
+  </div>
+</section>
+
+<!-- Slide 8 -->
+<section class="full-slide has-footnote">
+  <div class="frame-title">How MC Estimates Converge</div>
+  <div class="full-img"><img src="images/mc_convergence_curve.png"></div>
+  <div class="footnote">
+    By the Law of Large Numbers: average of many i.i.d. samples converges to the true mean.
+    Each first-visit return is an independent sample of \(v_\pi(s)\).
+    Error decreases as \(1/\sqrt{n}\) where \(n\) = number of visits.
+  </div>
+</section>
+
+<!-- Slide 9 -->
+<section>
+  <div class="frame-title">Efficient Update: Incremental Average</div>
+  <div class="callout" style="margin-bottom:.6em">
+    Instead of storing all returns and re-computing the mean:<br>
+    \[ V(s) \leftarrow V(s) + \frac{1}{n}\bigl[G - V(s)\bigr] \]
+  </div>
+  <ul>
+    <li><strong>Same result</strong> as computing the mean from scratch — but uses \(O(1)\) memory</li>
+    <li>For <strong>non-stationary</strong> tasks: replace \(\tfrac{1}{n}\) with a fixed step-size \(\alpha\):
+      \(V(s) \leftarrow V(s) + \alpha[G - V(s)]\)</li>
+    <li>This same idea is used in TD learning (next lecture)</li>
+  </ul>
+  <div class="boardwork">🖊️ <strong>Board:</strong> Show how the incremental mean formula is derived from the running average identity.</div>
+</section>
+
+<!-- Slide 10 -->
+<section class="full-slide has-footnote">
+  <div class="frame-title">Worked Example: MC Prediction on a Small MDP</div>
+  <div class="full-img"><img src="images/mc_worked_example.png"></div>
+  <div class="footnote">
+    Chain MDP: A → B → C → Terminal, rewards 0, 0, +1, \(\gamma = 1\).
+    After many episodes, \(V(A) = V(B) = V(C) = 1\).
+    Returns are calculated backwards and averaged episode by episode.
+  </div>
+</section>
+
+<!-- Slide 11 -->
+<section class="full-slide has-footnote">
+  <div class="frame-title">Three Advantages of MC over Dynamic Programming</div>
+  <div class="full-img"><img src="images/mc_advantages_dp.png"></div>
+  <div class="footnote">
+    1. No model needed — learn directly from experience.
+    2. Works with a simulator that generates sample transitions (not full probability tables).
+    3. Can estimate value of <em>one</em> state without evaluating all states.
+  </div>
+</section>
+
+<!-- ===================== PART C ===================== -->
+<section class="section-divider"><h1>Part C — Blackjack: A Monte Carlo Case Study</h1></section>
+
+<!-- Slide 12 -->
+<section>
+  <div class="frame-title">Blackjack as a Reinforcement Learning Problem</div>
+  <div class="two-col w60">
+    <div>
+      <ul>
+        <li><strong>Goal:</strong> get cards summing to ≤ 21, closer to 21 than the dealer</li>
+        <li><strong>Actions:</strong> <em>Hit</em> (draw a card) or <em>Stick</em> (stop)</li>
+        <li><strong>Reward:</strong> +1 win, −1 lose, 0 draw — only at end of game</li>
+        <li>Simulating games is easy; computing exact probabilities is hard → perfect for MC</li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/blackjack_setup.png" style="max-width:100%; max-height:340px;">
+    </div>
+  </div>
+</section>
+
+<!-- Slide 13 -->
+<section class="full-slide has-footnote">
+  <div class="frame-title">Blackjack State Space — 200 States</div>
+  <div class="full-img"><img src="images/blackjack_state_space.png"></div>
+  <div class="footnote">
+    State = (player's sum: 12–21) × (dealer's visible card: Ace–10) × (usable ace: Yes/No).
+    Total: \(10 \times 10 \times 2 = 200\) states.
+    A <strong>usable ace</strong> is one that can be counted as 11 without going over 21.
+  </div>
+</section>
+
+<!-- Slide 14 -->
+<section class="full-slide has-footnote">
+  <div class="frame-title">How a Blackjack Episode Works</div>
+  <div class="full-img"><img src="images/blackjack_episode_flowchart.png"></div>
+  <div class="footnote">
+    Evaluation policy \(\pi\): stick if player sum ≥ 20, else hit.
+    Dealer policy: stick if sum ≥ 17, else hit.
+    No need to compute \(p(s',r|s,a)\) — just simulate and record the outcome.
+  </div>
+</section>
+
+<!-- Slides 15 & 16: stacked sub-slides using same figure -->
+<section>
+  <section class="full-slide has-footnote">
+    <div class="frame-title">Blackjack Value Function — 10,000 Episodes</div>
+    <div class="full-img"><img src="images/_page_115_Figure_2.jpeg"></div>
+    <div class="footnote">
+      Figure 5.1 (Sutton &amp; Barto) — left column.
+      After 10,000 simulated games the surface is noisy but the trend is clear:
+      higher player sum → higher value. Usable-ace states have more uncertainty (visited less often).
+    </div>
+  </section>
+  <section class="full-slide has-footnote">
+    <div class="frame-title">Blackjack Value Function — 500,000 Episodes</div>
+    <div class="full-img"><img src="images/_page_115_Figure_2.jpeg"></div>
+    <div class="footnote">
+      Figure 5.1 (Sutton &amp; Barto) — right column.
+      After 500,000 games the surface is smooth — the Law of Large Numbers has done its job.
+      The no-usable-ace surface is more regular because those states are visited more often.
+    </div>
+  </section>
+</section>
+
+<!-- Slide 17 -->
+<section class="full-slide has-footnote">
+  <div class="frame-title">Why MC is Better than DP for Blackjack</div>
+  <div class="full-img"><img src="images/blackjack_dp_vs_mc.png"></div>
+  <div class="footnote">
+    Even though the rules of blackjack are fully known, computing \(p(s',r|s,a)\) requires listing all possible card combinations — tedious and error-prone.
+    MC avoids this: just play the game and record the result.
+  </div>
+</section>
+
+<!-- ===================== PART D ===================== -->
+<section class="section-divider"><h1>Part D — Properties of Monte Carlo Methods</h1></section>
+
+<!-- Slide 18 -->
+<section class="full-slide has-footnote">
+  <div class="frame-title">Backup Diagrams: DP vs MC</div>
+  <div class="full-img"><img src="images/mc_vs_dp_backup.png"></div>
+  <div class="footnote">
+    DP backup: one step, all possible next states (needs the model \(p\)).
+    MC backup: one sampled path, all the way to the terminal state (no model needed).
+    The depth and breadth of the diagram show exactly what information each method uses.
+  </div>
+</section>
+
+<!-- Slide 19 -->
+<section>
+  <div class="frame-title">MC Does Not Bootstrap</div>
+  <div class="two-col" style="gap:2em; align-items:flex-start;">
+    <div>
+      <p style="color:var(--rl-red); font-weight:700; margin-bottom:.3em">DP update (bootstraps)</p>
+      <div class="callout" style="font-size:.78em; background:#fff3f3">
+        \[ V(S_t) \leftarrow V(S_t) + \alpha\bigl[R_{t+1} + \gamma\,\textcolor{red}{V(S_{t+1})} - V(S_t)\bigr] \]
+        Uses the <em>estimated</em> value of the next state
+      </div>
+    </div>
+    <div>
+      <p style="color:var(--rl-red); font-weight:700; margin-bottom:.3em">MC update (no bootstrap)</p>
+      <div class="callout" style="font-size:.78em; background:#f0fff0">
+        \[ V(S_t) \leftarrow V(S_t) + \alpha\bigl[\textcolor{green}{G_t} - V(S_t)\bigr] \]
+        Uses the <em>actual observed</em> return
+      </div>
+    </div>
+  </div>
+  <ul style="margin-top:.6em; font-size:.85em">
+    <li><strong>Bootstrapping</strong> = using your own (possibly wrong) estimates to update other estimates</li>
+    <li>MC never bootstraps — each state's estimate is based purely on real rewards</li>
+  </ul>
+</section>
+
+<!-- Slide 20 -->
+<section class="full-slide has-footnote">
+  <div class="frame-title">State Estimates are Independent</div>
+  <div class="full-img"><img src="images/mc_independence_estimates.png"></div>
+  <div class="footnote">
+    DP: all state values are coupled through Bellman equations — changing one affects others.
+    MC: each state's estimate comes from its own independent episodes — no coupling.
+    Result: you can estimate \(V(s)\) for any single state without evaluating all states.
+  </div>
+</section>
+
+<!-- Slide 21 -->
+<section class="full-slide has-footnote">
+  <div class="frame-title">The Soap Bubble Analogy</div>
+  <div class="full-img"><img src="images/_page_116_Picture_6.jpeg"></div>
+  <div class="footnote">
+    Height of a soap surface at any interior point = average of neighbouring heights.
+    DP: solve a grid of equations (like iterative policy evaluation).
+    MC: do random walks from the point of interest to the boundary; average boundary heights.
+    Both give the same answer — but MC is faster when you only need one point.
+  </div>
+</section>
+
+<!-- Slide 22 -->
+<section class="full-slide has-footnote">
+  <div class="frame-title">MC vs DP — Summary Table</div>
+  <div class="full-img"><img src="images/dp_vs_mc_summary_table.png"></div>
+  <div class="footnote">
+    Key differences: MC needs no model, does not bootstrap, updates per episode, and can focus on a subset of states.
+    DP needs the full model but can be more sample-efficient when all state values are required.
+  </div>
+</section>
+
+<!-- ===================== PART E ===================== -->
+<section class="section-divider"><h1>Part E — Estimating Action Values &amp; Exploration</h1></section>
+
+<!-- Slide 23 -->
+<section>
+  <div class="frame-title">Why We Need Action Values \(Q(s,a)\)</div>
+  <div class="two-col" style="gap:1.8em; align-items:flex-start;">
+    <div>
+      <p style="font-weight:700; color:var(--rl-red); margin-bottom:.3em">With a model</p>
+      <div class="callout" style="font-size:.78em; background:#fff3f3">
+        \(\pi'(s) = \arg\max_a \sum_{s',r} p(s',r|s,a)[r + \gamma V(s')]\)<br>
+        <span class="small">Needs \(p\) — not available</span>
+      </div>
+    </div>
+    <div>
+      <p style="font-weight:700; color:var(--rl-red); margin-bottom:.3em">Without a model</p>
+      <div class="callout" style="font-size:.78em; background:#f0fff0">
+        \(\pi'(s) = \arg\max_a\, Q(s,a)\)<br>
+        <span class="small">Only needs \(Q\) — model-free ✓</span>
+      </div>
+    </div>
+  </div>
+  <ul style="margin-top:.6em; font-size:.85em">
+    <li>State values alone are not enough when the model is unknown</li>
+    <li>Estimating \(Q(s,a)\) directly lets us improve the policy without any model</li>
+  </ul>
+</section>
+
+<!-- Slide 24 -->
+<section>
+  <div class="frame-title">How to Estimate \(Q(s,a)\) with MC</div>
+  <div class="pseudocode">Change Returns(s) → Returns(s, a)
+Change V(S_t)   → Q(S_t, A_t)
+Check: is (S_t, A_t) the first visit to this pair in this episode?
+
+Update: Q(S_t, A_t) ← mean( Returns(S_t, A_t) )</div>
+  <ul style="margin-top:.5em; font-size:.84em">
+    <li>A <strong>visit</strong> to \((s,a)\): any timestep where \(S_t=s\) <em>and</em> \(A_t=a\)</li>
+    <li>Return \(G_t\) is associated with the pair \((s,a)\), not just the state \(s\)</li>
+    <li>Everything else is the same as MC prediction for \(V(s)\)</li>
+  </ul>
+</section>
+
+<!-- Slide 25 -->
+<section class="full-slide has-footnote">
+  <div class="frame-title">The Exploration Problem</div>
+  <div class="full-img"><img src="images/exploration_problem.png"></div>
+  <div class="footnote">
+    If the policy always picks the same action in a state, other actions are never tried.
+    We get no data for \(Q(s, \text{other actions})\) and cannot compare them.
+    This is the same explore-exploit tension seen in the bandit problem (Unit I).
+  </div>
+</section>
+
+<!-- Slide 26 -->
+<section>
+  <div class="frame-title">Solution 1: Exploring Starts</div>
+  <div class="two-col w60">
+    <div>
+      <ul>
+        <li>Start each episode from a <strong>randomly chosen</strong> state-action pair \((s,a)\)</li>
+        <li>Every pair must have a non-zero chance of being chosen as the start</li>
+        <li>Over many episodes, all pairs will be visited and estimated</li>
+        <li><strong>Limitation:</strong> only works in simulation — in real settings we cannot control the starting state</li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/exploring_starts.png" style="max-width:100%; max-height:330px;">
+    </div>
+  </div>
+</section>
+
+<!-- Slide 27 -->
+<section>
+  <div class="frame-title">Solution 2: Soft (Exploratory) Policies</div>
+  <div class="callout" style="margin-bottom:.6em; font-size:.88em">
+    <strong>\(\varepsilon\)-greedy policy:</strong> pick the best action most of the time,<br>
+    but with small probability \(\varepsilon\) pick a <em>random</em> action instead
+  </div>
+  <ul>
+    <li>Every action always has some probability of being chosen → all \((s,a)\) pairs eventually visited</li>
+    <li>No special starting conditions needed — works in real environments too</li>
+    <li>Tradeoff: finds the best exploratory policy, not the true optimal</li>
+    <li><strong>Next lecture:</strong> on-policy and off-policy MC control using \(\varepsilon\)-greedy</li>
+  </ul>
+</section>
+
+<!-- Slide 28 -->
+<section class="full-slide has-footnote">
+  <div class="frame-title">Backup Diagram for \(Q(s,a)\)</div>
+  <div class="full-img"><img src="images/q_backup_diagram.png"></div>
+  <div class="footnote">
+    The \(Q\) backup diagram starts at a state-action pair (filled square), not just a state.
+    Below it, the same sampled trajectory as the \(V\) backup goes all the way to the terminal state.
+    Return \(G\) accumulates from bottom to top along this single trajectory.
+  </div>
+</section>
+
+<!-- Slide 29 -->
+<section>
+  <div class="frame-title">General Policy Iteration with Monte Carlo</div>
+  <div class="two-col w60">
+    <div>
+      <div class="callout" style="font-size:.8em; margin-bottom:.6em">
+        \[\pi_0 \xrightarrow{E} q_{\pi_0} \xrightarrow{I} \pi_1 \xrightarrow{E} q_{\pi_1} \xrightarrow{I} \cdots \to \pi_*\]
+      </div>
+      <ul style="font-size:.84em">
+        <li><strong>E step:</strong> run episodes, average returns → estimate \(Q\) for current policy</li>
+        <li><strong>I step:</strong> update policy to be greedy w.r.t. \(Q\): \(\pi(s) \leftarrow \arg\max_a Q(s,a)\)</li>
+        <li>Alternate E and I after each episode — same GPI loop as in DP</li>
+        <li>Converges to optimal policy when all state-action pairs are explored</li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/_page_118_Picture_7.jpeg" style="max-width:100%; max-height:300px;">
+    </div>
+  </div>
+</section>
+
+<!-- Slide 30 -->
+<section>
+  <div class="frame-title">Summary &amp; What Comes Next</div>
+  <div class="two-col" style="gap:1.4em; align-items:center;">
+    <div>
+      <ul style="font-size:.84em">
+        <li>MC estimates value by <strong>averaging returns</strong> from sample episodes — no model needed</li>
+        <li>First-visit and every-visit MC both converge; no bootstrapping</li>
+        <li>Estimate \(Q(s,a)\) for model-free control; need exploration to cover all pairs</li>
+        <li><strong>Next lecture:</strong> MC Control — Monte Carlo ES, on-policy \(\varepsilon\)-soft, off-policy (importance sampling)</li>
+      </ul>
+    </div>
+    <div>
+      <img src="images/unit3_roadmap.png" style="max-width:100%; max-height:310px;">
+    </div>
+  </div>
+</section>
+
+<!-- ===================== QUESTION SLIDES ===================== -->
+<section class="section-divider"><h1>Practice Questions</h1></section>
+
+<!-- Q1 -->
+<section>
+  <section>
+    <div class="frame-title">Q1 — Compute a Return</div>
+    <div class="q-box">
+      <div class="qlabel">Question</div>
+      An episode has rewards \(R_1=2,\ R_2=3,\ R_3=0\) then terminates. Discount \(\gamma = 0.9\).<br>
+      What is \(G_0\), the return from step 0?
+      <div style="margin-top:.6em;">
+        <strong>A.</strong> 4.7 &nbsp;&nbsp; <strong>B.</strong> 5.0 &nbsp;&nbsp; <strong>C.</strong> 2.7 &nbsp;&nbsp; <strong>D.</strong> 3.0
+      </div>
+    </div>
+    <p style="font-size:.65em; color:#888; margin-top:.8em;">↓ Press down for answer</p>
+  </section>
+  <section>
+    <div class="frame-title">Q1 — Compute a Return</div>
+    <div class="q-box">
+      <div class="qlabel">Question</div>
+      An episode has rewards \(R_1=2,\ R_2=3,\ R_3=0\) then terminates. Discount \(\gamma = 0.9\).<br>
+      What is \(G_0\), the return from step 0?
+      <div style="margin-top:.6em;">
+        <strong>A.</strong> 4.7 &nbsp;&nbsp; <strong>B.</strong> 5.0 &nbsp;&nbsp; <strong>C.</strong> 2.7 &nbsp;&nbsp; <strong>D.</strong> 3.0
+      </div>
+    </div>
+    <div class="ans">
+      <strong>Answer: A — 4.7</strong><br>
+      \(G_2 = 0\), &nbsp; \(G_1 = 3 + 0.9\times0 = 3\), &nbsp; \(G_0 = 2 + 0.9\times3 = 4.7\)
+    </div>
+  </section>
+</section>
+
+<!-- Q2 -->
+<section>
+  <section>
+    <div class="frame-title">Q2 — First-Visit vs Every-Visit</div>
+    <div class="q-box">
+      <div class="qlabel">Question</div>
+      State \(s\) is visited at \(t=1,4,7\) in one episode with returns \(G_1=5,\ G_4=3,\ G_7=1\).<br>
+      What does <strong>first-visit MC</strong> estimate for \(V(s)\)?
+      <div style="margin-top:.6em;">
+        <strong>A.</strong> 3 &nbsp;&nbsp; <strong>B.</strong> 5 &nbsp;&nbsp; <strong>C.</strong> 4 &nbsp;&nbsp; <strong>D.</strong> 1
+      </div>
+    </div>
+    <p style="font-size:.65em; color:#888; margin-top:.8em;">↓ Press down for answer</p>
+  </section>
+  <section>
+    <div class="frame-title">Q2 — First-Visit vs Every-Visit</div>
+    <div class="q-box">
+      <div class="qlabel">Question</div>
+      State \(s\) is visited at \(t=1,4,7\) in one episode with returns \(G_1=5,\ G_4=3,\ G_7=1\).<br>
+      What does <strong>first-visit MC</strong> estimate for \(V(s)\)?
+      <div style="margin-top:.6em;">
+        <strong>A.</strong> 3 &nbsp;&nbsp; <strong>B.</strong> 5 &nbsp;&nbsp; <strong>C.</strong> 4 &nbsp;&nbsp; <strong>D.</strong> 1
+      </div>
+    </div>
+    <div class="ans">
+      <strong>Answer: B — 5</strong><br>
+      First-visit MC uses only the return from the <em>first</em> visit: \(G_1 = 5\).
+    </div>
+  </section>
+</section>
+
+<!-- Q3 -->
+<section>
+  <section>
+    <div class="frame-title">Q3 — Blackjack Exploration</div>
+    <div class="q-box">
+      <div class="qlabel">Question</div>
+      Policy \(\pi\): always hit when player sum = 15. Why can't we estimate \(Q(15,\ \text{stick})\)?
+      <div style="margin-top:.6em;">
+        <strong>A.</strong> Blackjack has too many states to track<br>
+        <strong>B.</strong> The policy never chooses "stick" at sum=15, so no returns are observed<br>
+        <strong>C.</strong> The dealer's card is unknown<br>
+        <strong>D.</strong> MC requires a model to estimate action-values
+      </div>
+    </div>
+    <p style="font-size:.65em; color:#888; margin-top:.8em;">↓ Press down for answer</p>
+  </section>
+  <section>
+    <div class="frame-title">Q3 — Blackjack Exploration</div>
+    <div class="q-box">
+      <div class="qlabel">Question</div>
+      Policy \(\pi\): always hit when player sum = 15. Why can't we estimate \(Q(15,\ \text{stick})\)?
+      <div style="margin-top:.6em;">
+        <strong>A.</strong> Blackjack has too many states to track<br>
+        <strong>B.</strong> The policy never chooses "stick" at sum=15, so no returns are observed<br>
+        <strong>C.</strong> The dealer's card is unknown<br>
+        <strong>D.</strong> MC requires a model to estimate action-values
+      </div>
+    </div>
+    <div class="ans">
+      <strong>Answer: B</strong><br>
+      \(\pi\) always hits at sum=15 → "stick" is never taken → no data to average.
+    </div>
+  </section>
+</section>
+
+<!-- Q4 -->
+<section>
+  <section>
+    <div class="frame-title">Q4 — MC vs DP Properties</div>
+    <div class="q-box">
+      <div class="qlabel">Question</div>
+      Which statement correctly describes Monte Carlo prediction?
+      <div style="margin-top:.6em;">
+        <strong>A.</strong> MC needs the full transition model \(p(s',r|s,a)\)<br>
+        <strong>B.</strong> MC updates \(V(s)\) using estimated values of successor states<br>
+        <strong>C.</strong> MC averages actual returns from complete episodes — no model needed<br>
+        <strong>D.</strong> MC backup considers all possible next states like DP
+      </div>
+    </div>
+    <p style="font-size:.65em; color:#888; margin-top:.8em;">↓ Press down for answer</p>
+  </section>
+  <section>
+    <div class="frame-title">Q4 — MC vs DP Properties</div>
+    <div class="q-box">
+      <div class="qlabel">Question</div>
+      Which statement correctly describes Monte Carlo prediction?
+      <div style="margin-top:.6em;">
+        <strong>A.</strong> MC needs the full transition model \(p(s',r|s,a)\)<br>
+        <strong>B.</strong> MC updates \(V(s)\) using estimated values of successor states<br>
+        <strong>C.</strong> MC averages actual returns from complete episodes — no model needed<br>
+        <strong>D.</strong> MC backup considers all possible next states like DP
+      </div>
+    </div>
+    <div class="ans">
+      <strong>Answer: C</strong><br>
+      MC uses real sampled returns \(G_t\); no model, no bootstrapping.
+    </div>
+  </section>
+</section>
+
+<!-- Q5 -->
+<section>
+  <section>
+    <div class="frame-title">Q5 — Focused Evaluation</div>
+    <div class="q-box">
+      <div class="qlabel">Question</div>
+      You have a 1000-state gridworld but only need values for 10 states near the goal. Which is more efficient?
+      <div style="margin-top:.6em;">
+        <strong>A.</strong> DP — it converges faster per sweep<br>
+        <strong>B.</strong> MC — episodes can start from just those 10 states, skipping the rest<br>
+        <strong>C.</strong> Both are equally efficient regardless of target states<br>
+        <strong>D.</strong> DP — it does not require full episodes
+      </div>
+    </div>
+    <p style="font-size:.65em; color:#888; margin-top:.8em;">↓ Press down for answer</p>
+  </section>
+  <section>
+    <div class="frame-title">Q5 — Focused Evaluation</div>
+    <div class="q-box">
+      <div class="qlabel">Question</div>
+      You have a 1000-state gridworld but only need values for 10 states near the goal. Which is more efficient?
+      <div style="margin-top:.6em;">
+        <strong>A.</strong> DP — it converges faster per sweep<br>
+        <strong>B.</strong> MC — episodes can start from just those 10 states, skipping the rest<br>
+        <strong>C.</strong> Both are equally efficient regardless of target states<br>
+        <strong>D.</strong> DP — it does not require full episodes
+      </div>
+    </div>
+    <div class="ans">
+      <strong>Answer: B</strong><br>
+      DP sweeps all 1000 states every iteration; MC targets only the states you care about.
+    </div>
+  </section>
+</section>
+
+<!-- ===================== REFERENCES ===================== -->
+<section>
+  <div class="frame-title">References</div>
+  <ul>
+    <li>Sutton &amp; Barto (2018). <em>Reinforcement Learning: An Introduction</em>, 2nd ed., Ch. 5.1–5.2.</li>
+    <li>Singh &amp; Sutton (1996). Reinforcement learning with replacing eligibility traces. <em>Machine Learning</em> 22(1–3).</li>
+    <li>Kakutani (1945). Two-dimensional Brownian motion and harmonic functions.</li>
+  </ul>
+  <p class="center" style="margin-top:1.2em; font-size:.85em">
+    <a href="https://buntyke.github.io/rlcourse-mtech-fall26">buntyke.github.io/rlcourse-mtech-fall26</a>
+  </p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/math/math.js"></script>
+<script>
+  Reveal.initialize({
+    width: 1280, height: 720, margin: 0.04,
+    hash: true, slideNumber: 'c/t',
+    plugins: [ RevealMath.MathJax3 ],
+    mathjax3: { mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js' }
+  });
+</script>
+</body>
+</html>

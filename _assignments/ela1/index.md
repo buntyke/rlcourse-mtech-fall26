@@ -6,7 +6,7 @@ pdf: /assignments/ela1/ela1.pdf
 hide_from_announcments: false
 due_event:
     type: due
-    date: 2026-06-04T23:59:00+05:30
+    date: 2026-06-06T23:59:00+05:30
     description: "ELA 1 due"
     assignment_url: /assignments/ela1/
 ---
